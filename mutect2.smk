@@ -12,9 +12,9 @@ germline_metadata = pandas.read_table("germline_metadata.tsv").set_index("fk_bri
 rule all:
 	input: 
 		expand('tumour_vcfs/{sample}.vcf', sample=samples),
-		metadata['table_file'],
-		metadata['contamination_table'],
-		metadata['segmentation_table'],
+		expand('tumour_vcfs/{SLX}_{barcode}_{flowcell}_{lane}_pileups.table', zip, SLX=metadata['fk_slx'], barcode=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane']),
+		expand('tumour_vcfs/{SLX}_{barcode}_{flowcell}_{lane}_contamination.table', zip, SLX=metadata['fk_slx'], barcode=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane']),
+		expand('tumour_vcfs/{SLX}_{barcode}_{flowcell}_{lane}_segmentation.table', zip, SLX=metadata['fk_slx'], barcode=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane']),
 		expand('tumour_vcfs/{sample}.filtered.vcf', sample=samples),
 		expand('tumour_vcfs/{sample}.filtered.annotated.maf', sample=samples)
 

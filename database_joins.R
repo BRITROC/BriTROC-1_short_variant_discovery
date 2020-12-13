@@ -34,12 +34,6 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 	dplyr::filter(fk_amplicon_panel==28)
 
 somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[A-Z0-9]+$'))
-somatic_metadata$table_file = paste('tumour_vcfs/',somatic_metadata$fk_slx,'_',somatic_metadata$fk_barcode,
-					'_',somatic_metadata$flowcell,'_',somatic_metadata$lane,'_pileups.table', sep='')
-somatic_metadata$contamination_table = paste('tumour_vcfs/',somatic_metadata$fk_slx,'_',somatic_metadata$fk_barcode,
-					'_',somatic_metadata$flowcell,'_',somatic_metadata$lane,'_contamination.table', sep='')
-somatic_metadata$segmentation_table = paste('tumour_vcfs/',somatic_metadata$fk_slx,'_',somatic_metadata$fk_barcode,
-					'_',somatic_metadata$flowcell,'_',somatic_metadata$lane,'_segmentation.table', sep='')
 
 write.table(germline_metadata, snakemake@output[['germline_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
 write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
