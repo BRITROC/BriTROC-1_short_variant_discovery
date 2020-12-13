@@ -42,7 +42,7 @@ def get_normal_bam_files(wildcards):
 	britroc_number = metadata_filt.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
-	germline_metadata_filt = germline_metadata.filter(like=str(britroc_number[0]), axis=0)
+	germline_metadata_filt = germline_metadata[germline_metadata['fk_britroc_number'] == britroc_number[0]]
 
 	SLX = germline_metadata_filt.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
