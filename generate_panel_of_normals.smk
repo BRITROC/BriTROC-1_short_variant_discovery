@@ -17,12 +17,14 @@ rule mutect2_normal_only:
 	input:
 		reference_genome=config['reference_genome'],
 		bam='../SLX/{slx}/bam/{slx}.{barcode}.{flowcell}.s_{lane}.bam',
-		germline_resource='../sample_swaps/gnomad.exomes.r2.1.1.fix_chr_names.sites.vcf.bgz'
+		germline_resource='../sample_swaps/gnomad.exomes.r2.1.1.fix_chr_names.sites.vcf.bgz',
+		interval_file='intersected_panel_6_28_amplicons.interval_list'
 	output: 'normal_vcfs/{slx}_{barcode}_{flowcell}_{lane}.vcf'
 	threads: 4
 	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
 			--reference {input.reference_genome} \
 			--input {input.bam} \
+			--intervals {input.interval_file} \
 			--germline-resource {input.germline_resource} \
 			--output {output}'
 
