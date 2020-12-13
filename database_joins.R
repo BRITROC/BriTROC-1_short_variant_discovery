@@ -22,9 +22,11 @@ run_slx = RPostgres::dbReadTable(britroc_con, 'run_slx')
 
 germline_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%
+	dplyr::inner_join(run_slx, by='fk_slx') %>%
 	dplyr::filter(type %in% c('germline')) %>%
-	dplyr::filter(fk_slx == 'SLX-15676') %>%
 	dplyr::filter(fk_amplicon_panel==28)
+
+germline_metadata = germline_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[A-Z0-9]+$'))
 
 somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%

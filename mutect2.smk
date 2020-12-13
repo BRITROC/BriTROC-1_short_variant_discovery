@@ -48,14 +48,21 @@ def get_normal_bam_files(wildcards):
 	SLX = SLX.index.unique().tolist()
 
 	barcodes = germline_metadata_filt.set_index('fk_barcode', drop=False)
-	barcodes = barcodes.index.unique().tolist()	
+	barcodes = barcodes.index.unique().tolist()
 
-	bam_file_1 = '../SLX/{}/bam/{}.bwamem.bam'.format(SLX[0], barcodes[0])
-	bam_file_2 = '../SLX/{}/bam/{}.bwamem.bam'.format(SLX[0], barcodes[1])
+	lane = germline_metadata_filt.set_index('lane', drop=False)
+	lane = lane.index.unique().tolist()
+	
+	flowcell = germline_metadata_filt.set_index('fk_run', drop=False)
+	flowcell = flowcell.index.unique().tolist()
+	flowcell = flowcell[0].split('_')
+
+	bam_file_1 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+	bam_file_2 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
 
 	return([bam_file_1, bam_file_2])
 
-def get_normal_barcodes(wildcards):
+def get_normal_samples(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
 	britroc_number = metadata_filt.set_index('fk_britroc_number', drop=False)
@@ -63,10 +70,12 @@ def get_normal_barcodes(wildcards):
 
 	germline_metadata_filt = germline_metadata.filter(like=str(britroc_number[0]), axis=0)
 
-	barcodes = germline_metadata_filt.set_index('fk_barcode', drop=False)
-	barcodes = barcodes.index.unique().tolist()	
+	samples = germline_metadata_filt.set_index('fk_sample', drop=False)
+	samples = samples.index.unique().tolist()	
 
-	return(barcodes)
+	samples.append(samples[0] + '_d')
+
+	return(samples)
 
 rule get_tumour_pileup_summary:
 	input:
@@ -98,15 +107,16 @@ rule mutect2:
 	output: 
 		tumour_vcf='tumour_vcfs/{sample}.vcf',
 		f1r2='tumour_vcfs/{sample}_f1r2.tar.gz'
+	threads: 4
 	params:
-		normal_sample_barcode=get_normal_barcodes
+		normal_sample_identifier=get_normal_samples
 	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
 			--input {input.tumour_bams[0]} \
 			--input {input.tumour_bams[1]} \
 			--input {input.normal_bams[0]} \
 			--input {input.normal_bams[1]} \
-			--normal-sample {params.normal_sample_barcode[0]} \
-			--normal-sample {params.normal_sample_barcode[1]} \
+			--normal-sample {params.normal_sample_identifier[0]} \
+			--normal-sample {params.normal_sample_identifier[1]} \
 			--panel-of-normals {input.panel_of_normals} \
 			--germline-resource {input.germline_resource} \
 			--output {output.tumour_vcf} \
