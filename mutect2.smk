@@ -68,12 +68,15 @@ def get_normal_samples(wildcards):
 	britroc_number = metadata_filt.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
-	germline_metadata_filt = germline_metadata.filter(like=str(britroc_number[0]), axis=0)
+	germline_metadata_filt = germline_metadata[germline_metadata['fk_britroc_number'] == britroc_number[0]]
 
 	samples = germline_metadata_filt.set_index('fk_sample', drop=False)
 	samples = samples.index.unique().tolist()	
 
 	samples.append(samples[0] + '_d')
+	# this is accounting for a bug in the formatting of BAM headers
+	samples[0] = samples[0].replace('-','')
+	samples[1] = samples[1].replace('-','')
 
 	return(samples)
 
@@ -102,6 +105,7 @@ rule mutect2:
 		reference_genome=config['reference_genome'],
 		panel_of_normals='pon.vcf.gz',
 		germline_resource='../sample_swaps/gnomad.exomes.r2.1.1.fix_chr_names.sites.vcf.bgz',
+		interval_file='intersected_panel_6_28_amplicons.interval_list',
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files
 	output: 
@@ -117,6 +121,7 @@ rule mutect2:
 			--input {input.normal_bams[1]} \
 			--normal-sample {params.normal_sample_identifier[0]} \
 			--normal-sample {params.normal_sample_identifier[1]} \
+			--intervals {input.interval_file} \
 			--panel-of-normals {input.panel_of_normals} \
 			--germline-resource {input.germline_resource} \
 			--output {output.tumour_vcf} \
@@ -159,17 +164,25 @@ def get_segmentation_tables(wildcards):
 
 	return([segmentation_table_1, segmentation_table_2])
 
+rule LearnReadOrientationModel:
+	input: 'tumour_vcfs/{sample}_f1r2.tar.gz'
+	output: 'tumour_vcfs/{sample}_artifiact_priors.tar.gz'
+	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk LearnReadOrientationModel \
+			--input {input} \
+			--output {output}'
+
 rule filter_mutect_calls:
 	input:
 		reference=config['reference_genome'],
 		mutect2_vcf=rules.mutect2.output.tumour_vcf,
-		f1r2=rules.mutect2.output.f1r2,
+		f1r2=rules.LearnReadOrientationModel.output,
 		contamination_tables=get_contamination_tables,
 		segmentation_tables=get_segmentation_tables
 	output: 'tumour_vcfs/{sample}.filtered.vcf'
 	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk FilterMutectCalls \
 			-R {input.reference} \
 			-V {input.mutect2_vcf} \
+			--orientation-bias-artifact-priors {input.f1r2} \
 			--contamination-table {input.contamination_tables[0]} \
 			--contamination-table {input.contamination_tables[1]} \
 			--tumor-segmentation {input.segmentation_tables[0]} \
@@ -189,4 +202,9 @@ rule funcotator:
 			--data-sources-path funcotator_dataSources.v1.6.20190124s \
 			--remove-filtered-variants \
 			-O {output}'
+
+rule collate_annotation_files:
+	input: expand('tumour_vcfs/{sample}.filtered.annotated.maf', sample=samples)
+	output: 'tumour_vcfs/all_samples.maf'
+	script: 'collate_maf_files.R'
 
