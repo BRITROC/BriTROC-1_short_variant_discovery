@@ -3,6 +3,7 @@
 configfile: 'config.yaml'
 
 import pandas
+import os
 
 metadata = pandas.read_table("somatic_metadata.tsv").set_index("fk_sample", drop=False)
 samples = metadata.index.unique().tolist()
@@ -57,10 +58,16 @@ def get_normal_bam_files(wildcards):
 	flowcell = flowcell.index.unique().tolist()
 	flowcell = flowcell[0].split('_')
 
-	bam_file_1 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
-	bam_file_2 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+	if SLX[0] == 'SLX-9629':
 
-	return([bam_file_1, bam_file_2])
+		bam_file_1 = '../SLX/{}/samplebam/{}.{}.bam'.format(SLX[0], SLX[0], barcodes[0])
+		return([bam_file_1])
+
+	else:
+		bam_file_1 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+		bam_file_2 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+
+		return([bam_file_1, bam_file_2])
 
 def get_normal_samples(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
@@ -73,10 +80,19 @@ def get_normal_samples(wildcards):
 	samples = germline_metadata_filt.set_index('fk_sample', drop=False)
 	samples = samples.index.unique().tolist()	
 
-	samples.append(samples[0] + '_d')
-	# this is accounting for a bug in the formatting of BAM headers
-	samples[0] = samples[0].replace('-','')
-	samples[1] = samples[1].replace('-','')
+	SLX = germline_metadata_filt.set_index('fk_slx', drop=False)
+	SLX = SLX.index.unique().tolist()
+
+	print(SLX)
+
+	if SLX[0] == 'SLX-9629':
+		pass
+		#samples[0] = samples[0].replace('-','')
+	else:
+		samples.append(samples[0] + '_d')
+		# this is accounting for a bug in the formatting of BAM headers
+		samples[0] = samples[0].replace('-','')
+		samples[1] = samples[1].replace('-','')
 
 	return(samples)
 
@@ -114,19 +130,36 @@ rule mutect2:
 	threads: 4
 	params:
 		normal_sample_identifier=get_normal_samples
-	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
-			--input {input.tumour_bams[0]} \
-			--input {input.tumour_bams[1]} \
-			--input {input.normal_bams[0]} \
-			--input {input.normal_bams[1]} \
-			--normal-sample {params.normal_sample_identifier[0]} \
-			--normal-sample {params.normal_sample_identifier[1]} \
-			--intervals {input.interval_file} \
-			--panel-of-normals {input.panel_of_normals} \
-			--germline-resource {input.germline_resource} \
-			--output {output.tumour_vcf} \
-			--f1r2-tar-gz {output.f1r2} \
-			--reference {input.reference_genome}'
+	run:
+		print(input.normal_bams)
+		if len(params.normal_sample_identifier) == 2:
+			print('2 normal sample bam files')
+			shell ('/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
+				--input {input.tumour_bams[0]} \
+				--input {input.tumour_bams[1]} \
+				--input {input.normal_bams[0]} \
+				--input {input.normal_bams[1]} \
+				--normal-sample {params.normal_sample_identifier[0]} \
+				--normal-sample {params.normal_sample_identifier[1]} \
+				--intervals {input.interval_file} \
+				--panel-of-normals {input.panel_of_normals} \
+				--germline-resource {input.germline_resource} \
+				--output {output.tumour_vcf} \
+				--f1r2-tar-gz {output.f1r2} \
+				--reference {input.reference_genome}')
+		else:
+			print('1 normal sample bam file')
+			shell ('/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
+				--input {input.tumour_bams[0]} \
+				--input {input.tumour_bams[1]} \
+				--input {input.normal_bams[0]} \
+				--normal-sample {params.normal_sample_identifier[0]} \
+				--intervals {input.interval_file} \
+				--panel-of-normals {input.panel_of_normals} \
+				--germline-resource {input.germline_resource} \
+				--output {output.tumour_vcf} \
+				--f1r2-tar-gz {output.f1r2} \
+				--reference {input.reference_genome}')
 
 def get_contamination_tables(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
