@@ -32,7 +32,7 @@ rule index_bgz_file:
 
 rule add_chr_prefix_to_biallelic_SNPs:
 	input: 'somatic-b37_small_exac_common_3.vcf'
-	output: 'somatic-b37_small_exac_common_3.fix_chr_names.vcf'
+	output: protected('somatic-b37_small_exac_common_3.fix_chr_names.vcf')
 	shell: "sed -r 's/ID=([0-9XY]+)/ID=chr\\1/g' {input} | sed '/^#/!s/^/chr/1' > {output}"
 
 rule index_biallelic_snps_file:
