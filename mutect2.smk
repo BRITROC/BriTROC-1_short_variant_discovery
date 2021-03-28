@@ -17,11 +17,14 @@ rule all:
 		expand('tumour_vcfs/{SLX}_{barcode}_{flowcell}_{lane}_contamination.table', zip, SLX=metadata['fk_slx'], barcode=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane']),
 		expand('tumour_vcfs/{SLX}_{barcode}_{flowcell}_{lane}_segmentation.table', zip, SLX=metadata['fk_slx'], barcode=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane']),
 		expand('tumour_vcfs/{sample}.filtered.vcf', sample=samples),
-		expand('tumour_vcfs/{sample}.filtered.annotated.maf', sample=samples)
+		expand('tumour_vcfs/{sample}.filtered2.vcf', sample=samples),
+		expand('tumour_vcfs/{sample}.filtered3.vcf', sample=samples),
+		expand('tumour_vcfs/{sample}.filtered.vep.vcf', sample=samples)
 
 def get_tumour_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
+	metadata_filt = metadata[(metadata.fk_sample == wildcards.sample)].head(n=2)
+
 	SLX = metadata_filt.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
 	barcodes = metadata_filt.set_index('fk_barcode', drop=False)
@@ -39,7 +42,7 @@ def get_tumour_bam_files(wildcards):
 
 def get_normal_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
+	metadata_filt = metadata[(metadata.fk_sample==wildcards.sample)].head(n=2)
 	britroc_number = metadata_filt.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
@@ -71,7 +74,7 @@ def get_normal_bam_files(wildcards):
 
 def get_normal_samples(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
+	metadata_filt = metadata[(metadata.fk_sample==wildcards.sample)].head(n=2)
 	britroc_number = metadata_filt.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
@@ -83,16 +86,14 @@ def get_normal_samples(wildcards):
 	SLX = germline_metadata_filt.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
 
-	print(SLX)
-
 	if SLX[0] == 'SLX-9629':
 		pass
 		#samples[0] = samples[0].replace('-','')
 	else:
 		samples.append(samples[0] + '_d')
 		# this is accounting for a bug in the formatting of BAM headers
-		samples[0] = samples[0].replace('-','')
-		samples[1] = samples[1].replace('-','')
+		#samples[0] = samples[0].replace('-','')
+		#samples[1] = samples[1].replace('-','')
 
 	return(samples)
 
@@ -126,7 +127,8 @@ rule mutect2:
 		normal_bams=get_normal_bam_files
 	output: 
 		tumour_vcf='tumour_vcfs/{sample}.vcf',
-		f1r2='tumour_vcfs/{sample}_f1r2.tar.gz'
+		f1r2='tumour_vcfs/{sample}_f1r2.tar.gz',
+		bam_output='tumour_vcfs/{sample}.bam'
 	threads: 4
 	params:
 		normal_sample_identifier=get_normal_samples
@@ -146,6 +148,8 @@ rule mutect2:
 				--germline-resource {input.germline_resource} \
 				--output {output.tumour_vcf} \
 				--f1r2-tar-gz {output.f1r2} \
+				--minimum-allele-fraction 0.00 \
+				--bam-output {output.bam_output} \
 				--reference {input.reference_genome}')
 		else:
 			print('1 normal sample bam file')
@@ -159,11 +163,13 @@ rule mutect2:
 				--germline-resource {input.germline_resource} \
 				--output {output.tumour_vcf} \
 				--f1r2-tar-gz {output.f1r2} \
+				--minimum-allele-fraction 0.00 \
+				--bam-output {output.bam_output} \
 				--reference {input.reference_genome}')
 
 def get_contamination_tables(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
+	metadata_filt = metadata[(metadata.fk_sample==wildcards.sample)].head(n=2)
 	SLX = metadata_filt.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
 	barcodes = metadata_filt.set_index('fk_barcode', drop=False)
@@ -181,7 +187,7 @@ def get_contamination_tables(wildcards):
 
 def get_segmentation_tables(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	metadata_filt = metadata.filter(like=wildcards.sample, axis=0).head(n=2)
+	metadata_filt = metadata[(metadata.fk_sample==wildcards.sample)].head(n=2)
 	SLX = metadata_filt.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
 	barcodes = metadata_filt.set_index('fk_barcode', drop=False)
@@ -204,7 +210,7 @@ rule LearnReadOrientationModel:
 			--input {input} \
 			--output {output}'
 
-rule filter_mutect_calls:
+rule mark_mutect_calls_for_filtering:
 	input:
 		reference=config['reference_genome'],
 		mutect2_vcf=rules.mutect2.output.tumour_vcf,
@@ -220,24 +226,49 @@ rule filter_mutect_calls:
 			--contamination-table {input.contamination_tables[1]} \
 			--tumor-segmentation {input.segmentation_tables[0]} \
 			--tumor-segmentation {input.segmentation_tables[1]} \
+			--min-allele-fraction 0.00 \
 			-O {output}'
 
-rule funcotator:
+rule filter_variants:
 	input: 
-		reference=config['reference_genome'],
-		filtered_vcf=rules.filter_mutect_calls.output
-	output: 'tumour_vcfs/{sample}.filtered.annotated.maf'
-	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Funcotator \
+		filtered_vcf=rules.mark_mutect_calls_for_filtering.output,
+		reference=config['reference_genome']
+	output: 'tumour_vcfs/{sample}.filtered2.vcf'
+	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk SelectVariants \
 			-R {input.reference} \
 			-V {input.filtered_vcf} \
-			--output-file-format MAF \
-			--ref-version hg19 \
-			--data-sources-path funcotator_dataSources.v1.6.20190124s \
-			--remove-filtered-variants \
+			--exclude-filtered \
 			-O {output}'
 
-rule collate_annotation_files:
-	input: expand('tumour_vcfs/{sample}.filtered.annotated.maf', sample=samples)
-	output: 'tumour_vcfs/all_samples.maf'
-	script: 'collate_maf_files.R'
+rule filter_variants2:
+	input: 
+		filtered_vcf=rules.filter_variants.output
+	output: 'tumour_vcfs/{sample}.filtered3.vcf'
+	shell: 'sed s/^chr//g {input.filtered_vcf} > {output}'
+
+rule vep:
+	input:
+		filtered_vcf=rules.filter_variants2.output
+	output: 'tumour_vcfs/{sample}.filtered.vep.vcf'
+	shell: 'ensembl-vep/vep \
+			-i {input.filtered_vcf} \
+			-o {output} \
+			--database \
+			--force_overwrite \
+			--check_existing \
+			--sift b \
+			--polyphen b \
+			--canonical \
+			--protein \
+			--uniprot \
+			--numbers \
+			--domains \
+			--variant_class \
+			--biotype \
+			--ccds \
+			--symbol \
+			--clin_sig_allele 0 \
+			-a GRCh37 \
+			--port 3337'
+
 
