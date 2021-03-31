@@ -26,7 +26,7 @@ germline_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name
 	dplyr::filter(type %in% c('germline')) %>%
 	dplyr::filter(!fk_slx %in% c('SLX-11110')) %>%
 	dplyr::filter(fk_amplicon_panel %in% c(6,28)) %>%
-	dplyr::arrange(fk_britroc_number)
+	dplyr::arrange(fk_britroc_number,type)
 
 germline_metadata = germline_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
@@ -36,7 +36,8 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 	dplyr::filter(type %in% c('archival','relapse')) %>%
 	dplyr::filter(fk_britroc_number %in% germline_metadata$fk_britroc_number) %>%
 	dplyr::filter(fk_amplicon_panel %in% c(6,28)) %>%
-	dplyr::arrange(fk_britroc_number)
+	dplyr::filter(fk_slx != 'SLX-13716') %>%
+	dplyr::arrange(fk_britroc_number,type)
 
 somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
@@ -47,7 +48,8 @@ paired_samples = somatic_metadata %>%
 	ungroup() %>% 
 	group_by(fk_britroc_number) %>% 
 	summarise(n=n()) %>%
-	dplyr::filter(n>1)
+	dplyr::filter(n>1) %>%
+	dplyr::select(-n)
 
 somatic_metadata = dplyr::inner_join(somatic_metadata, paired_samples, by='fk_britroc_number')
 
