@@ -21,3 +21,6 @@ tmp.R
 legacy/
 ensembl-vep/
 *.tsv
+temp/
+resources/
+results/

@@ -103,44 +103,32 @@ def get_normal_sample_names(wildcards):
 
 	return(samples)
 
-rule mutect2:
+rule convert_picard_interval_to_bed:
+	input: 
+		targets='resources/panel_28_targets.interval_list',
+		amplicons='resources/panel_28_amplicons.interval_list'
+	output: 'resources/panel_28.bed'
+	script: '../scripts/convert_picard_interval_to_bed.R'
+
+rule vardict:
 	input:
 		reference_genome=config['reference_genome'],
-		panel_of_normals=rules.create_panel_of_normals.output,
-		germline_resource='resources/gnomad.exomes.r2.1.1.fix_chr_names.sites.vcf.bgz',
-		interval_file='resources/panel_28_targets.interval_list',
-		tumour_bams=get_tumour_bam_files
-	output: 
-		tumour_vcf='results/tumour_sample_vcfs/{sample}.vcf',
-		f1r2='results/tumour_sample_vcfs/{sample}_f1r2.tar.gz',
-		bam_output='results/tumour_sample_vcfs/{sample}.bam'
-	threads: 4
-	params:
-		normal_sample_identifier=get_normal_sample_names
-	run:
-		if len(params.normal_sample_identifier) == 2:
-			print('2 normal sample bam files')
-			shell ('/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
-				--input {input.tumour_bams[0]} \
-				--input {input.tumour_bams[1]} \
-				--intervals {input.interval_file} \
-				--germline-resource {input.germline_resource} \
-				--output {output.tumour_vcf} \
-				--f1r2-tar-gz {output.f1r2} \
-				--minimum-allele-fraction 0.00 \
-				--bam-output {output.bam_output} \
-				--max-reads-per-alignment-start 0 \
-				--reference {input.reference_genome}')
-		else:
-			print('1 normal sample bam file')
-			shell ('/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \
-				--input {input.tumour_bams[0]} \
-				--input {input.tumour_bams[1]} \
-				--intervals {input.interval_file} \
-				--germline-resource {input.germline_resource} \
-				--output {output.tumour_vcf} \
-				--f1r2-tar-gz {output.f1r2} \
-				--minimum-allele-fraction 0.00 \
-				--bam-output {output.bam_output} \
-				--max-reads-per-alignment-start 0 \
-				--reference {input.reference_genome}')
+		path_to_bed_file=rules.convert_picard_interval_to_bed.output,
+		tumour_bams=get_tumour_bam_files,
+		normal_bams=get_normal_bam_files
+	output: 'results/tumour_sample_vcfs_vardict/{sample}.vcf'
+	shell: '/scratchb/jblab/bradle02/libraries/VarDict-1.8.2/bin/VarDict \
+				-G {input.reference_genome} \
+				-f 0.01 \
+				-z \
+				-U \
+				-deldupvar \
+				--amplicon 10:0.95 \
+				-N tumor_sample_name \
+				-b {input.tumour_bams[0]} \
+				{input.path_to_bed_file} | \
+				/scratchb/jblab/bradle02/libraries/VarDict-1.8.2/bin/teststrandbias.R | \
+				/scratchb/jblab/bradle02/libraries/VarDict-1.8.2/bin/var2vcf_valid.pl \
+				-N tumour_sample_name \
+				-E \
+				-f 0.01 > {output}'

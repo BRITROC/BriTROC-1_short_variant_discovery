@@ -92,3 +92,40 @@ rule filter_variants:
 			-V {input.filtered_vcf} \
 			--exclude-filtered \
 			-O {output}'
+
+rule filter_vardict_variants:
+	input: 
+		filtered_vcf=rules.vardict.output,
+		reference=config['reference_genome']
+	output: 'results/tumour_sample_vcfs_vardict/{sample}.filtered.vcf'
+	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk SelectVariants \
+			-R {input.reference} \
+			-V {input.filtered_vcf} \
+			--exclude-filtered \
+			-O {output}'
+
+# note: Can't use SelectVariant with octopus output as they are not compatible
+
+rule filter_octopus_raw_calls:
+	input: 
+		filtered_vcf='results/tumour_sample_vcfs_octopus/{sample}.vcf',
+	output: 'results/tumour_sample_vcfs_octopus/{sample}.filtered.vcf'
+	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+
+rule filter_octopus_hard_filtering:
+	input: 
+		filtered_vcf='results/tumour_sample_vcfs_octopus/{sample}.filtered2.vcf',
+	output: 'results/tumour_sample_vcfs_octopus/{sample}.filtered3.vcf'
+	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+
+rule filter_octopus_random_forest:
+	input: 
+		filtered_vcf='results/tumour_sample_vcfs_octopus/{sample}.filtered4.vcf',
+	output: 'results/tumour_sample_vcfs_octopus/{sample}.filtered5.vcf'
+	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+
+# filters VCF and preserves record in which all samples (except the normal) have the same predicted genotype
+rule ensure_matching_genotypes:
+	input: 'results/tumour_sample_vcfs_octopus/{sample}.filtered6.vcf'
+	output: 'results/tumour_sample_vcfs_octopus/{sample}.filtered7.vcf'
+	shell: 'bash workflow/scripts/match_genotypes.sh {input} > {output}'

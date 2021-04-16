@@ -1,8 +1,13 @@
 # A snakefile within a larger workflow to generate a panel of normals for mutect2
 
-rule link_amplicon_panels_file:
+rule link_amplicon_panels_targets_file:
 	input: '/scratcha/jblab/amplicon_panels/28_JBLAB_AAprimers_dream_panel/targets.txt'
-	output: 'resources/panel_28.interval_list'
+	output: 'resources/panel_28_targets.interval_list'
+	shell: 'ln -s {input} {output}'
+
+rule link_amplicon_panels_amplicon_file:
+	input: '/scratcha/jblab/amplicon_panels/28_JBLAB_AAprimers_dream_panel/amplicons.txt'
+	output: 'resources/panel_28_amplicons.interval_list'
 	shell: 'ln -s {input} {output}'
 
 rule mutect2_normal_only:
@@ -10,7 +15,7 @@ rule mutect2_normal_only:
 		reference_genome=config['reference_genome'],
 		bam='../SLX/{slx}/bam/{slx}.{barcode}.{flowcell}.s_{lane}.bam',
 		germline_resource='resources/gnomad.exomes.r2.1.1.fix_chr_names.sites.vcf.bgz',
-		interval_file=rules.link_amplicon_panels_file.output
+		interval_file=rules.link_amplicon_panels_targets_file.output
 	output: 'results/normal_sample_vcfs/{slx}_{barcode}_{flowcell}_{lane}.vcf'
 	threads: 4
 	shell: '/home/bioinformatics/software/gatk/gatk-4.1.8.0/gatk Mutect2 \

@@ -1,4 +1,4 @@
-# A simple script within a larger snakemake workflow of collating and filtering variant calls from strelka
+# A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
 library(tidyverse)
 library(DBI)
@@ -8,6 +8,9 @@ library(RPostgres)
 readRenviron('~/.Renviron')
 
 vep_files = snakemake@input %>% unlist
+
+print(vep_files %>% length)
+
 sample_names = stringr::str_extract(string=vep_files, pattern='(JBLAB-[0-9]+|IM_[0-9]+)') 
 
 # a rudimentary helper function to add the sample IDs to the annotation output table
@@ -31,7 +34,8 @@ annotations = purrr::map(
       cDNA_position='c',
       CDS_position='c',
       Protein_position='c',
-      Allele='c'
+      Allele='c',
+      Amino_acids='c'
     )
 )  %>%
   purrr::map2_dfr(.y=sample_names, .f=mutate_x_y ) %>%
@@ -66,6 +70,8 @@ new_columns = purrr::map_dfc(.x=new_column_names, .f=extract_column)
 colnames(new_columns) = new_column_names
 
 annotations = cbind(annotations, new_columns) %>% as_tibble()
+
+annotations %>% dim() %>% print()
 
 ## begin to filter mutations for predicted pathogenicity
 
@@ -102,33 +108,44 @@ annotations = annotations %>% dplyr::filter(
 #grepl('low_confidence',annotations$SIFT) 
 #c(grepl('possibly',annotations$PolyPhen)) & c(grepl('low_confidence',annotations$SIFT))
 
-#annotations = annotations %>% dplyr::filter(
-#  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
-#)
+annotations = annotations %>% dplyr::filter(
+  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
+)
 
 annotations = annotations %>% dplyr::filter(
   CANONICAL == 'YES'
 )
 
-annotations = annotations %>% dplyr::filter(
-  IMPACT != 'LOW'
-)
+# this called a splice mutation as low impact so probably not a good filter
+
+#annotations = annotations %>% dplyr::filter(
+#  IMPACT != 'LOW'
+#)
+
+#annotations = annotations %>% dplyr::filter(
+#  !Consequence %in% c(
+#    '3_prime_UTR_variant','5_prime_UTR_variant','downstream_gene_variant','intron_variant',
+#    'upstream_gene_variant', 'non_coding_transcript_exon_variant',
+#    'intron_variant,non_coding_transcript_variant'
+#  )
+#)
 
 annotations = annotations %>% dplyr::filter(
   !Consequence %in% c(
-    '3_prime_UTR_variant','5_prime_UTR_variant','downstream_gene_variant','intron_variant',
+    'downstream_gene_variant','5_prime_UTR_variant','3_prime_UTR_variant',
     'upstream_gene_variant', 'non_coding_transcript_exon_variant',
     'intron_variant,non_coding_transcript_variant'
   )
 )
 
+
 # remove transcript isoform duplicates
 
 # this doesn't make a change if we already filter for 'CANONICAL=TRUE'
 
-annotations = annotations %>%
-  dplyr::group_by(sample_id,Location,Allele) %>%
-  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
+#annotations = annotations %>%
+#  dplyr::group_by(sample_id,Location,Allele) %>%
+#  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
 print(annotations)
 
@@ -143,11 +160,76 @@ britroc_con <- dbConnect(RPostgres::Postgres(),
                          password = Sys.getenv('jblab_db_password')
 )
 
+clarity_con <- dbConnect(RPostgres::Postgres(),
+                         dbname='clarity',
+                         host='jblab-db.cri.camres.org',
+                         port = 5432,
+                         user = Sys.getenv('jblab_db_username'),
+                         password = Sys.getenv('jblab_db_password')
+)
+
+
 samples = dbReadTable(britroc_con, 'sample')
 
 annotations = dplyr::inner_join(annotations,samples, by=c('sample_id'='name'))
 
-annotations %>% group_by(fk_britroc_number,SYMBOL) %>% summarise(n=n()) %>% ungroup %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n) %>% print(n=Inf)
+x = annotations %>% group_by(fk_britroc_number,SYMBOL) %>% summarise(n=n()) %>% ungroup %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n)
+
+### for this tumour type calculate the number of people with paired samples ####
+
+print(vep_files %>% length)
+
+vep_sample_list = stringr::str_extract(string=vep_files, pattern='(IM_[0-9]+)|JBLAB-[0-9]+')
+
+num_patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels %>% length()
+
+print(num_patients_with_paired_samples)
+
+#num_patients_with_paired_samples = 141
+
+#slx_library = dbReadTable(britroc_con, 'slx_library') %>% 
+#	dplyr::filter(fk_slx!='SLX-13716') %>% # no data for this SLX
+#	dplyr::filter(grepl('AA',fk_experiment)) # select for tam-seq experiments only
+
+#slx_clarity = dbReadTable(clarity_con, 'slx')
+
+#slx_library = dplyr::semi_join(slx_library, slx_clarity, by=c('fk_slx'='name')) # ensure slx is actually in clarity
+
+#experiments = dbReadTable(britroc_con, 'experiment') %>% dplyr::filter(fk_amplicon_panel %in% c(6,28)) # only allow panel 6 or panel 28 amplicon panels
+#slx_library = slx_library %>% dplyr::semi_join(experiments, by=c('fk_experiment'='name'))
+
+# retrieve analysis type
+#analysis_type = stringr::str_extract(string=snakemake@output[[1]], pattern='(archival|relapse)')
+#print(analysis_type)
+	
+#sequenced_samples = dplyr::semi_join(samples, slx_library, by=c('name'='fk_sample')) 
+#sequenced_samples = sequenced_samples %>% 
+#	dplyr::group_by(fk_britroc_number,type) %>% 
+#	dplyr::summarise(n=n()) %>% 
+#	tidyr::pivot_wider(names_from=type, values_from=n) %>%
+#	dplyr::filter(!is.na(!!as.symbol(analysis_type)) & !is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
+
+#num_patients_with_paired_samples = sequenced_samples %>% .$fk_britroc_number %>% as.factor %>% levels %>% length()
+#print('number of patients with paired samples for this analysis type:')
+#print(num_patients_with_paired_samples)
+
+##################################################################################
+
+x = x %>% dplyr::mutate(prop_patients_with_mutation=n/num_patients_with_paired_samples)
+print(x)
+
+print('BRCA1 patients')
+
+annotations %>% dplyr::filter(SYMBOL=='BRCA1') %>% .$fk_britroc_number %>% unique()
+
+print('BRCA2 patients')
+
+annotations %>% dplyr::filter(SYMBOL=='BRCA2') %>% .$fk_britroc_number %>% unique()
+
+print('Total BRCA somatic mutation rate - patient level')
+
+z = annotations %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2')) %>% .$fk_britroc_number %>% unique() %>% length
+print(z / num_patients_with_paired_samples)
 
 write_tsv(annotations, snakemake@output[[1]])
 
