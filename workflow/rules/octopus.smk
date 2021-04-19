@@ -1,6 +1,6 @@
 def get_tumour_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = paired_somatic_metadata[(paired_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
+	test_sample_metadata = all_somatic_metadata[(all_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
 
 	SLX = test_sample_metadata.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
@@ -12,18 +12,18 @@ def get_tumour_bam_files(wildcards):
 	flowcell = flowcell.index.unique().tolist()
 	flowcell = flowcell[0].split('_')
 
-	bam_file_1 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
-	bam_file_2 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+	bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+	bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
 
 	return([bam_file_1, bam_file_2])
 
 def get_normal_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = paired_somatic_metadata[(paired_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
+	test_sample_metadata = all_somatic_metadata[(all_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
 	britroc_number = test_sample_metadata.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
-	patient_metadata = paired_somatic_metadata[paired_somatic_metadata['fk_britroc_number'] == britroc_number[0]]
+	patient_metadata = all_somatic_metadata[all_somatic_metadata['fk_britroc_number'] == britroc_number[0]]
 
 	normal_metadata = germline_metadata[germline_metadata['fk_britroc_number'] == britroc_number[0]].head(n=2)
 
@@ -42,22 +42,22 @@ def get_normal_bam_files(wildcards):
 
 	if SLX[0] == 'SLX-9629':
 
-		bam_file_1 = '../SLX/{}/samplebam/{}.{}.bam'.format(SLX[0], SLX[0], barcodes[0])
+		bam_file_1 = '../SLX/{}/samplebam/cleaned_samplebams/{}.{}.amplicon.bam'.format(SLX[0], SLX[0], barcodes[0])
 		return([bam_file_1])
 
 	else:
-		bam_file_1 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
-		bam_file_2 = '../SLX/{}/bam/{}.{}.{}.s_{}.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+		bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+		bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
 
 		return([bam_file_1, bam_file_2])
 
 def get_normal_sample_names(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = paired_somatic_metadata[(paired_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
+	test_sample_metadata = all_somatic_metadata[(all_somatic_metadata.fk_sample == wildcards.sample)].head(n=2)
 	britroc_number = test_sample_metadata.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
-	patient_metadata = paired_somatic_metadata[paired_somatic_metadata['fk_britroc_number'] == britroc_number[0]]
+	patient_metadata = all_somatic_metadata[all_somatic_metadata['fk_britroc_number'] == britroc_number[0]]
 	
 	normal_metadata = germline_metadata[germline_metadata['fk_britroc_number'] == britroc_number[0]].head(n=2)
 
