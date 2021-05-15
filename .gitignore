@@ -4,6 +4,7 @@
 *.gz
 *.stats
 *.tbi
+*.bed
 tumour_vcfs/
 normal_vcfs/
 slurm-submit.general

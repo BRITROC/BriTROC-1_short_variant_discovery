@@ -2,11 +2,11 @@
 # For ease of interpretation, BAM files have also been renamed - incorporating important sample metadata information in the sample name
 
 def get_bam_and_bam_index(wildcards):
-	#patient_metadata = all_somatic_metadata[(all_somatic_metadata.fk_sample == wildcards.sample_id)] 
-	#patient_metadata = patient_metadata[(patient_metadata.fk_barcode == wildcards.barcode)]
-
-	patient_metadata = germline_metadata[(germline_metadata.fk_sample == wildcards.sample_id)] 
+	patient_metadata = somatic_tp53_metadata[(somatic_tp53_metadata.fk_sample == wildcards.sample_id)] 
 	patient_metadata = patient_metadata[(patient_metadata.fk_barcode == wildcards.barcode)]
+
+	#patient_metadata = germline_metadata[(germline_metadata.fk_sample == wildcards.sample_id)] 
+	#patient_metadata = patient_metadata[(patient_metadata.fk_barcode == wildcards.barcode)]
 
 	SLX = patient_metadata.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()

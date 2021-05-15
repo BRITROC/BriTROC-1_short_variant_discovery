@@ -12,8 +12,8 @@ def get_tumour_bam_files(wildcards):
 	flowcell = flowcell.index.unique().tolist()
 	flowcell = flowcell[0].split('_')
 
-	bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
-	bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+	bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.antijoined_28_6.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+	bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.antijoined_28_6.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
 
 	return([bam_file_1, bam_file_2])
 
@@ -42,12 +42,12 @@ def get_normal_bam_files(wildcards):
 
 	if SLX[0] == 'SLX-9629':
 
-		bam_file_1 = '../SLX/{}/samplebam/cleaned_samplebams/{}.{}.amplicon.bam'.format(SLX[0], SLX[0], barcodes[0])
+		bam_file_1 = '../SLX/{}/samplebam/cleaned_samplebams/{}.{}.antijoined_28_6.bam'.format(SLX[0], SLX[0], barcodes[0])
 		return([bam_file_1])
 
 	else:
-		bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
-		bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.amplicon.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
+		bam_file_1 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.antijoined_28_6.bam'.format(SLX[0],  ''.join(SLX), barcodes[0], flowcell[-1], lane[0])
+		bam_file_2 = '../SLX/{}/bam/cleaned_bams/{}.{}.{}.s_{}.antijoined_28_6.bam'.format(SLX[0],  ''.join(SLX), barcodes[1], flowcell[-1], lane[0])
 
 		return([bam_file_1, bam_file_2])
 
@@ -105,7 +105,7 @@ rule convert_bed_to_oct_format:
 rule octopus:
 	input:
 		reference_genome=config['reference_genome'],
-		interval_file='resources/intersected_panel_6_28.oct',
+		interval_file='resources/antijoined_panel_28_6.oct',             #'resources/intersected_panel_6_28.oct',
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files
 	output: 
@@ -129,7 +129,7 @@ rule octopus:
 rule filter_octopus_calls:
 	input:
 		reference_genome=config['reference_genome'],
-		interval_file='resources/intersected_panel_6_28.oct',
+		interval_file='resources/antijoined_panel_28_6.oct',                                #'resources/intersected_panel_6_28.oct',
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files,
 		vcf_file='results/tumour_sample_vcfs_octopus/{sample}.filtered.vcf'
@@ -156,7 +156,7 @@ rule filter_octopus_calls:
 rule filter_octopus_calls2:
 	input:
 		reference_genome=config['reference_genome'],
-		interval_file='resources/intersected_panel_6_28.oct',
+		interval_file='resources/antijoined_panel_28_6.oct',                             #'resources/intersected_panel_6_28.oct',
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files,
 		vcf_file='results/tumour_sample_vcfs_octopus/{sample}.filtered3.vcf'
