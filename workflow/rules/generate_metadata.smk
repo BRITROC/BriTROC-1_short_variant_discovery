@@ -12,6 +12,13 @@ rule get_metadata:
 		somatic_metadata='config/somatic_metadata.tsv'
 	script: '../scripts/database_joins.R'
 
+rule get_matched_metadata:
+	input:
+	output: 
+		germline_metadata='config/matched_germline_metadata.tsv',
+		somatic_metadata='config/matched_somatic_metadata.tsv'
+	script: '../scripts/matched_database_joins.R'
+
 rule get_paired_metadata: # for paired primary and relapse samples
 	input:
 	output: 
