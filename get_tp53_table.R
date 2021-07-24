@@ -2,8 +2,8 @@
 
 library(magrittr)
 
-archival_tp53_variants = readr::read_tsv('results/filtered_archival_vep_calls_octopus.tsv', na='NA')
-relapse_tp53_variants = readr::read_tsv('results/filtered_relapse_vep_calls_octopus.tsv', na='NA')
+archival_tp53_variants = readr::read_tsv('results/final_tp53/filtered_archival_vep_calls_octopus.tsv', na='NA')
+relapse_tp53_variants = readr::read_tsv('results/final_tp53/filtered_relapse_vep_calls_octopus.tsv', na='NA')
 
 all_tp53_variants = rbind(archival_tp53_variants,relapse_tp53_variants)
 
@@ -14,7 +14,7 @@ all_tp53_variants = dplyr::inner_join(all_tp53_variants,tp53_freq, by=c('fk_brit
 all_tp53_variants = all_tp53_variants %>% dplyr::arrange(fk_britroc_number,-n,type,sample_id)
 
 
-MAFs = readr::read_tsv('results/tp53_collated_MAFs.tsv')
+MAFs = readr::read_tsv('results/final_tp53/tp53_collated_MAFs.tsv')
 
 all_tp53_variants = dplyr::left_join(all_tp53_variants,MAFs, by=c('sample_id','#Uploaded_variation'='vep_format'))
 
@@ -41,6 +41,8 @@ readr::write_tsv(
 			) %>% unique(),
 	'foo.tsv'
 	)
+
+quit()
 
 all_tp53_variants = all_tp53_variants %>% unique()
 
@@ -153,4 +155,4 @@ patient_level_table = patient_level_table %>% dplyr::select(
 
 #patient_level_table$num_samples_with_variant_total = NULL
 
-readr::write_tsv(patient_level_table, 'foo2.tsv')
+#readr::write_tsv(patient_level_table, 'foo2.tsv')

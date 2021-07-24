@@ -11,11 +11,13 @@ vep_files = snakemake@input %>% unlist
 
 print(vep_files %>% length)
 
-sample_names = stringr::str_extract(string=vep_files, pattern='(JBLAB-[0-9]+|IM_[0-9]+)') 
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+') 
+
+print(patient_names)
 
 # a rudimentary helper function to add the sample IDs to the annotation output table
 mutate_x_y = function(x,y) {
-  return(dplyr::mutate(x, sample_id=y))
+  return(dplyr::mutate(x, patient_id=y))
 }
 
 # A pipe which reads in each VEP file, adds the sample ID as an additional column and reformats
@@ -29,20 +31,25 @@ annotations = purrr::map(
   col_names=TRUE,
   col_types =
     readr::cols(
-      `#Uploaded_variation` = 'c',
-      Location = 'c',
-      cDNA_position='c',
-      CDS_position='c',
-      Protein_position='c',
-      Allele='c',
-      Amino_acids='c'
+	POS='i',
+	REF='c',
+	ALT='c',
+	`#CHROM`='c'
     )
 )  %>%
-  purrr::map2_dfr(.y=sample_names, .f=mutate_x_y ) %>%
-  dplyr::arrange(Gene) %>%
-  dplyr::select(sample_id, everything())
+  purrr::map2_dfr(.y=patient_names, .f=mutate_x_y ) %>%
+  dplyr::arrange(patient_id) %>%
+  dplyr::select(patient_id, everything())
 
 annotations = annotations %>% unique()
+
+print(annotations)
+
+#annotations = annotations %>% dplyr::filter(!(REF=='C' & ALT=='T'))
+#annotations = annotations %>% dplyr::filter(!(REF=='G' & ALT=='A'))
+
+readr::write_tsv(annotations, path=snakemake@output[[1]], append=FALSE)
+quit()
 
 # separate columns
 extract_column = function(column_name) {
@@ -118,7 +125,7 @@ annotations = annotations %>% dplyr::filter(
 #c(grepl('possibly',annotations$PolyPhen)) & c(grepl('low_confidence',annotations$SIFT))
 
 annotations = annotations %>% dplyr::filter(
-  SYMBOL %in% c('TP53')      #,'BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
+  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
 )
 
 annotations = annotations %>% dplyr::filter(
@@ -161,8 +168,12 @@ annotations = annotations %>% dplyr::filter(
 
 print(annotations)
 
+readr::write_tsv(annotations, path='tmp_annotations_joined.tsv', append=FALSE)
+
 annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% arrange(n) %>% print()
 annotations %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n) %>% print()
+
+quit()
 
 britroc_con <- dbConnect(RPostgres::Postgres(),
                          dbname='britroc1',

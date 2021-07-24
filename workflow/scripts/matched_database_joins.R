@@ -39,6 +39,18 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 
 somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
+# ensure that there is a archival and a relapse sample for the same patient
+paired_somatic_metadata = somatic_metadata %>% 
+	dplyr::group_by(fk_britroc_number,type) %>% 
+	dplyr::summarise(n=n()) %>% 
+	ungroup() %>% 
+	group_by(fk_britroc_number) %>% 
+	summarise(n=n()) %>%
+	dplyr::filter(n>1) %>%
+	dplyr::select(-n)
+
+somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% paired_somatic_metadata$fk_britroc_number)
+
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% germline_metadata$fk_britroc_number)
 germline_metadata = germline_metadata %>% dplyr::filter(fk_britroc_number %in% somatic_metadata$fk_britroc_number)
 

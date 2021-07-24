@@ -7,15 +7,17 @@ library(RPostgres)
 # ensure that the script reads from the users .Renviron text file
 readRenviron('~/.Renviron')
 
-vep_files = snakemake@input %>% unlist
+vep_files = snakemake@input$vep_files %>% unlist
 
 print(vep_files %>% length)
 
-sample_names = stringr::str_extract(string=vep_files, pattern='(JBLAB-[0-9]+|IM_[0-9]+)') 
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+') 
+
+print(patient_names)
 
 # a rudimentary helper function to add the sample IDs to the annotation output table
 mutate_x_y = function(x,y) {
-  return(dplyr::mutate(x, sample_id=y))
+  return(dplyr::mutate(x, patient_id=y))
 }
 
 # A pipe which reads in each VEP file, adds the sample ID as an additional column and reformats
@@ -38,11 +40,84 @@ annotations = purrr::map(
       Amino_acids='c'
     )
 )  %>%
-  purrr::map2_dfr(.y=sample_names, .f=mutate_x_y ) %>%
+  purrr::map2_dfr(.y=patient_names, .f=mutate_x_y ) %>%
   dplyr::arrange(Gene) %>%
-  dplyr::select(sample_id, everything())
+  dplyr::select(patient_id, everything())
 
 annotations = annotations %>% unique()
+print(annotations %>% dplyr::filter(nchar(Allele) != 1) %>% dplyr::select('#Uploaded_variation',Location,Allele), n=100)
+
+
+# filter to ensure tech reps had matching genotypes
+vcf = readr::read_tsv(snakemake@input$vcf_file)
+#vcf = vcf %>% tidyr::unite('#CHROM',POS, col='Location', sep=':')
+get_vep_variant_format = function (row_index) {
+
+	x = vcf[row_index,]
+
+	if (grepl('\\*',x$ALT) & nchar(x$REF) == 1) {
+		print('complex multi-allelic variant')
+		x$ALT_tmp = x$ALT %>% stringr::str_replace(',', replacement='/')
+		x$REF_tmp = x$REF
+	}
+	else if(grepl('\\*',x$ALT)) {
+		print('complex multi-allelic variant')
+		x$POS = x$POS + 1
+		x$REF_tmp = x$REF %>% stringr::str_remove('[ATGC]')
+		x$ALT_tmp = x$ALT %>% stringr::str_replace('[ATGC]', replacement='-')
+		x$ALT_tmp = x$ALT_tmp %>% stringr::str_replace(',', replacement='/')	
+	}
+	else if (nchar(x$REF) > 1 & nchar(x$ALT) > 1) { 
+		x$REF_tmp = x$REF
+		x$ALT_tmp = x$ALT
+	}
+	else if (nchar(x$ALT) > 1) { #insertion
+		x$POS = x$POS + 1
+		x$REF_tmp = x$REF %>% stringr::str_replace('[ATGC]', replacement='-')
+		x$ALT_tmp = x$ALT %>% stringr::str_remove('[ATGC]')
+		#print(x$REF)
+		#print(x$REF_tmp)
+		#print(x$ALT)
+		#print(x$ALT_tmp)
+	} else if (nchar(x$REF) > 1) { #deletion
+		x$POS = x$POS + 1
+		x$REF_tmp = x$REF %>% stringr::str_remove('[ATGC]')
+		x$ALT_tmp = x$ALT %>% stringr::str_replace('[ATGC]', replacement='-')
+		#print(x$REF)
+		#print(x$REF_tmp)
+		#print(x$ALT)
+		#print(x$ALT_tmp)
+	}
+	else {
+		x$REF_tmp = x$REF
+		x$ALT_tmp = x$ALT
+	}
+
+	x = x %>% tidyr::unite(REF_tmp, ALT_tmp, col='Alleles', sep='/', remove=TRUE)
+	x$vep_format = paste(x$CHROM, x$POS, x$Alleles, sep='_')
+	x$Alleles = NULL
+
+	return(x)
+}
+
+print(vcf)
+
+print('foo')
+
+vcf = purrr::map_dfr(.x=1:dim(vcf)[1], .f=get_vep_variant_format)
+vcf$patient_id = vcf$patient_id %>% as.character()
+
+print('goo')
+
+print(vcf)
+
+print(annotations)
+
+annotations = dplyr::inner_join(annotations,vcf, by=c('#Uploaded_variation'='vep_format', 'patient_id'))
+
+print('shoe')
+
+print(annotations)
 
 # separate columns
 extract_column = function(column_name) {
@@ -65,7 +140,8 @@ extract_column = function(column_name) {
 
 new_column_names = c(
 		     'IMPACT','SYMBOL','SYMBOL_SOURCE','BIOTYPE','CLIN_SIG','SIFT','PolyPhen','CANONICAL',
-                     'ENSP','UNIPARC','EXON','INTRON','SWISSPROT','TREMBL','DOMAINS','FLAGS','gnomAD_AF','AF'
+                     'ENSP','UNIPARC','EXON','INTRON','SWISSPROT','TREMBL','DOMAINS','FLAGS','gnomAD_AF','AF',
+		      'HGVSc','HGVSp'
 			)
 
 new_columns = purrr::map_dfc(.x=new_column_names, .f=extract_column)
@@ -77,8 +153,9 @@ annotations %>% dim() %>% print()
 
 ## begin to filter mutations for predicted pathogenicity
 
-# remove TP53 artifacts
+# remove TP53 and BRCA1 artifacts
 annotations = annotations %>% dplyr::filter(!`#Uploaded_variation` %in% c('chr17_7573010_T/G','chr17_7574036_G/A'))
+annotations = annotations %>% dplyr::filter(!`#Uploaded_variation` %in% c('chr17_41231352_T/C'))
 
 # filter columns
 annotations = annotations %>% dplyr::filter(
@@ -118,7 +195,7 @@ annotations = annotations %>% dplyr::filter(
 #c(grepl('possibly',annotations$PolyPhen)) & c(grepl('low_confidence',annotations$SIFT))
 
 annotations = annotations %>% dplyr::filter(
-  SYMBOL %in% c('TP53')      #,'BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
+  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
 )
 
 annotations = annotations %>% dplyr::filter(
@@ -139,8 +216,6 @@ annotations = annotations %>% dplyr::filter(
 #  )
 #)
 
-print(annotations) %>% dplyr::filter(SYMBOL=='FANCM')
-
 annotations = annotations %>% dplyr::filter(
   !Consequence %in% c(
     'downstream_gene_variant','5_prime_UTR_variant','3_prime_UTR_variant',
@@ -159,10 +234,18 @@ annotations = annotations %>% dplyr::filter(
 #  dplyr::group_by(sample_id,Location,Allele) %>%
 #  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
-print(annotations)
+print(annotations %>% dplyr::select(patient_id,`#Uploaded_variation`,Allele), n=Inf)
 
-annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% arrange(n) %>% print()
-annotations %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n) %>% print()
+vcf = dplyr::inner_join(vcf,annotations, by=c('vep_format'='#Uploaded_variation', 'patient_id'))
+
+readr::write_tsv(annotations, path=snakemake@output[[1]], append=FALSE) #'tmp_annotations_joined_archival.tsv'
+readr::write_tsv(vcf, path='tmp_annotations_joined_archival2.tsv', append=FALSE)
+
+annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% arrange(n) %>% print(n=Inf)
+annotations %>% group_by(patient_id,SYMBOL) %>% summarise(n=n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
+	summarise(n=n()) %>% dplyr::arrange(n) %>% print(n=Inf)
+
+quit()
 
 britroc_con <- dbConnect(RPostgres::Postgres(),
                          dbname='britroc1',
