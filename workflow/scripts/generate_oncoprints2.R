@@ -3,28 +3,36 @@ library(DBI)
 library(RPostgres)
 library(ComplexHeatmap)
 
-#archival_non_tp53 = readr::read_tsv('results/filtered_archival_vep_calls_octopus_joined.tsv')
-germline_variants = readr::read_tsv('final_germline_set.tsv') %>% dplyr::rename(patient_id='fk_britroc_number', Consequence='variant_type', SYMBOL='gene_symbol')
+archival_non_tp53 = readr::read_tsv('results/filtered_archival_vep_calls_octopus_joined.tsv')
+archival_tp53 = readr::read_tsv('results/final_tp53/filtered_TP53_variants_with_MAFs.tsv') %>% dplyr::filter(type=='archival') %>% dplyr::mutate(SYMBOL='TP53')
 
-#print(germline_tp53)
+tp53_variant_clonality = readr::read_tsv('results/final_tp53/TP53_variants_with_clonality_classifications.tsv')
 
-germline_variants = germline_variants %>% dplyr::select(patient_id,Consequence,SYMBOL)
+archival_tp53_clonal_mutations = dplyr::inner_join(
+	archival_tp53, 
+	tp53_variant_clonality %>% dplyr::filter(classification=='clonal' | is.na(classification)), 
+	by=c('fk_britroc_number','#Uploaded_variation')
+) %>% dplyr::select(fk_britroc_number,`#Uploaded_variation`,Consequence,SYMBOL)
 
-#print(germline_non_tp53 %>% dplyr::select(patient_id, `#Uploaded_variation`, SYMBOL, Consequence), n=Inf)
+archival_tp53_no_clonal_mutation = archival_tp53 %>% 
+	dplyr::filter(!fk_britroc_number %in% archival_tp53_clonal_mutations$fk_britroc_number) %>%
+	dplyr::select(fk_britroc_number,`#Uploaded_variation`,Consequence,SYMBOL)
 
-germline_variants$Consequence = dplyr::recode(
-	germline_variants$Consequence,
-	'splice_acceptor'='splice_acceptor_variant',
-	'frameshift'='frameshift_variant',
-	'nonsynonymous'='missense_variant',
-	'stop_gained,splice_region'='stop_gained,splice_region_variant',
-	'splice_region,intron'='splice_region_variant,intron_variant',
-	'framehift,splice_region'='frameshift_variant'
-)
+archival_tp53 = rbind(archival_tp53_clonal_mutations, archival_tp53_no_clonal_mutation)
 
-germline_variants$Consequence %>% unique() %>% length()
+#print(archival_tp53)
 
-germline_variants$Consequence = factor(germline_variants$Consequence,
+archival_non_tp53 = archival_non_tp53 %>% dplyr::select(patient_id,`#Uploaded_variation`,Consequence,SYMBOL)
+archival_tp53 = archival_tp53 %>% dplyr::rename(patient_id=fk_britroc_number)
+
+archival_non_tp53 = archival_non_tp53 %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
+archival_non_tp53 = archival_non_tp53 %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))
+
+print(archival_non_tp53)
+
+archival_variants = rbind(archival_tp53, archival_non_tp53)
+
+archival_variants$Consequence = factor(archival_variants$Consequence,
                                        levels=c(
                                          'frameshift_variant',
                                          'inframe_deletion',
@@ -39,10 +47,18 @@ germline_variants$Consequence = factor(germline_variants$Consequence,
 					 'splice_region_variant,synonymous_variant'
                                          ))
 
+archival_variants = archival_variants %>% dplyr::arrange(patient_id,Consequence)
 
-germline_variants$Consequence %>% unique() %>% length()
+archival_variants = archival_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift')
+archival_variants = archival_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift')
 
-germline_variants = germline_variants %>% dplyr::arrange(patient_id,Consequence)
+archival_variants = archival_variants %>% 
+	dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C') %>%
+	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69))
+
+print(archival_variants %>% dplyr::filter(SYMBOL=='BRCA2'))
+
+quit()
 
 # retrieve sequencing metadata
 
@@ -76,7 +92,7 @@ experiments = dbReadTable(britroc_con, 'experiment') %>% dplyr::filter(fk_amplic
 slx_library = slx_library %>% dplyr::semi_join(experiments, by=c('fk_experiment'='name'))
 
 # retrieve analysis type
-#analysis_type = stringr::str_extract(string=snakemake@output[[1]], pattern='(germline|germline)')
+#analysis_type = stringr::str_extract(string=snakemake@output[[1]], pattern='(archival|relapse)')
 #print(analysis_type)
 
 sequenced_samples = dplyr::semi_join(samples, slx_library, by=c('name'='fk_sample'))
@@ -102,23 +118,23 @@ sequenced_samples = sequenced_samples %>%
        tidyr::pivot_wider(names_from=type, values_from=n) %>%
        dplyr::filter(!is.na(archival) & !is.na(relapse) & !is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
 
-germline_variants = germline_variants %>% dplyr::filter(patient_id %in% sequenced_samples$fk_britroc_number)
+print(sequenced_samples)
 
-print(germline_variants)
+archival_variants = archival_variants %>% dplyr::filter(patient_id %in% sequenced_samples$fk_britroc_number)
 
 #####
 
-germline_variants =
-  germline_variants %>% dplyr::select(patient_id,SYMBOL, Consequence) %>%
+archival_variants =
+  archival_variants %>% dplyr::select(patient_id,SYMBOL, `#Uploaded_variation`,Consequence) %>%
   unique()
 
 # remove synonymous and intron variants
-germline_variants = 
-  germline_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
+archival_variants = 
+  archival_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
   unique()
 
 somatic_samples_with_no_mutations = dplyr::anti_join(
-  sequenced_samples, germline_variants, by=c('fk_britroc_number'='patient_id')
+  sequenced_samples, archival_variants, by=c('fk_britroc_number'='patient_id')
 )
 
 somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::rename(patient_id='fk_britroc_number')
@@ -131,7 +147,7 @@ somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
   dplyr::mutate(variant_type='dummy', gene_symbol='BRCA1') %>% 
   dplyr::select(patient_id,variant_type,gene_symbol)
 
-somatic_samples_with_mutations = germline_variants %>% dplyr::select(patient_id,SYMBOL,Consequence)
+somatic_samples_with_mutations = archival_variants %>% dplyr::select(patient_id,SYMBOL,Consequence)
 somatic_samples_with_no_mutations =  somatic_samples_with_no_mutations %>% dplyr::ungroup()
 colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type')
 
@@ -164,7 +180,10 @@ somatic_variants = somatic_variants %>% tibble::as_tibble() %>%
   dplyr::group_by(patient_id,gene_symbol) %>%
   dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
-print(somatic_variants %>% dplyr::filter(gene_symbol=='BRCA1'))
+#print(somatic_variants %>% dplyr::filter(gene_symbol=='BRCA1'))
+
+print(somatic_variants %>% dplyr::filter(gene_symbol=='BRCA2'))
+quit()
 
 # convert the data frame to a matrix
 somatic_variants = somatic_variants %>% 
@@ -192,22 +211,22 @@ alter_fun = list(
   background = ComplexHeatmap::alter_graphic("rect", fill = "#CCCCCC"),   
   frameshift = ComplexHeatmap::alter_graphic("rect", fill = col["frameshift"]),
   stop_gained = ComplexHeatmap::alter_graphic("rect", fill = col["stop_gained"]),
- `inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
+  `inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
   splice_region_SNV = ComplexHeatmap::alter_graphic("rect", fill = col["splice_region_SNV"]),
   missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 )
 
-pdf('germline_britroc_oncoprint.pdf')
+pdf('archival_britroc_oncoprint.pdf')
 
 ComplexHeatmap::oncoPrint(
   mat=somatic_variants,
   alter_fun = alter_fun,
-  row_order = c('BRCA1','BRCA2','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
+  row_order = c('TP53','BRCA1','BRCA2','FANCM','BARD1')
 #  heatmap_legend_param = list(labels=c('frameshift','stop gained','inframe indel','splice region SNV','missense'),
 #                              title='Alterations')
 )
 
 dev.off()
 
-print(germline_variants)
+print(archival_variants)
 #print(sequenced_samples, n=Inf)

@@ -3,34 +3,28 @@ library(DBI)
 library(RPostgres)
 library(ComplexHeatmap)
 
-archival_non_tp53 = readr::read_tsv('results/filtered_archival_vep_calls_octopus_joined.tsv')
-archival_tp53 = readr::read_tsv('foo.tsv') %>% dplyr::filter(type=='archival') %>% dplyr::mutate(SYMBOL='TP53')
+source('~/.Renviron')
 
-tp53_variant_clonality = readr::read_tsv('foo2.tsv')
+# read in germline variant information
+germline_variants = readr::read_tsv(snakemake@input[['filtered_germline_variants']]) %>% 
+	dplyr::rename(patient_id='fk_britroc_number', Consequence='variant_type', SYMBOL='gene_symbol')
+germline_variants = germline_variants %>% dplyr::select(patient_id,Consequence,SYMBOL)
 
-archival_tp53_clonal_mutations = dplyr::inner_join(
-	archival_tp53, 
-	tp53_variant_clonality %>% dplyr::filter(classification=='clonal' | is.na(classification)), 
-	by=c('fk_britroc_number','#Uploaded_variation')
-) %>% dplyr::select(fk_britroc_number,`#Uploaded_variation`,Consequence,SYMBOL)
+print(germline_variants %>% dplyr::filter(SYMBOL=='BRCA1'), n=Inf)
 
-archival_tp53_no_clonal_mutation = archival_tp53 %>% 
-	dplyr::filter(!fk_britroc_number %in% archival_tp53_clonal_mutations$fk_britroc_number) %>%
-	dplyr::select(fk_britroc_number,`#Uploaded_variation`,Consequence,SYMBOL)
+# recode germline variant information
+germline_variants$Consequence = dplyr::recode(
+	germline_variants$Consequence,
+	'splice_acceptor'='splice_acceptor_variant',
+	'frameshift'='frameshift_variant',
+	'nonsynonymous'='missense_variant',
+	'stop_gained,splice_region'='stop_gained,splice_region_variant',
+	'splice_region,intron'='splice_region_variant,intron_variant',
+	'framehift,splice_region'='frameshift_variant'
+)
 
-archival_tp53 = rbind(archival_tp53_clonal_mutations, archival_tp53_no_clonal_mutation)
-
-#print(archival_tp53)
-
-archival_non_tp53 = archival_non_tp53 %>% dplyr::select(patient_id,`#Uploaded_variation`,Consequence,SYMBOL)
-archival_tp53 = archival_tp53 %>% dplyr::rename(patient_id=fk_britroc_number)
-
-archival_non_tp53 = archival_non_tp53 %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
-archival_non_tp53 = archival_non_tp53 %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))
-
-archival_variants = rbind(archival_tp53, archival_non_tp53)
-
-archival_variants$Consequence = factor(archival_variants$Consequence,
+# factorise variant consequence column
+germline_variants$Consequence = factor(germline_variants$Consequence,
                                        levels=c(
                                          'frameshift_variant',
                                          'inframe_deletion',
@@ -45,33 +39,26 @@ archival_variants$Consequence = factor(archival_variants$Consequence,
 					 'splice_region_variant,synonymous_variant'
                                          ))
 
-archival_variants = archival_variants %>% dplyr::arrange(patient_id,Consequence)
-
-archival_variants = archival_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift')
-archival_variants = archival_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift')
-
-archival_variants = archival_variants %>% 
-	dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C') %>%
-	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69))
+# reformat column
+germline_variants = germline_variants %>% dplyr::arrange(patient_id,Consequence)
 
 # retrieve sequencing metadata
-
 britroc_con <- dbConnect(RPostgres::Postgres(),
                          dbname='britroc1',
                          host='jblab-db.cri.camres.org',
                          port = 5432,
-                         user = Sys.getenv('jblab_db_username'),
-                         password = Sys.getenv('jblab_db_password')
+                         user = jblab_db_username,
+                         password = jblab_db_password
 )
-
 clarity_con <- dbConnect(RPostgres::Postgres(),
                          dbname='clarity',
                          host='jblab-db.cri.camres.org',
                          port = 5432,
-                         user = Sys.getenv('jblab_db_username'),
-                         password = Sys.getenv('jblab_db_password')
+                         user = jblab_db_username,
+                         password = jblab_db_password
 )
 
+# read in DNA sample information
 samples = dbReadTable(britroc_con, 'sample')
 
 slx_library = dbReadTable(britroc_con, 'slx_library') %>%
@@ -86,53 +73,54 @@ experiments = dbReadTable(britroc_con, 'experiment') %>% dplyr::filter(fk_amplic
 slx_library = slx_library %>% dplyr::semi_join(experiments, by=c('fk_experiment'='name'))
 
 # retrieve analysis type
-#analysis_type = stringr::str_extract(string=snakemake@output[[1]], pattern='(archival|relapse)')
-#print(analysis_type)
-
 sequenced_samples = dplyr::semi_join(samples, slx_library, by=c('name'='fk_sample'))
 
+# remove non-HGSOC samples
 non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420',
 			'IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424',
 			'IM_302','IM_303','IM_304','IM_305',
 			'JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44')
 
+# remove samples with poor sequencing QC
 samples_with_no_good_sequencing = c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441') 
 
+# remove samples with very low purity
 samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200',
 				'IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309',
 				'IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392')
 
+# bind the poor samples together
 bad_samples = c(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity)
 
+# remove samples from downstream analyses
 sequenced_samples = sequenced_samples %>% dplyr::filter(!name %in% bad_samples)
 
+# group sequenced samples by patient, and only retain patients with at least one germline, relapse and archival sample
 sequenced_samples = sequenced_samples %>%
        dplyr::group_by(fk_britroc_number,type) %>%
        dplyr::summarise(n=dplyr::n()) %>%
        tidyr::pivot_wider(names_from=type, values_from=n) %>%
-       dplyr::filter(!is.na(archival) & !is.na(relapse) & !is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
+       dplyr::filter(!is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
 
-print(sequenced_samples)
+# only retain variants in patients with at least one germline, relapse and archival sample
+germline_variants = germline_variants %>% dplyr::filter(patient_id %in% sequenced_samples$fk_britroc_number)
 
-archival_variants = archival_variants %>% dplyr::filter(patient_id %in% sequenced_samples$fk_britroc_number)
-
-#####
-
-archival_variants =
-  archival_variants %>% dplyr::select(patient_id,SYMBOL, `#Uploaded_variation`,Consequence) %>%
+# reformat
+germline_variants =
+  germline_variants %>% dplyr::select(patient_id,SYMBOL,Consequence) %>%
   unique()
 
 # remove synonymous and intron variants
-archival_variants = 
-  archival_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
+germline_variants = 
+  germline_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
   unique()
 
+# this information is needed so that the oncoprint shows information even for patients without a mutation in any one gene
 somatic_samples_with_no_mutations = dplyr::anti_join(
-  sequenced_samples, archival_variants, by=c('fk_britroc_number'='patient_id')
+  sequenced_samples, germline_variants, by=c('fk_britroc_number'='patient_id')
 )
 
 somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::rename(patient_id='fk_britroc_number')
-print(somatic_samples_with_no_mutations)
 
 # reformat
 somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
@@ -141,7 +129,7 @@ somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
   dplyr::mutate(variant_type='dummy', gene_symbol='BRCA1') %>% 
   dplyr::select(patient_id,variant_type,gene_symbol)
 
-somatic_samples_with_mutations = archival_variants %>% dplyr::select(patient_id,SYMBOL,Consequence)
+somatic_samples_with_mutations = germline_variants %>% dplyr::select(patient_id,SYMBOL,Consequence)
 somatic_samples_with_no_mutations =  somatic_samples_with_no_mutations %>% dplyr::ungroup()
 colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type')
 
@@ -174,8 +162,6 @@ somatic_variants = somatic_variants %>% tibble::as_tibble() %>%
   dplyr::group_by(patient_id,gene_symbol) %>%
   dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
-print(somatic_variants %>% dplyr::filter(gene_symbol=='BRCA1'))
-
 # convert the data frame to a matrix
 somatic_variants = somatic_variants %>% 
   tidyr::pivot_wider(names_from=patient_id, values_from=variant_type) %>% 
@@ -207,17 +193,12 @@ alter_fun = list(
   missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 )
 
-pdf('archival_britroc_oncoprint.pdf')
+pdf(snakemake@output[['germline_oncoprint']])
 
 ComplexHeatmap::oncoPrint(
   mat=somatic_variants,
   alter_fun = alter_fun,
-  row_order = c('TP53','BRCA1','BRCA2','FANCM','BARD1')
-#  heatmap_legend_param = list(labels=c('frameshift','stop gained','inframe indel','splice region SNV','missense'),
-#                              title='Alterations')
+  row_order = c('BRCA1','BRCA2','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
 )
 
 dev.off()
-
-print(archival_variants)
-#print(sequenced_samples, n=Inf)
