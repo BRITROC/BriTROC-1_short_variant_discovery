@@ -67,7 +67,7 @@ def get_normal_sample_names(wildcards):
 rule convert_bed6_to_oct_format:
 	input:  'resources/panel_6_28.nonoverlapping.targets.{nonoverlapping_id}.bed'                                           
 	output: 'resources/panel_6_28.{nonoverlapping_id}.targets.oct'
-	script: '../scripts/convert_bed6_to_octopus.R'
+	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
 rule octopus:
 	input:

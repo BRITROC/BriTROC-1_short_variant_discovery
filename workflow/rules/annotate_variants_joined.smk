@@ -42,41 +42,41 @@ rule ensure_tech_rep_genotypes_match:
 		library_MAFs='results/tumour_sample_vcfs_octopus/{patient_id}.library_MAFs.vcf',
 		library_depths='results/tumour_sample_vcfs_octopus/{patient_id}.library_depths.vcf',
 		sample_genotypes='results/tumour_sample_vcfs_octopus/{patient_id}.sample_genotypes.vcf'
-	script: '../scripts/view_square_vcfs.R'
+	script: '../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_and_filter_vcf_files:
 	input: expand('results/tumour_sample_vcfs_octopus/{patient_id}.filtered3.vcf', patient_id=matched_somatic_patients)
 	output: 'results/filtered3_joined.tsv'
-	script: '../scripts/filtered4_files_joined.R'
+	script: '../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule collate_and_filter_vcf_archival_files:
 	input: expand('results/tumour_sample_vcfs_octopus/{patient_id}.archival.filtered3.vcf', patient_id=matched_somatic_patients)
 	output: 'results/archival_filtered3_joined.tsv'
-	script: '../scripts/filtered4_files_joined.R'
+	script: '../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule collate_and_filter_vcf_relapse_files:
 	input: expand('results/tumour_sample_vcfs_octopus/{patient_id}.relapse.filtered3.vcf', patient_id=matched_somatic_patients)
 	output: 'results/relapse_filtered3_joined.tsv'
-	script: '../scripts/filtered4_files_joined.R'
+	script: '../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule collate_and_filter_archival_octopus_vep_files:
 	input: 
 		vep_files=expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_somatic_patients),
 		vcf_file='results/archival_filtered3_joined.tsv'
 	output: 'results/filtered_archival_vep_calls_octopus_joined.tsv'
-	script: '../scripts/collate_and_filter_vep_files_joined.R'
+	script: '../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
 
 rule collate_and_filter_relapse_octopus_vep_files:
 	input: 
 		vep_files=expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_somatic_patients),
 		vcf_file='results/relapse_filtered3_joined.tsv'
 	output: 'results/filtered_relapse_vep_calls_octopus_joined.tsv'
-	script: '../scripts/collate_and_filter_vep_files_joined.R'
+	script: '../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
 
 rule get_archival_variants_with_two_reps:
 	input: expand('results/tumour_sample_vcfs_octopus/{patient_id}.library_MAFs.vcf', patient_id=matched_somatic_patients)
 	output: 'results/archival_variants_with_two_reps.tsv'
-	script: '../scripts/get_num_variants_with_two_reps.R'
+	script: '../scripts/annotate_variants_joined/get_num_variants_with_two_reps.R'
 
 def get_joined_vcf (wildcards):
 	test_sample_metadata = matched_somatic_metadata[(matched_somatic_metadata.fk_sample == wildcards.sample)]

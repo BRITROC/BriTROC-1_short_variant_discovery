@@ -36,19 +36,19 @@ rule vep_octopus:
 rule collate_and_filter_archival_octopus_vep_files:
 	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_archival_samples)
 	output: 'results/final_tp53/filtered_archival_vep_calls_octopus_non_tp53.tsv'
-	script: '../scripts/collate_and_filter_vep_files_non_tp53.R'
+	script: '../scripts/annotate_variants_TP53/collate_and_filter_vep_files_non_tp53.R'
 
 # maybe we should perform joint-variant calling on all archival samples belonging to the same patient?
 
 rule collate_and_filter_relapse_octopus_vep_files:
 	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=somatic_tp53_samples)
 	output: 'results/final_tp53/filtered_relapse_vep_calls_octopus.tsv'
-	script: '../scripts/collate_and_filter_vep_files.R'
+	script: '../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
 
 rule collate_allele_fraction_data:
 	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered2.vcf', sample=somatic_tp53_samples)
 	output: 'results/final_TP53/tp53_collated_MAFs.tsv'
-	script: '../scripts/extract_info_from_vcf.R'
+	script: '../scripts/annotate_variants_TP53/extract_info_from_vcf.R'
 
 rule add_MAFs_to_TP53_variant_table:
 	input:
@@ -56,13 +56,13 @@ rule add_MAFs_to_TP53_variant_table:
 		filtered_relapse_TP53_variants='results/final_tp53/filtered_relapse_vep_calls_octopus.tsv',
 		TP53_variant_MAFs='results/final_tp53/tp53_collated_MAFs.tsv'
 	output: 'results/final_tp53/filtered_TP53_variants_with_MAFs.tsv'
-	script: '../scripts/get_TP53_table.R'
+	script: '../scripts/annotate_variants_TP53/get_tp53_table.R'
 
 rule classify_clonality_of_TP53_variants:
 	input:
 		filtered_TP53_variants_with_MAFs=rules.add_MAFs_to_TP53_variant_table.output.TP53_variant_MAFs,
 	output: TP53_variants_classified_by_clonality='results/final_tp53/TP53_variants_with_clonality_classifications.tsv'
-	script: '../scripts/get_TP53_clonality_classifications.R'
+	script: '../scripts/annotate_variants_TP53/get_TP53_clonality_classifications.R'
 
 #rule collate_and_filter_relapse_vep_files:
 #	input: expand('results/tumour_sample_vcfs/{sample}.filtered.vep.vcf', sample=paired_relapse_samples)

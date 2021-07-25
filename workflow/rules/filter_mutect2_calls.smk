@@ -52,7 +52,7 @@ rule remove_normal_sample:
 rule ensure_matching_genotypes:
 	input: 'results/tumour_sample_vcfs_octopus/{sample}.filtered4.vcf'
 	output: 'results/tumour_sample_vcfs_octopus/{sample}.filtered5.vcf'
-	shell: 'bash workflow/scripts/match_genotypes.sh {input} > {output}'
+	shell: 'bash workflow/scripts/filter_non_joined_calls/match_genotypes.sh {input} > {output}'
 
 #rule remove_records_with_homozygous_reference_calls:
 #	input: 'results/tumour_sample_vcfs_octopus/{sample}.filtered4.vcf'
