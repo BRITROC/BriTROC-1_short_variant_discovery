@@ -23,6 +23,7 @@ include: 'workflow/rules/clean_bams.smk'
 include: 'workflow/rules/octopus_joint.smk'
 include: 'workflow/rules/filter_mutect2_calls_joint.smk'
 include: 'workflow/rules/annotate_variants_joined.smk'
+include: 'workflow/rules/generate_oncoprints.smk'
 
 rule all:
 	input:
