@@ -11,12 +11,12 @@ def get_tumour_bam_files(wildcards):
 
 	return(bam_files)
 
-rule convert_bed6_to_oct_format:
+rule convert_bed6_to_oct_format_tp53:
 	input:  'tp53.nonoverlapping.targets.{nonoverlapping_id}.bed'                                           
 	output: 'resources/union_of_tp53.{nonoverlapping_id}.targets.oct'
 	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
-rule octopus:
+rule octopus_tp53:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file='resources/union_of_tp53.{nonoverlapping_id}.targets.oct',
@@ -42,18 +42,22 @@ rule octopus:
 				--regions-file {input.interval_file} \
 				--output {output.tumour_vcf} \
 				-R {input.reference_genome}'
-rule bgzip_vcf:
+rule bgzip_vcf_sample_level:
 	input: 'results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf'
 	output: 
 		compressed_vcf=temp('results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf.gz')
+	wildcard_constraints:
+		sample='(JBLAB-[0-9]+|IM_[0-9]+)'
 	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
 
-rule index_compressed_vcf:
+rule index_compressed_vcf_sample_level:
 	input: 'results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf.gz'
 	output: 'results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf.gz.csi'
+	wildcard_constraints:
+		sample='(JBLAB-[0-9]+|IM_[0-9]+)'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
 
-rule concat_vcfs:
+rule concat_vcfs_sample_level:
 	input: 
 		compressed_vcfs=lambda wildcards: expand('results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf.gz', nonoverlapping_id=[1,2,3,4,5], sample=wildcards.sample),
 		compressed_vcf_indexes=lambda wildcards: expand('results/tumour_sample_vcfs_octopus/{sample}.{nonoverlapping_id}.vcf.gz.csi', nonoverlapping_id=[1,2,3,4,5], sample=wildcards.sample)

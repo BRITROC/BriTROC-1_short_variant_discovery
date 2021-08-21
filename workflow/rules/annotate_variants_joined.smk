@@ -66,12 +66,30 @@ rule collate_and_filter_archival_octopus_vep_files:
 	output: 'results/filtered_archival_vep_calls_octopus_joined.tsv'
 	script: '../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
 
+
+rule collate_archival_octopus_vep_files_without_filtering:
+	input: 
+		vep_files=expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_somatic_patients),
+		vcf_file='results/archival_filtered3_joined.tsv'
+	output: 'results/collated_archival_vep_calls_octopus_joined.tsv'
+	script: '../scripts/annotate_variants_joined/collate_files_without_filtering.R'
+
 rule collate_and_filter_relapse_octopus_vep_files:
 	input: 
 		vep_files=expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_somatic_patients),
 		vcf_file='results/relapse_filtered3_joined.tsv'
 	output: 'results/filtered_relapse_vep_calls_octopus_joined.tsv'
 	script: '../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
+
+rule collate_relapse_octopus_vep_files_without_filtering:
+	input: 
+		vep_files=expand('results/tumour_sample_vcfs_octopus/{sample}.filtered.vep.vcf', sample=matched_somatic_patients),
+		vcf_file='results/relapse_filtered3_joined.tsv'
+	output: 'results/collated_relapse_vep_calls_octopus_joined.tsv'
+	script: '../scripts/annotate_variants_joined/collate_files_without_filtering.R'
+
+
+
 
 rule get_archival_variants_with_two_reps:
 	input: expand('results/tumour_sample_vcfs_octopus/{patient_id}.library_MAFs.vcf', patient_id=matched_somatic_patients)
