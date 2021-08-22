@@ -19,7 +19,7 @@ all_tp53_variants = dplyr::inner_join(all_tp53_variants,tp53_freq, by=c('fk_brit
 all_tp53_variants = all_tp53_variants %>% dplyr::arrange(fk_britroc_number,-n,type,sample_id)
 
 # read in TP53 MAF data
-MAFs = readr::read_tsv(snakemake@input[['results/final_tp53/tp53_collated_MAFs.tsv']])
+MAFs = readr::read_tsv(snakemake@input[['TP53_variant_MAFs']])
 
 # add the MAF data to the main variants table 
 all_tp53_variants = dplyr::left_join(all_tp53_variants,MAFs, by=c('sample_id','#Uploaded_variation'='vep_format'))
