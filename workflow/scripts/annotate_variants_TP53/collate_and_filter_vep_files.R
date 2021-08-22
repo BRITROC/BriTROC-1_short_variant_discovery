@@ -1,6 +1,6 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
-library(tidyverse)
+library(magrittr)
 library(DBI)
 library(RPostgres)
 
@@ -71,7 +71,7 @@ new_column_names = c(
 new_columns = purrr::map_dfc(.x=new_column_names, .f=extract_column)
 colnames(new_columns) = new_column_names
 
-annotations = cbind(annotations, new_columns) %>% as_tibble()
+annotations = cbind(annotations, new_columns) %>% tibble::as_tibble()
 
 annotations %>% dim() %>% print()
 
@@ -161,8 +161,8 @@ annotations = annotations %>% dplyr::filter(
 
 print(annotations)
 
-annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% arrange(n) %>% print()
-annotations %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n) %>% print()
+annotations %>% dplyr::group_by(SYMBOL,`#Uploaded_variation`) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(n) %>% print()
+annotations %>% dplyr::group_by(SYMBOL) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(n) %>% print()
 
 britroc_con <- dbConnect(RPostgres::Postgres(),
                          dbname='britroc1',
@@ -208,8 +208,9 @@ vep_sample_list = vep_sample_list[!vep_sample_list %in% non_hgsoc_samples]
 vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_no_good_sequencing]
 vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_very_low_purity]
 
-annotations = annotations %>% filter(sample_id %in% vep_sample_list) # evidence that we may be filtering genuine variants
-x = annotations %>% group_by(fk_britroc_number,SYMBOL) %>% summarise(n=n()) %>% ungroup %>% group_by(SYMBOL) %>% summarise(n=n()) %>% arrange(n)
+annotations = annotations %>% dplyr::filter(sample_id %in% vep_sample_list) # evidence that we may be filtering genuine variants
+x = annotations %>% dplyr::group_by(fk_britroc_number,SYMBOL) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
+	dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(n)
 
 num_patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels %>% length()
 patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels()
@@ -286,5 +287,5 @@ print(samples_with_no_mutations_annotations)
 
 annotations = rbind(annotations,samples_with_no_mutations_annotations)
 
-write_tsv(annotations, snakemake@output[[1]])
+readr::write_tsv(annotations, snakemake@output[[1]])
 
