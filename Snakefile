@@ -17,11 +17,15 @@ matched_somatic_patients = matched_somatic_metadata.index.unique().tolist()
 matched_archival_metadata= matched_somatic_metadata[(matched_somatic_metadata.type=='archival')]
 matched_archival_samples = matched_archival_metadata.index.unique().tolist()
 
+somatic_tp53_metadata = pandas.read_table("config/somatic_samples_tp53.tsv").set_index('fk_sample', drop=False)
+somatic_tp53_samples = somatic_tp53_metadata.index.unique().tolist()
+
 include: 'workflow/rules/generate_intersected_amplicons.smk'
 include: 'workflow/rules/clean_bams.smk'
-#include: 'workflow/rules/octopus.smk'
+include: 'workflow/rules/octopus_tp53.smk'
 include: 'workflow/rules/octopus_joint.smk'
 include: 'workflow/rules/filter_mutect2_calls_joint.smk'
+include: 'workflow/rules/annotate_variants_TP53.smk'
 include: 'workflow/rules/annotate_variants_joined.smk'
 include: 'workflow/rules/generate_oncoprints.smk'
 
