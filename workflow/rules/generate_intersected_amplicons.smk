@@ -12,7 +12,7 @@ rule antijoin_intervals:
 		panel_6='/scratcha/jblab/amplicon_panels/6_HR_Elkes_panel_2015_08_28/{interval_type}.txt',
 		panel_28='/scratcha/jblab/amplicon_panels/28_JBLAB_AAprimers_dream_panel/{interval_type}.txt'
 	output: temp('resources/antijoined_panel_28_6_amplicons.{interval_type}.interval_list.tmp')
-	script: '../scripts/generate_interesected_amplicons/antijoin_amplicons.R'
+	script: '../scripts/generate_intersected_amplicons/antijoin_amplicons.R'
 
 rule union_of_tp53_intervals:
 	input:
