@@ -8,7 +8,7 @@ square_vcf = readr::read_tsv(snakemake@input[[1]], comment='##')  #'results/tumo
 square_vcf = square_vcf %>% dplyr::rename('CHROM'=`#CHROM`)
 
 # remove the column in the table which corresponds to the normal sample
-patient_id = snakemake@input[[1]] %>% stringr::str_extract('[0-9]+') %>% as.integer()
+patient_id = snakemake@wildcards$patient_id %>% as.integer()
 #patient_id = file_name %>% stringr::str_extract('[0-9]+') %>% as.integer()
 
 germline_metadata = readr::read_tsv('config/matched_germline_metadata.tsv') %>% dplyr::filter(fk_britroc_number==patient_id)
