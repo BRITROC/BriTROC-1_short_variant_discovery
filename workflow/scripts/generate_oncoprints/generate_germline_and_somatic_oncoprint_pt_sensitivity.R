@@ -18,6 +18,9 @@ tp53_variants = readr::read_tsv(snakemake@input[['filtered_TP53_variants_with_MA
 		dplyr::filter(type==tumour_type) %>% 
 		dplyr::mutate(SYMBOL='TP53')
 
+print(tp53_variants)
+print(non_tp53_variants)
+
 # removed variants on the basis of annotations in the MTBP pipeline
 if (tumour_type=='archival') {
 non_tp53_variants = non_tp53_variants %>% 
@@ -281,12 +284,45 @@ alter_fun = list(
   missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 )
 
+print(somatic_variants)
+dim(somatic_variants)
+
 dummy = matrix('', nrow=6, ncol=108)
 row.names(dummy) = c('BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
 
+dim(somatic_variants) %>% print()
+dim(dummy) %>% print()
+
 x = rbind(somatic_variants, dummy)
 
+z = x[1,]
+y = x[1,] %>% tibble::as_tibble() %>% dplyr::mutate(patient_id=names(z))
+
+print(y %>% dplyr::filter(value==''))
+
 somatic_variants=x
+
+# generate a platinum sensitivity partition
+heatmap_patients = colnames(somatic_variants)
+heatmap_table = tibble::tibble(fk_britroc_number=as.integer(heatmap_patients))
+print(heatmap_table)
+
+patients = dbReadTable(britroc_con, 'patients')
+print(patients)
+
+heatmap_table = dplyr::inner_join(
+  heatmap_table, patients,
+  by=c('fk_britroc_number'='britroc_number')
+) %>% dplyr::select('fk_britroc_number','pt_sensitivity_at_reg')
+
+heatmap_table$pt_sensitivity_at_reg =
+  dplyr::recode(
+    heatmap_table$pt_sensitivity_at_reg,
+    'sensitive'='platinum sensitive',
+    'resistant'='platinum resistant'
+  )
+
+print(heatmap_table)
 
 pdf(snakemake@output[['germline_and_somatic_oncoprint']])
 
@@ -296,9 +332,28 @@ if (tumour_type=='archival') {
 	genes_with_variants = c('TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
 }
 
+#ComplexHeatmap::oncoPrint(
+#  mat=somatic_variants,
+#  alter_fun = alter_fun,
+#  row_order = genes_with_variants
+#)
+
+#ha = HeatmapAnnotation(show_legend = c(FALSE))
+
 ComplexHeatmap::oncoPrint(
-  mat=somatic_variants,
+  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
   alter_fun = alter_fun,
+  show_heatmap_legend=FALSE,
+  row_labels=c('','','','','','','','','',''),
+  column_title='platinum resistant',
+  row_order = genes_with_variants
+) +
+ComplexHeatmap::oncoPrint(
+  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
+  alter_fun = alter_fun,
+  column_title='platinum sensitive',
+ # heatmap_legend_param = list(labels=c('frameshift','stop gained','splice region SNV','missense'),
+#                              title='Alterations'),
   row_order = genes_with_variants
 )
 

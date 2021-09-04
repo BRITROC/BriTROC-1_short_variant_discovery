@@ -52,6 +52,23 @@ rule create_nonoverlapping_amplicons2:
 		--output-prefix panel_6_28.nonoverlapping \
 		--minimum-number-of-sets 2'
 
+rule create_nonoverlapping_amplicons_panel_28_only:
+	input: 
+		amplicon_intervals='resources/antijoined_panel_28_6_amplicons.amplicons.interval_list',
+		target_intervals='resources/antijoined_panel_28_6_amplicons.targets.interval_list'
+	output: 
+		nonoverlapping_amplicon_intervals='resources/nonoverlapping_antijoined_panel_28_6_amplicons.amplicons.interval_list',
+		nonoverlapping_target_intervals='resources/nonoverlapping_antijoined_panel_28_6_amplicons.targets.interval_list'
+	shell: 
+		'java -Xms2G -Xmx6G \
+		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
+		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
+		--amplicons {input.amplicon_intervals} \
+		--targets {input.target_intervals} \
+		--reference {config[reference_genome]} \
+		--output-prefix nonoverlapping.antijoined_panel_28_6 \
+		--minimum-number-of-sets 2'
+
 rule clean_bams:
 	input:
 		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
@@ -84,6 +101,29 @@ rule clean_bams2:
 		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bam',
 		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bai',
 		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.coverage.txt'
+	wildcard_constraints:
+		barcode='FLD[0-9]+'
+	shell: 
+		'java -Xms2G -Xmx6G \
+		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
+		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
+		--unmark-duplicate-reads \
+		--require-both-ends-anchored \
+		--maximum-distance 1 \
+		--amplicon-coverage {output.coverage} \
+		--bam {input.bam} \
+		--amplicon-bam {output.bam} \
+		--amplicons {input.amplicon_intervals}'
+
+rule clean_bams_panel_28_only:
+	input:
+		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
+		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
+		amplicon_intervals='resources/nonoverlapping.antijoined_panel_28_6.amplicons.{nonoverlapping_id}.bed'
+	output:
+		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bam',
+		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bai',
+		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
 	shell: 

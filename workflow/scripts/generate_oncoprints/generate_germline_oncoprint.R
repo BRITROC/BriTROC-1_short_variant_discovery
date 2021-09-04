@@ -193,12 +193,53 @@ alter_fun = list(
   missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 )
 
+# generate a platinum sensitivity partition
+heatmap_patients = colnames(somatic_variants)
+heatmap_table = tibble::tibble(fk_britroc_number=as.integer(heatmap_patients))
+print(heatmap_table)
+
+patients = dbReadTable(britroc_con, 'patients')
+print(patients)
+
+heatmap_table = dplyr::inner_join(
+  heatmap_table, patients,
+  by=c('fk_britroc_number'='britroc_number')
+) %>% dplyr::select('fk_britroc_number','pt_sensitivity_at_reg')
+
+heatmap_table$pt_sensitivity_at_reg =
+  dplyr::recode(
+    heatmap_table$pt_sensitivity_at_reg,
+    'sensitive'='platinum sensitive',
+    'resistant'='platinum resistant'
+  )
+
+
+
 pdf(snakemake@output[['germline_oncoprint']])
 
+#ComplexHeatmap::oncoPrint(
+#  mat=somatic_variants,
+#  alter_fun = alter_fun,
+#  row_order = c('BRCA1','BRCA2','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
+#)
+
+genes_with_variants = c('BRCA1','BRCA2','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
+
 ComplexHeatmap::oncoPrint(
-  mat=somatic_variants,
+  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
   alter_fun = alter_fun,
-  row_order = c('BRCA1','BRCA2','RAD51B','RAD51C','RAD51D','BRIP1','PALB2')
+  show_heatmap_legend=FALSE,
+  row_labels=c('','','','','','',''),
+  column_title='platinum resistant',
+  row_order = genes_with_variants
+) +
+ComplexHeatmap::oncoPrint(
+  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
+  alter_fun = alter_fun,
+  column_title='platinum sensitive',
+ # heatmap_legend_param = list(labels=c('frameshift','stop gained','splice region SNV','missense'),
+#                              title='Alterations'),
+  row_order = genes_with_variants
 )
 
 dev.off()
