@@ -25,6 +25,13 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
 			dplyr::mutate(SYMBOL='TP53')
+
+	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
+	if (gene_set_analysed == 'HRD') {
+	} else if (gene_set_analysed == 'nonHRD') {
+		panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
+		tp53_variants = tp53_variants %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
+	}
 	
 	# read in TP53 variant clonality predictions
 	tp53_variant_clonality = readr::read_tsv(TP53_variant_clonality_status)
@@ -67,7 +74,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 
 	# bind TP53 variants together
 	tp53_variants = rbind(tp53_variants_clonal_mutations, tp53_variants_no_clonal_mutation)
-
+	
 	# reformat variant information
 	non_tp53_variants = non_tp53_variants %>% dplyr::select(patient_id,Consequence,SYMBOL,type)
 	tp53_variants = tp53_variants %>% dplyr::rename(patient_id=fk_britroc_number)
@@ -138,9 +145,17 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	  unique()
 	
 	# this information is needed so that the oncoprint shows information even for patients without a mutation in any one gene
+	# TODO: consider removing - purpose is not clear
 	somatic_samples_with_no_mutations = dplyr::anti_join(
 	  relevant_samples, all_variants, by=c('fk_britroc_number'='patient_id')
 	)
+
+	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
+	if (gene_set_analysed == 'HRD') {
+	} else if (gene_set_analysed == 'nonHRD') {
+		panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
+		somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
+	}
 
 	# reformat
 	somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
@@ -154,7 +169,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	somatic_samples_with_no_mutations =  somatic_samples_with_no_mutations %>% dplyr::ungroup()
 	colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type','tumour_type')
 
-	# bind data together	
+	# bind data together
 	somatic_variants = rbind(somatic_samples_with_mutations, somatic_samples_with_no_mutations)
 
 	# remap variant type categories
