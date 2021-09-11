@@ -25,3 +25,6 @@ ensembl-vep/
 temp/
 resources/
 results/
+lib/
+plots/
+misc_temp/
