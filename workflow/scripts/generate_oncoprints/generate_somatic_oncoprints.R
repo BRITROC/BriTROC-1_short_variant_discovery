@@ -44,16 +44,25 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 		missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 	)
 
-	# create a dummy matrix including all genes in which a variant has not been found	
-	dummy = matrix('', nrow=11, ncol=112)
-	row.names(dummy) = c(
-		'BARD1_relapse',
-		'RAD51B_archival','RAD51B_relapse',
-		'RAD51C_archival','RAD51C_relapse',
-		'RAD51D_archival','RAD51D_relapse',
-		'BRIP1_archival','BRIP1_relapse',
-		'PALB2_archival','PALB2_relapse'
-	)
+	# all genes examined in this analysis
+	all_genes =  tibble::tibble(names=c('TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'))
+
+	# all possible gene x tumour type combinations
+	all_possible_variant_types = list(all_genes=all_genes,tumour_types=c('archival','relapse')) %>% 
+		purrr::cross() %>% 
+		purrr::map(purrr::lift(paste), sep='_') %>% 
+		unlist()
+	
+	# force the all_possible_variant_types vector to have the desired order
+	all_possible_variant_types = tibble::tibble(names=rep(all_genes$names,2),variant_types=all_possible_variant_types)
+	all_genes = dplyr::inner_join(all_genes,all_possible_variant_types, by='names')
+	all_possible_variant_types = all_genes$variant_types
+
+	# dummy rows to be added for gene x tumour type mutation combinations not observed
+	rows_to_add_to_somatic_variants_table = setdiff(all_possible_variant_types, row.names(somatic_variants))
+
+	dummy = matrix('', nrow=length(rows_to_add_to_somatic_variants_table), ncol=dim(somatic_variants)[2] )
+	row.names(dummy) = rows_to_add_to_somatic_variants_table	
 
 	somatic_variants = rbind(somatic_variants, dummy)
 	
@@ -75,34 +84,19 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	    'resistant'='platinum resistant'
 	  )
 
+	# order tables
 	somatic_variants <- somatic_variants[, order(as.integer(colnames(somatic_variants)))]
-	
-	# include all relevant genes on the basis of tumour type
-	genes_with_variants = c(
-	'TP53_archival','TP53_relapse',
-	'BRCA1_archival','BRCA1_relapse',
-	'BRCA2_archival','BRCA2_relapse',
-	'FANCM_archival','FANCM_relapse',
-	'BARD1_archival','BARD1_relapse',
-	'RAD51B_archival','RAD51B_relapse',
-	'RAD51C_archival','RAD51C_relapse',
-	'RAD51D_archival','RAD51D_relapse',
-	'BRIP1_archival','BRIP1_relapse',
-	'PALB2_archival','PALB2_relapse'
-	)
-
 	heatmap_table = heatmap_table %>% dplyr::arrange(fk_britroc_number)
 
-	print(somatic_oncoprint_output_file)
 	pdf(somatic_oncoprint_output_file)	
 	
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
 	  alter_fun = alter_fun,
 	  show_heatmap_legend=FALSE,
-	  row_labels=c('','','','','','','','','','','','','','','','','','','',''),
+	  row_labels=rep('', length(all_possible_variant_types)),
 	  column_title='platinum resistant',
-	  row_order = genes_with_variants
+	  row_order = all_possible_variant_types
 	) +
 	ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
@@ -110,7 +104,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  column_title='platinum sensitive',
 	  #heatmap_legend_param = list(labels=c('frameshift','stop gained','splice region SNV','missense'),
 	  #                             title='Alterations'),
-	  row_order = genes_with_variants
+	  row_order = all_possible_variant_types
 	) 
 
 	# essential step when the pdf function is used inside of a function 
