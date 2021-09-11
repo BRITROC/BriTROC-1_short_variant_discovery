@@ -4,7 +4,7 @@ library(RPostgres)
 
 # TODO: move samples QC filtering upstream
 
-prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, nonTP53_relapse_variants, TP53_variants, TP53_variant_clonality_status, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output) {
+prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, nonTP53_relapse_variants, TP53_variants, TP53_variant_clonality_status, gene_set_analysed, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output) {
 
 	source('/Users/bradle02/.Renviron')
 	source('functions.R')
@@ -75,6 +75,8 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# filter variants by type and by gene symbol on the basis of TMBP assigned pathogenicity status
 	# TODO: automate use MTBP pipeline
 
+	if (gene_set_analysed=='HRD') {
+
 	# TODO: rerun pipeline with the correct parameterisation
 	# add variants that were previously filtered due to an overly harsh MAF threshold
 	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift', type='archival')
@@ -90,6 +92,10 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# MTBP specific processing filters
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
+
+	} else if (gene_set_analysed == 'nonHRD') {
+
+	}
 
 	# bind TP53 and nonTP53 variants together
 	all_variants = rbind(tp53_variants, non_tp53_variants) %>% unique()
@@ -191,6 +197,7 @@ prepare_data_for_oncoprint_generation (
 	nonTP53_relapse_variants=snakemake@input[['filtered_non_TP53_variants_relapse']],
 	TP53_variants=snakemake@input[['filtered_TP53_variants_with_MAFs']],
 	TP53_variant_clonality_status=snakemake@input[['clonality_status_of_TP53_variants']],
+	gene_set_analysed=snakemake@wildcards$HRD_or_nonHRD,
 	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
 	samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
 	samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
@@ -203,6 +210,7 @@ prepare_data_for_oncoprint_generation (
 #	TP53_variants='results/final_tp53/filtered_TP53_variants_with_MAFs.tsv',
 #	TP53_variant_clonality_status='results/final_tp53/TP53_variants_with_clonality_classifications.tsv',
 #	non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420','IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424','IM_302','IM_303','IM_304','IM_305','JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44'),
+#	gene_set_analysed='HRD',
 #	samples_with_no_good_sequencing =  c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441'),
 #	samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200','IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309','IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392'),
 #	output='somatic_variants_for_oncoprint.tsv'	

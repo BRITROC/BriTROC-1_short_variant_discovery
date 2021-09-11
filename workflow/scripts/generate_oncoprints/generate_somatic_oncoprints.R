@@ -3,7 +3,7 @@ library(DBI)
 library(RPostgres)
 library(ComplexHeatmap)
 
-generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output_file) {
+generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output_file, gene_set_analysed) {
 
 	source('~/.Renviron')
 	source('functions.R')
@@ -45,7 +45,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	)
 
 	# all genes examined in this analysis
-	all_genes =  tibble::tibble(names=c('TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'))
+	all_genes =  tibble::tibble(names=gene_set_analysed)
 
 	# all possible gene x tumour type combinations
 	all_possible_variant_types = list(all_genes=all_genes,tumour_types=c('archival','relapse')) %>% 
@@ -114,8 +114,9 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	return()
 }
 
-#generate_somatic_oncoprint('somatic_variants_for_oncorprint.tsv', 'HRD_somatic_oncoprint.pdf')
+#generate_somatic_oncoprint('somatic_variants_for_oncorprint.tsv', 'HRD_somatic_oncoprint.pdf', c('TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'))
 generate_somatic_oncoprint(
 	somatic_variants=snakemake@input[['data_for_somatic_oncoprint']],
-	somatic_oncoprint_output_file=snakemake@output[['somatic_oncoprint']]
+	somatic_oncoprint_output_file=snakemake@output[['somatic_oncoprint']],
+	gene_set_analysed=snakemake@params$gene_set_analysed
 )
