@@ -84,10 +84,17 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	    'resistant'='platinum resistant'
 	  )
 
-	# order tables
-	somatic_variants <- somatic_variants[, order(as.integer(colnames(somatic_variants)))]
-	heatmap_table = heatmap_table %>% dplyr::arrange(fk_britroc_number)
+	# order tables by archival TP53 variant type - ensure both tables below have the same order
+	somatic_variants = somatic_variants[, order(somatic_variants[1,], decreasing=TRUE)]
+	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
 
+	print(somatic_variants)
+	print(heatmap_table)
+
+        somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'] %>% print()
+
+	#quit()
+	
 	pdf(somatic_oncoprint_output_file)	
 	
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
@@ -96,14 +103,14 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  show_heatmap_legend=FALSE,
 	  row_labels=rep('', length(all_possible_variant_types)),
 	  column_title='platinum resistant',
+	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant']),
 	  row_order = all_possible_variant_types
 	) +
 	ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
 	  alter_fun = alter_fun,
 	  column_title='platinum sensitive',
-	  #heatmap_legend_param = list(labels=c('frameshift','stop gained','splice region SNV','missense'),
-	  #                             title='Alterations'),
+	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']),
 	  row_order = all_possible_variant_types
 	) 
 
