@@ -19,6 +19,9 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# bind archival and relapse non-TP53 variants
 	non_tp53_variants = rbind(non_tp53_variants_archival, non_tp53_variants_relapse)
 	
+	# remove suspected aritfacts
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
+
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
 			dplyr::mutate(SYMBOL='TP53')
@@ -71,6 +74,20 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 
 	# filter variants by type and by gene symbol on the basis of TMBP assigned pathogenicity status
 	# TODO: automate use MTBP pipeline
+
+	# TODO: rerun pipeline with the correct parameterisation
+	# add variants that were previously filtered due to an overly harsh MAF threshold
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='FANCM', patient_id=176, Consequence='frameshift', type='relapse')
+
+	# removed variants on the basis of annotations in the MTBP pipeline
+	non_tp53_variants = non_tp53_variants %>%  # remove suspected artifacts
+		dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69 & type=='archival')) %>% 
+		dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==123 & type=='relapse')) %>%
+		dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77 & type=='relapse'))
+
+	# MTBP specific processing filters
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
 
@@ -190,15 +207,3 @@ prepare_data_for_oncoprint_generation (
 #	samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200','IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309','IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392'),
 #	output='somatic_variants_for_oncoprint.tsv'	
 #)
-
-# TODO: formalise this
-	# add variants that were previously filtered due to an overly harsh MAF threshold
-	
-	#if (tumour_type=='archival') {
-	#	all_variants = all_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift')
-	#	all_variants = all_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift')
-	#} else if (tumour_type=='relapse') {
-	#	all_variants = all_variants %>% tibble::add_row(SYMBOL='FANCM', patient_id=176, Consequence='frameshift')
-	#} else {
-	# 	quit()
-	#}
