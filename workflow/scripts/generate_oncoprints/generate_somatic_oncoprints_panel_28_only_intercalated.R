@@ -6,7 +6,12 @@ library(ComplexHeatmap)
 source('~/.Renviron')
 
 # read in tumour samples variants
-non_tp53_variants = readr::read_tsv(snakemake@input[['filtered_non_TP53_variants']])
+non_tp53_variants_archival = readr::read_tsv(snakemake@input[['filtered_non_TP53_variants_archival']])
+non_tp53_variants_relapse = readr::read_tsv(snakemake@input[['filtered_non_TP53_variants_relapse']])
+
+non_tp53_variants = rbind(non_tp53_variants_archival, non_tp53_variants_relapse)
+
+print(non_tp53_variants)
 
 sessionInfo()
 
@@ -14,58 +19,74 @@ sessionInfo()
 tumour_type = snakemake@wildcards$tumour_sample_type
 
 # Set of annotated TP53 variants 
-tp53_variants = readr::read_tsv(snakemake@input[['filtered_TP53_variants_with_MAFs']]) %>% 
-		dplyr::filter(type==tumour_type) %>% 
+tp53_variants_archival = readr::read_tsv(snakemake@input[['filtered_TP53_variants_with_MAFs']]) %>% 
+		dplyr::filter(type=='archival') %>% 
 		dplyr::mutate(SYMBOL='TP53')
 
-# removed variants on the basis of annotations in the MTBP pipeline
-if (tumour_type=='archival') {
-non_tp53_variants = non_tp53_variants %>% 
-	dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C') %>% # suspected artifact
-	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69))
-} else if (tumour_type=='relapse'){
-non_tp53_variants = non_tp53_variants %>% 
-	dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C') %>% # suspected artifact
-	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==123)) %>%
-	dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77))
-} else {
-	quit()
-}
+tp53_variants_relapse = readr::read_tsv(snakemake@input[['filtered_TP53_variants_with_MAFs']]) %>% 
+		dplyr::filter(type=='relapse') %>% 
+		dplyr::mutate(SYMBOL='TP53')
+
+#print(tp53_variants_archival)
+#print(tp53_variants_relapse)
+
+tp53_variants = rbind(tp53_variants_archival, tp53_variants_relapse)
 
 # read in TP53 variant clonality predictions
 tp53_variant_clonality = readr::read_tsv(snakemake@input[['clonality_status_of_TP53_variants']])
 
 # join the two TP53 variant tables
-tp53_variants_clonal_mutations = dplyr::inner_join(
-	tp53_variants, 
-	tp53_variant_clonality %>% dplyr::filter(classification=='clonal' | is.na(classification)), 
+tp53_variants_clonal_mutations_archival = dplyr::inner_join(
+	tp53_variants_archival, 
+	tp53_variant_clonality %>% dplyr::filter(classification=='clonal' | is.na(classification)) %>% dplyr::filter(num_samples_with_variant_archival>0), 
 	by=c('fk_britroc_number','#Uploaded_variation')
-) %>% dplyr::select(fk_britroc_number,Consequence,SYMBOL)
+) %>% dplyr::select(fk_britroc_number,Consequence,SYMBOL,type)
+
+tp53_variants_clonal_mutations_relapse = dplyr::inner_join(
+	tp53_variants_relapse, 
+	tp53_variant_clonality %>% dplyr::filter(classification=='clonal' | is.na(classification)) %>% dplyr::filter(num_samples_with_variant_relapse>0), 
+	by=c('fk_britroc_number','#Uploaded_variation')
+) %>% dplyr::select(fk_britroc_number,Consequence,SYMBOL,type)
+
+tp53_variants_clonal_mutations = rbind(tp53_variants_clonal_mutations_archival, tp53_variants_clonal_mutations_relapse)
 
 # retain non-clonal variants for patients in which a clonal TP53 hasn't been found
-tp53_variants_no_clonal_mutation = tp53_variants %>% 
-	dplyr::filter(!fk_britroc_number %in% tp53_variants_clonal_mutations$fk_britroc_number) %>%
-	dplyr::select(fk_britroc_number,Consequence,SYMBOL)
+tp53_variants_no_clonal_mutation_archival = tp53_variants_archival %>% 
+	dplyr::filter(!fk_britroc_number %in% tp53_variants_clonal_mutations_archival$fk_britroc_number) %>%
+	dplyr::select(fk_britroc_number,Consequence,SYMBOL,type)
+
+tp53_variants_no_clonal_mutation_relapse = tp53_variants_relapse %>% 
+	dplyr::filter(!fk_britroc_number %in% tp53_variants_clonal_mutations_relapse$fk_britroc_number) %>%
+	dplyr::select(fk_britroc_number,Consequence,SYMBOL,type)
+
+tp53_variants_no_clonal_mutation = rbind(tp53_variants_no_clonal_mutation_archival, tp53_variants_no_clonal_mutation_relapse)
 
 # bind TP5 variants together
 tp53_variants = rbind(tp53_variants_clonal_mutations, tp53_variants_no_clonal_mutation)
+
+print(non_tp53_variants %>% colnames())
 
 # reformat variant information
 non_tp53_variants = non_tp53_variants %>% dplyr::select(patient_id,Consequence,SYMBOL)
 tp53_variants = tp53_variants %>% dplyr::rename(patient_id=fk_britroc_number)
 
 # filter variants by type and by gene symbol
-if (tumour_type=='archival') {
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'))
+non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
+non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'))
 
-} else  {
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'))
-}
+#print(tp53_variants)
 
 # bind all variants together
-all_variants = rbind(tp53_variants, non_tp53_variants)
+
+all_variants = rbind(tp53_variants, non_tp53_variants) %>% unique()
+#all_variants = tp53_variants %>% unique()
+
+#print(all_variants, n=Inf)
+
+#tp53_variants_clonal_mutations_archival %>% print(n=Inf)
+#tp53_variants_no_clonal_mutation_archival %>% print(n=Inf)
+
+print(tp53_variants, n=Inf)
 
 # factorise variant consequence column
 all_variants$Consequence = factor(all_variants$Consequence,
@@ -161,9 +182,13 @@ sequenced_samples = sequenced_samples %>%
 # only retain variants in patients with at least one germline, relapse and archival sample
 all_variants = all_variants %>% dplyr::filter(patient_id %in% sequenced_samples$fk_britroc_number)
 
+metadata_foo = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
+
+all_variants = all_variants %>% dplyr::filter(patient_id %in% metadata_foo$fk_britroc_number)
+
 # reformat
 all_variants =
-  all_variants %>% dplyr::select(patient_id,SYMBOL,Consequence) %>%
+  all_variants %>% dplyr::select(patient_id,SYMBOL,Consequence,type) %>%
   unique()
 
 # remove synonymous and intron variants
@@ -182,18 +207,16 @@ somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr:
 somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
   dplyr::select(patient_id) %>% 
   unique() %>% 
-  dplyr::mutate(variant_type='dummy', gene_symbol='PTEN') %>% 
-  dplyr::select(patient_id,variant_type,gene_symbol)
+  dplyr::mutate(variant_type='dummy', gene_symbol='PTEN', type='foo') %>% 
+  dplyr::select(patient_id,variant_type,gene_symbol,type)
 
-somatic_samples_with_mutations = all_variants %>% dplyr::select(patient_id,SYMBOL,Consequence)
+somatic_samples_with_mutations = all_variants %>% dplyr::select(patient_id,SYMBOL,Consequence,type)
 somatic_samples_with_no_mutations =  somatic_samples_with_no_mutations %>% dplyr::ungroup()
-colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type')
+colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type','tumour_type')
 
 somatic_variants = rbind(somatic_samples_with_mutations, somatic_samples_with_no_mutations)
 
-print(all_variants)
-
-print('foo')
+#print(somatic_variants)
 
 # remap variant type categories
 somatic_variants$variant_type = dplyr::recode(
@@ -217,15 +240,28 @@ somatic_variants$variant_type = dplyr::recode(
   'dummy'='' # make the dummy row blank
 )
 
+#print(somatic_variants, n=Inf)
+
 # for simplicity for now - only one mutation per patient-gene group
 somatic_variants = somatic_variants %>% tibble::as_tibble() %>% 
-  dplyr::group_by(patient_id,gene_symbol) %>%
+  dplyr::group_by(patient_id,gene_symbol,tumour_type) %>%
   dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
+
+somatic_variants = somatic_variants %>% 
+	tidyr::unite(gene_symbol_tumour_type, c(gene_symbol,tumour_type), remove=TRUE, sep='_') %>%
+	dplyr::arrange(patient_id)
+
+#print(somatic_variants)
+
+
+#########################################################################
 
 # convert the data frame to a matrix
 somatic_variants = somatic_variants %>% 
   tidyr::pivot_wider(names_from=patient_id, values_from=variant_type) %>% 
   as.matrix()
+
+#print(somatic_variants)
 
 row.names(somatic_variants) = somatic_variants[,1]
 somatic_variants = somatic_variants[,-1]
@@ -253,9 +289,22 @@ alter_fun = list(
   missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 )
 
-dummy = matrix('', nrow=9, ncol=112)
-row.names(dummy) = c('NRAS','PIK3CA','CTNNB1','EGFR','BRAF','KRAS','RB1','CDK12','NF1')
-#print(dummy)
+#print(somatic_variants)
+
+dummy = matrix('', nrow=20, ncol=112)
+row.names(dummy) = c(
+		'NRAS_archival','NRAS_relapse',
+		'PIK3CA_archival','PIK3CA_relapse',
+		'CTNNB1_archival','CTNNB1_relapse',
+		'EGFR_archival','EGFR_relapse',
+		'BRAF_archival','BRAF_relapse',
+		'PTEN_archival','PTEN_relapse',
+		'KRAS_archival','KRAS_relapse',
+		'RB1_archival','RB1_relapse',
+		'CDK12_archival','CDK12_relapse',
+		'NF1_archival','NF1_relapse'
+)
+print(dummy)
 
 x = rbind(somatic_variants, dummy)
 
@@ -303,11 +352,19 @@ somatic_variants %>% class() %>% print()
 
 pdf(snakemake@output[['somatic_oncoprint']])
 
-if (tumour_type=='archival') {
-	genes_with_variants = c('TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1')
-} else if (tumour_type=='relapse') {
-	genes_with_variants = c('TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1')
-}
+genes_with_variants = c(
+			'TP53_archival','TP53_relapse',
+			'NRAS_archival','NRAS_relapse',
+			'PIK3CA_archival','PIK3CA_relapse',
+			'CTNNB1_archival','CTNNB1_relapse',
+			'EGFR_archival','EGFR_relapse',
+			'BRAF_archival','BRAF_relapse',
+			'PTEN_archival','PTEN_relapse',
+			'KRAS_archival','KRAS_relapse',
+			'RB1_archival','RB1_relapse',
+			'CDK12_archival','CDK12_relapse',
+			'NF1_archival','NF1_relapse'
+)
 
 #ComplexHeatmap::oncoPrint(
 #  mat=somatic_variants,
@@ -323,9 +380,9 @@ ComplexHeatmap::oncoPrint(
   mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
   alter_fun = alter_fun,
   show_heatmap_legend=FALSE,
-  row_labels=c('','','','','','','','','','',''),
+  row_labels=c('','','','','','','','','','','','','','','','','','','','','',''),
   column_title='platinum resistant',
-  row_order = genes_with_variants
+  row_order = genes_with_variants                                 #c('TP53_archival','TP53_relapse')
 ) +
 ComplexHeatmap::oncoPrint(
   mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
@@ -333,14 +390,14 @@ ComplexHeatmap::oncoPrint(
   column_title='platinum sensitive',
  # heatmap_legend_param = list(labels=c('frameshift','stop gained','splice region SNV','missense'),
 #                              title='Alterations'),
-  row_order = genes_with_variants
+  row_order = genes_with_variants                                 #c('TP53_archival','TP53_relapse')
 )
 
-print('platinum resistant patients')
-heatmap_table %>% dplyr::filter(pt_sensitivity_at_reg=='platinum resistant') %>% .$fk_britroc_number 
+#
+print('platinum sensitive patients')
+heatmap_table %>% dplyr::filter(pt_sensitivity_at_reg=='platinum sensitive') %>% .$fk_britroc_number 
+heatmap_table %>% dim()
 
-somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant']
-
-print(heatmap_table, n=Inf)
+somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']
 
 dev.off()

@@ -38,8 +38,10 @@ include: 'workflow/rules/generate_oncoprints_panel_28_only.smk'
 rule all:
 	input:
 		expand('results/tumour_sample_vcfs_octopus/panel_28_only/{patient_id}.filtered2.vcf', patient_id=matched_somatic_patients_panel_28_only),
-		'plots/archival_somatic_britroc_oncoprint_panel_28_only.pdf',
-		'plots/relapse_somatic_britroc_oncoprint_panel_28_only.pdf'
+		#'plots/archival_somatic_britroc_oncoprint_panel_28_only.pdf',
+		#'plots/relapse_somatic_britroc_oncoprint_panel_28_only.pdf',
+		'plots/somatic_britroc_oncoprint_panel_28_only_intercalated.pdf'
+		#'plots/somatic_britroc_oncoprint_intercalated.pdf'
 		#expand('results/tumour_sample_vcfs_octopus/{patient_id}.filtered3.vcf', patient_id=matched_somatic_patients),
 		#expand('results/tumour_sample_vcfs_octopus/{patient_id}.library_MAFs.vcf', patient_id=matched_somatic_patients),
 		#'results/archival_filtered3_joined.tsv',
