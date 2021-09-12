@@ -134,6 +134,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  column_title='Pt resistant',
           column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
 	  pct_gp = gpar(fontsize = row_label_font_size),
+	  row_names_gp = gpar(fontsize=row_label_font_size, fontface='bold'),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant']),
 	  row_order = all_possible_variant_types
 	) +
@@ -143,6 +144,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  column_title='Pt sensitive',
           column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
 	  pct_gp = gpar(fontsize = row_label_font_size),
+	  row_names_gp = gpar(fontsize=row_label_font_size, fontface='bold'),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']),
 	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold'), ncol=5),
 	  row_order = all_possible_variant_types
