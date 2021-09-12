@@ -49,8 +49,8 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 		background = ComplexHeatmap::alter_graphic("rect", fill = "#CCCCCC"),
 		frameshift = ComplexHeatmap::alter_graphic("rect", fill = col["frameshift"]),
 		stop_gained = ComplexHeatmap::alter_graphic("rect", fill = col["stop_gained"]),
-		`inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
 		splice_region_SNV = ComplexHeatmap::alter_graphic("rect", fill = col["splice_region_SNV"]),
+		`inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
 		missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 	)
 
