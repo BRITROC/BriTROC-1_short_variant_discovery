@@ -121,7 +121,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	row.names(somatic_variants) = row.names(somatic_variants) %>% stringr::str_replace('_', ' ')
 	all_possible_variant_types = all_possible_variant_types %>% stringr::str_replace('_', ' ')
 	
-	pdf(somatic_oncoprint_output_file)	
+	pdf(somatic_oncoprint_output_file, width=10)	
 
         column_title_font_size = 8
 	row_label_font_size = 6
@@ -149,7 +149,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	) 
 
 	combined_oncoprint = ComplexHeatmap::draw(
-		combined_oncoprint, heatmap_legend_side = "bottom", annotation_legend_side = "bottom"
+		combined_oncoprint, heatmap_legend_side = "bottom", annotation_legend_side = "bottom",
 	)
 	
 	dev.off()
