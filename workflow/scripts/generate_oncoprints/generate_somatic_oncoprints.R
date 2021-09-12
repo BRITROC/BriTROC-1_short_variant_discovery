@@ -111,6 +111,11 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# order tables by archival TP53 variant type - ensure both tables below have the same order
 	somatic_variants = somatic_variants[, order(somatic_variants[1,], decreasing=TRUE)]
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
+
+	# replace underscore in row names with a single space
+	# TODO: implement a more elegant solution
+	row.names(somatic_variants) = row.names(somatic_variants) %>% stringr::str_replace('_', ' ')
+	all_possible_variant_types = all_possible_variant_types %>% stringr::str_replace('_', ' ')
 	
 	pdf(somatic_oncoprint_output_file)	
 
