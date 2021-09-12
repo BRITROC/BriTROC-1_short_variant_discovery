@@ -113,6 +113,9 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
 	
 	pdf(somatic_oncoprint_output_file)	
+
+        column_title_font_size = 8
+	row_label_font_size = 6
 	
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
@@ -120,6 +123,8 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  show_heatmap_legend=FALSE,
 	  row_labels=rep('', length(all_possible_variant_types)),
 	  column_title='platinum resistant',
+          column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
+	  pct_gp = gpar(fontsize = row_label_font_size),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant']),
 	  row_order = all_possible_variant_types
 	) +
@@ -127,7 +132,10 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
 	  alter_fun = alter_fun,
 	  column_title='platinum sensitive',
+          column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
+	  pct_gp = gpar(fontsize = row_label_font_size),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']),
+	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold')), #legend_label_gp = gpar(fontsize = 3),
 	  row_order = all_possible_variant_types
 	) 
 
