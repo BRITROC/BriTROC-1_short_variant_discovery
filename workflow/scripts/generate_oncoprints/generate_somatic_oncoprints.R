@@ -40,16 +40,16 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# map short mutation classes to colour labels
 	col = c(
 	  'frameshift'= 'red',
-	  'stop_gained'= 'orange',
-	  'splice_region_SNV'= 'yellow',
+	  'stop gained'= 'orange',
+	  'splice region SNV'= 'yellow',
 	  'inframe indel'= 'cyan',
 	  'missense'= 'blue'
 	)
 	alter_fun = list(
 		background = ComplexHeatmap::alter_graphic("rect", fill = "#CCCCCC"),
 		frameshift = ComplexHeatmap::alter_graphic("rect", fill = col["frameshift"]),
-		stop_gained = ComplexHeatmap::alter_graphic("rect", fill = col["stop_gained"]),
-		splice_region_SNV = ComplexHeatmap::alter_graphic("rect", fill = col["splice_region_SNV"]),
+		`stop gained` = ComplexHeatmap::alter_graphic("rect", fill = col["stop gained"]),
+		`splice region SNV` = ComplexHeatmap::alter_graphic("rect", fill = col["splice region SNV"]),
 		`inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
 		missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
 	)
