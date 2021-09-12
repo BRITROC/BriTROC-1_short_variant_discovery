@@ -14,6 +14,16 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# read in preprocessed data
 	somatic_variants = readr::read_tsv(somatic_variants)
 
+	# create a genes column
+	somatic_variants_tmp = somatic_variants %>% 
+		dplyr::mutate(gene=stringr::str_extract(gene_symbol_tumour_type, pattern='[A-Z0-9]+_') %>% 
+		stringr::str_remove('_')) 
+	
+	# identify genes in which a variant has been found in at least one patient
+	# is later used to remove genes in which did not have any observed variants for all tumour types
+	genes_with_variants = somatic_variants_tmp %>% dplyr::pull(gene) %>% unique()
+	rm(somatic_variants_tmp)
+
 	# convert the data frame to a matrix
 	somatic_variants = somatic_variants %>% 
 	  tidyr::pivot_wider(names_from=patient_id, values_from=variant_type) %>% 
@@ -65,6 +75,20 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	row.names(dummy) = rows_to_add_to_somatic_variants_table	
 
 	somatic_variants = rbind(somatic_variants, dummy)
+
+	# remove genes which have no variants
+	# TODO: wrap this in a function
+	somatic_variants_rows_to_keep = tibble::tibble(
+		gene_symbol_tumour_type=row.names(somatic_variants),
+		gene_name=stringr::str_extract(gene_symbol_tumour_type, pattern='[A-Z0-9]+_') %>% stringr::str_remove('_')
+	)
+	somatic_variants_rows_to_keep$keep = ifelse(somatic_variants_rows_to_keep$gene_name %in% genes_with_variants, TRUE, FALSE)
+
+	# remove rows
+	somatic_variants = somatic_variants[somatic_variants_rows_to_keep$keep,]
+
+	# remove irrelevant items in this vector used to set row order of the oncoprint
+	all_possible_variant_types = all_possible_variant_types[all_possible_variant_types %>% stringr::str_remove('_.*') %in% genes_with_variants]
 	
 	# generate a platinum sensitivity partition
 	heatmap_patients = colnames(somatic_variants)
@@ -87,13 +111,6 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# order tables by archival TP53 variant type - ensure both tables below have the same order
 	somatic_variants = somatic_variants[, order(somatic_variants[1,], decreasing=TRUE)]
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
-
-	print(somatic_variants)
-	print(heatmap_table)
-
-        somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'] %>% print()
-
-	#quit()
 	
 	pdf(somatic_oncoprint_output_file)	
 	
