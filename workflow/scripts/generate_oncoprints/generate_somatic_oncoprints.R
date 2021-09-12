@@ -108,8 +108,12 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	    'resistant'='platinum resistant'
 	  )
 
-	# order tables by archival TP53 variant type - ensure both tables below have the same order
-	somatic_variants = somatic_variants[, order(somatic_variants[1,], decreasing=TRUE)]
+	# set the order variants appear in the oncoprint
+	variant_type_order = c('frameshift', 'stop gained', 'splice region SNV', 'inframe indel', 'missense')
+
+	# order tables by archival TP53 variant type	
+	somatic_variants = somatic_variants[, order( factor(somatic_variants[1,], levels=variant_type_order))]
+	# ensure heatmap table has the same order as somatic variants
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
 
 	# replace underscore in row names with a single space
