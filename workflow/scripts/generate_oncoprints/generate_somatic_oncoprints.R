@@ -122,7 +122,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  alter_fun = alter_fun,
 	  show_heatmap_legend=FALSE,
 	  row_labels=rep('', length(all_possible_variant_types)),
-	  column_title='platinum resistant',
+	  column_title='Pt resistant',
           column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
 	  pct_gp = gpar(fontsize = row_label_font_size),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant']),
@@ -131,16 +131,17 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'],
 	  alter_fun = alter_fun,
-	  column_title='platinum sensitive',
+	  column_title='Pt sensitive',
           column_title_gp = gpar(fontsize = column_title_font_size, fontface='bold'),
 	  pct_gp = gpar(fontsize = row_label_font_size),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']),
-	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold')), #legend_label_gp = gpar(fontsize = 3),
+	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold'), ncol=5),
 	  row_order = all_possible_variant_types
 	) 
 
-	# essential step when the pdf function is used inside of a function 
-	print(combined_oncoprint)
+	combined_oncoprint = ComplexHeatmap::draw(
+		combined_oncoprint, heatmap_legend_side = "bottom", annotation_legend_side = "bottom"
+	)
 	
 	dev.off()
 	return()
