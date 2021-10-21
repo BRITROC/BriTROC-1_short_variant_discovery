@@ -15,7 +15,7 @@ make_connection_to_postgres_server = function(database_name, host_name, port_num
 	return (db_connection)
 }
 
-remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con) {
+remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type) {
 	
 		# read in DNA sample and library information
 		samples = dbReadTable(britroc_con, 'sample')
@@ -39,14 +39,22 @@ remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_
 		
 		# remove samples from downstream analyses
 		sequenced_samples = sequenced_samples %>% dplyr::filter(!name %in% bad_samples)
-	
+
+		if (analysis_type=='somatic') {	
 		# group sequenced samples by patient, and only retain patients with at least one germline, relapse and archival sample
 		relevant_samples = sequenced_samples %>%
 		       dplyr::group_by(fk_britroc_number,type) %>%
 		       dplyr::summarise(n=dplyr::n()) %>%
 		       tidyr::pivot_wider(names_from=type, values_from=n) %>%
 		       dplyr::filter(!is.na(archival) & !is.na(relapse) & !is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
-		
+		} else if (analysis_type=='germline') {
+		relevant_samples = sequenced_samples %>%
+		       dplyr::group_by(fk_britroc_number,type) %>%
+		       dplyr::summarise(n=dplyr::n()) %>%
+		       tidyr::pivot_wider(names_from=type, values_from=n) %>%
+		       dplyr::filter(!is.na(germline))
+		}
+
 	return(relevant_samples)
 		}
 
