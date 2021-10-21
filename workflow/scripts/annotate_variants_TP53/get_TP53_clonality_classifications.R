@@ -107,8 +107,14 @@ classify_clonality_status = function(patient_id) {
 	x$rank_QUAL = NA
 	x$rank_QUAL[order(x$mean_QUAL, decreasing=TRUE)] = 1:nrow(x)	
 
+	# add a penalty for variants which don't appear in all tumour sample types
+	x$tumour_type_penalty = NA
+
+	x$tumour_type_penalty = ifelse(x$num_samples_with_variant_archival > 0 & x$num_samples_with_variant_relapse > 0 , 0, 4) # a penalty of 4
+	x$tumour_type_penalty = ifelse(x$num_samples_archival == 0 | x$num_samples_relapse == 0 , 0, x$tumour_type_penalty)
+
 	# calculate the sum of ranks
-	x$rank_total = x$rank_num_samples + x$rank_MAF + x$rank_QUAL
+	x$rank_total = x$rank_num_samples + x$rank_MAF + x$rank_QUAL + x$tumour_type_penalty
 
 	# order by lowest summed rank
 	x = x %>% dplyr::arrange(rank_total)
@@ -123,6 +129,7 @@ classify_clonality_status = function(patient_id) {
 	x$classification[1] = 'clonal'
 	x$classification[2:length(x$classification)] = 'subclonal'
 	}
+
 	return(x)
 }
 
