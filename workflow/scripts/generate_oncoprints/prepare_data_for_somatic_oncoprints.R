@@ -4,7 +4,7 @@ library(RPostgres)
 
 # TODO: move samples QC filtering upstream
 
-prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, nonTP53_relapse_variants, TP53_variants, TP53_variant_clonality_status, gene_set_analysed, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output) {
+prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, nonTP53_relapse_variants, TP53_variants, TP53_variant_clonality_status, gene_set_analysed, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output, analysis_type) {
 
 	source('/Users/bradle02/.Renviron')
 	source('functions.R')
@@ -36,6 +36,10 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# read in TP53 variant clonality predictions
 	tp53_variant_clonality = readr::read_tsv(TP53_variant_clonality_status)
 
+	patients_with_no_clonality_calls = tp53_variant_clonality %>% dplyr::group_by(fk_britroc_number) %>% 
+		dplyr::summarise(no_clonality_calls=all(is.na(classification))) %>% dplyr::filter(no_clonality_calls==TRUE) %>% 
+		dplyr::pull(fk_britroc_number)
+
 	join_TP53_variants_with_clonality_status = function(TP53_variant_set, TP53_variant_clonality_status, tumour_type) {
 
 	## most samples have multiple TP53 mutations, so where applicable, we want to only select the clonal mutation
@@ -44,7 +48,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	TP53_variants_clonal_mutations = dplyr::inner_join(
 		TP53_variant_set %>% dplyr::filter(type==tumour_type), 
 		TP53_variant_clonality_status %>% # include variants without a classification and only those variants that appear in 'tumour_type' 
-			dplyr::filter(classification=='clonal' | is.na(classification)) %>% 
+			dplyr::filter(classification=='clonal' | is.na(classification)) %>%
 			dplyr::filter(stringr::str_interp('num_samples_with_variant_${tumour_type}')>0), 
 		by=c('fk_britroc_number','#Uploaded_variation')
 	) %>% dplyr::select(fk_britroc_number,Consequence,SYMBOL,type)
@@ -57,7 +61,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	tp53_variants_clonal_mutations_relapse = join_TP53_variants_with_clonality_status(tp53_variants,tp53_variant_clonality,'relapse')
 
 	# bind clonal mutations of different tumour types together
-	tp53_variants_clonal_mutations = rbind(tp53_variants_clonal_mutations_archival, tp53_variants_clonal_mutations_relapse)
+	tp53_variants_clonal_mutations = rbind(tp53_variants_clonal_mutations_archival, tp53_variants_clonal_mutations_relapse) %>% unique()
 
 	# retain non-clonal variants for patients in which a clonal TP53 hasn't been found
 	tp53_variants_no_clonal_mutation_archival = tp53_variants %>%
@@ -129,7 +133,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	## remove non-relevant samples
 	# TODO: remove SLX-13716 from the database
 		
-	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con)
+	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
 
 	# only retain variants in patients with at least one germline, relapse and archival sample
 	all_variants = all_variants %>% dplyr::filter(patient_id %in% relevant_samples$fk_britroc_number)
@@ -194,12 +198,12 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	  'splice_region_variant'='splice region SNV',
 	  'dummy'='' # make the dummy row blank
 	)
-
-	# for simplicity for now - only one mutation per patient-gene group
+ 	
+	#for simplicity for now - only one mutation per patient-gene group
 	somatic_variants = somatic_variants %>% tibble::as_tibble() %>% 
 	  dplyr::group_by(patient_id,gene_symbol,tumour_type) %>%
 	  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
-	
+
 	# reformat
 	somatic_variants = somatic_variants %>% 
 		tidyr::unite(gene_symbol_tumour_type, c(gene_symbol,tumour_type), remove=TRUE, sep='_') %>%
@@ -217,7 +221,8 @@ prepare_data_for_oncoprint_generation (
 	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
 	samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
 	samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
-	output = snakemake@output[['data_for_somatic_oncoprint']]
+	output = snakemake@output[['data_for_somatic_oncoprint']],
+	analysis_type='somatic'
 )
 
 #prepare_data_for_oncoprint_generation (

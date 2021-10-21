@@ -51,7 +51,8 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 		`stop gained` = ComplexHeatmap::alter_graphic("rect", fill = col["stop gained"]),
 		`splice region SNV` = ComplexHeatmap::alter_graphic("rect", fill = col["splice region SNV"]),
 		`inframe indel` = ComplexHeatmap::alter_graphic("rect", fill = col["inframe indel"]),
-		missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"])
+		missense = ComplexHeatmap::alter_graphic("rect", fill = col["missense"]),
+		germline = function(x, y, w, h) grid.points(x, y, pch = 16, size = unit(0.40, "char"))
 	)
 
 	# all genes examined in this analysis
@@ -121,7 +122,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	row.names(somatic_variants) = row.names(somatic_variants) %>% stringr::str_replace('_', ' ')
 	all_possible_variant_types = all_possible_variant_types %>% stringr::str_replace('_', ' ')
 	
-	pdf(somatic_oncoprint_output_file, width=10)	
+	png(somatic_oncoprint_output_file, width=1200)	
 
         column_title_font_size = 8
 	row_label_font_size = 6
@@ -146,7 +147,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	  pct_gp = gpar(fontsize = row_label_font_size),
 	  row_names_gp = gpar(fontsize=row_label_font_size, fontface='bold'),
 	  column_order = colnames(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive']),
-	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold'), ncol=5),
+	  heatmap_legend_param = list(title='', labels_gp = gpar(fontsize = 6, fontface='bold'), ncol=5, ncol=2, by_row=TRUE),
 	  row_order = all_possible_variant_types
 	) 
 
