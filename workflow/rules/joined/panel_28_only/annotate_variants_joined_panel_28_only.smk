@@ -1,3 +1,6 @@
+matched_somatic_metadata_panel_28_only = pandas.read_table("config/somatic_metadata_panel_28_only.tsv").set_index("fk_britroc_number", drop=False)
+matched_somatic_patients_panel_28_only = matched_somatic_metadata_panel_28_only.index.unique().tolist()
+
 rule vep_octopus:
 	input: rules.concat_vcfs.output
 	output: 'results/tumour_sample_vcfs_octopus/panel_28_only/{patient_id}.filtered.vep.vcf'
