@@ -18,7 +18,7 @@ rule symlink_bam_indexes:
 		lane='s_[1-8]'           #"((?!_bwamem).)*"
 	shell: 'ln {input} {output}'
 
-rule create_nonoverlapping_amplicons:
+rule create_nonoverlapping_amplicons_TP53:
 	input: 
 		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.interval_list',
 		target_intervals='resources/union_of_tp53_amplicons.targets.interval_list'
