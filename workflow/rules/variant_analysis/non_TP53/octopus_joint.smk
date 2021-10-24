@@ -2,8 +2,13 @@ def get_tumour_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	test_sample_metadata = matched_somatic_metadata[(matched_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_6_28.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
+	# configure 'analysis_type' string
+	if wildcards.analysis_type == 'panel_6_28':
+		analysis_type = 'panel_6_28'
+	elif wildcards.analysis_type == 'panel_28_only':
+		analysis_type = 'antijoined_panel_28_6' 
 
+	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.{analysis_type}.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'], analysis_type=analysis_type)
 	bam_files = []
 
 	for bam_file_name in bam_files_tmp:
@@ -20,7 +25,13 @@ def get_normal_bam_files(wildcards):
 
 	normal_metadata = matched_germline_metadata[matched_germline_metadata['fk_britroc_number'] == britroc_number[0]]
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_6_28.bam', zip, SLX_ID=normal_metadata['fk_slx'], barcodes=normal_metadata['fk_barcode'], flowcell=normal_metadata['flowcell'], lane=normal_metadata['lane']) 
+	# configure 'analysis_type' string
+	if wildcards.analysis_type == 'panel_6_28':
+		analysis_type = 'panel_6_28'
+	elif wildcards.analysis_type == 'panel_28_only':
+		analysis_type = 'antijoined_panel_28_6' 
+
+	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.{analysis_type}.bam', zip, SLX_ID=normal_metadata['fk_slx'], barcodes=normal_metadata['fk_barcode'], flowcell=normal_metadata['flowcell'], lane=normal_metadata['lane'], analysis_type=analysis_type) 
 
 	bam_files = []
 
@@ -64,19 +75,27 @@ def get_normal_sample_names(wildcards):
 
 	return(samples)
 
+def get_relevant_bed_file(wildcards):
+	if wildcards.analysis_type == 'panel_6_28':
+		output_file='resources/panel_6_28.nonoverlapping.targets.{}.bed'.format(wildcards.nonoverlapping_id)
+	elif wildcards.analysis_type == 'panel_28_only':
+		output_file='resources/nonoverlapping.antijoined_panel_28_6.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
+	
+	return(output_file)
+
 rule convert_bed6_to_oct_format:
-	input:  'resources/panel_6_28.nonoverlapping.targets.{nonoverlapping_id}.bed'                                           
-	output: 'resources/panel_6_28.{nonoverlapping_id}.targets.oct'
+	input:  get_relevant_bed_file                                           
+	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'
 	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
 rule octopus:
 	input:
 		reference_genome=config['reference_genome'],
-		interval_file='resources/panel_6_28.{nonoverlapping_id}.targets.oct', 
+		interval_file=rules.convert_bed6_to_oct_format.output, 
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files
 	output: 
-		tumour_vcf='results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.vcf',
+		tumour_vcf='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf',
 	threads: 4
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
@@ -101,26 +120,3 @@ rule octopus:
 				--regions-file {input.interval_file} \
 				--output {output.tumour_vcf} \
 				-R {input.reference_genome}'
-
-rule bgzip_vcf:
-	input: 'results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf'
-	output: 
-		compressed_vcf=temp('results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
-
-rule index_compressed_vcf:
-	input: 'results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz'
-	output: 'results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
-
-rule concat_vcfs:
-	input: 
-		compressed_vcfs=lambda wildcards: expand('results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id),
-		compressed_vcf_indexes=lambda wildcards: expand('results/tumour_sample_vcfs_octopus/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id)
-	wildcard_constraints:
-		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
-		patient_id='[0-9]+'
-	output: 'results/tumour_sample_vcfs_octopus/{patient_id}.filtered2.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}' 
-
-
