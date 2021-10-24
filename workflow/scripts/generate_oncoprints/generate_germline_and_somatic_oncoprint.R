@@ -66,20 +66,14 @@ generate_somatic_oncoprint = function(somatic_variants, germline_data, somatic_o
 	germline_variants = rbind(germline_variants_archival, germline_variants_relapse)
 	germline_variants = germline_variants %>% dplyr::mutate(variant_type = paste(variant_type,'germline',sep=';'))
 
-	print(somatic_variants)
-	print(germline_variants)
-
 	somatic_variants = rbind(somatic_variants,germline_variants)
-	print(somatic_variants)
 
         # for simplicity for now - only one mutation per patient-gene group
         #somatic_variants = somatic_variants %>% tibble::as_tibble() %>%
          # dplyr::group_by(patient_id,gene_symbol_tumour_type) %>%
 	 # dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(-n)
 
-	#print(somatic_variants, n=Inf)
-	#quit()
-         somatic_variants = somatic_variants %>% dplyr::group_by(patient_id,gene_symbol_tumour_type) %>% 
+        somatic_variants = somatic_variants %>% dplyr::group_by(patient_id,gene_symbol_tumour_type) %>% 
 		dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
 	# create a genes column
@@ -134,11 +128,7 @@ generate_somatic_oncoprint = function(somatic_variants, germline_data, somatic_o
 	
 	# force the all_possible_variant_types vector to have the desired order
 	all_possible_variant_types = tibble::tibble(names=rep(all_genes$names,2),variant_types=all_possible_variant_types)
-	print('foo')
-	print(all_genes)
-	print(all_possible_variant_types)
 	all_genes = dplyr::inner_join(all_genes,all_possible_variant_types, by='names')
-	print('goo')
 	all_possible_variant_types = all_genes$variant_types
 
 	# dummy rows to be added for gene x tumour type mutation combinations not observed
@@ -189,15 +179,10 @@ generate_somatic_oncoprint = function(somatic_variants, germline_data, somatic_o
 	# ensure heatmap table has the same order as somatic variants
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
 
-	print(somatic_variants[1,])
-	#quit()
-
 	# replace underscore in row names with a single space
 	# TODO: implement a more elegant solution
 	row.names(somatic_variants) = row.names(somatic_variants) %>% stringr::str_replace('_', ' ')
 	all_possible_variant_types = all_possible_variant_types %>% stringr::str_replace('_', ' ')
-
-	print(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'])
 	
 	png(somatic_oncoprint_output_file, width=1200)	
 
@@ -238,7 +223,7 @@ generate_somatic_oncoprint = function(somatic_variants, germline_data, somatic_o
 
 #generate_somatic_oncoprint('somatic_variants_for_oncorprint.tsv', 'HRD_somatic_oncoprint.pdf', c('TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'))
 generate_somatic_oncoprint(
-	somatic_variants='results/data_for_somatic_oncoprint_HRD.tsv',
+	somatic_variants=snakemake@input[['data_for_somatic_oncoprint']],
 	germline_data=snakemake@input[['germline_data']],
 	somatic_oncoprint_output_file=snakemake@output[['germline_and_somatic_oncoprint']],
 	gene_set_analysed=snakemake@params$gene_set_analysed

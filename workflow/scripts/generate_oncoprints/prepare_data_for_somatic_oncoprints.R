@@ -27,8 +27,8 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 			dplyr::mutate(SYMBOL='TP53')
 
 	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
-	if (gene_set_analysed == 'HRD') {
-	} else if (gene_set_analysed == 'nonHRD') {
+	if (gene_set_analysed == 'panel_6_28') {
+	} else if (gene_set_analysed == 'panel_28_only') {
 		panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
 		tp53_variants = tp53_variants %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
 	}
@@ -86,7 +86,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# filter variants by type and by gene symbol on the basis of TMBP assigned pathogenicity status
 	# TODO: automate use MTBP pipeline
 
-	if (gene_set_analysed=='HRD') {
+	if (gene_set_analysed=='panel_6_28') {
 
 	# TODO: rerun pipeline with the correct parameterisation
 	# add variants that were previously filtered due to an overly harsh MAF threshold
@@ -104,7 +104,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
 
-	} else if (gene_set_analysed == 'nonHRD') {
+	} else if (gene_set_analysed == 'panel_28_only') {
 
 	}
 
@@ -155,8 +155,8 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	)
 
 	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
-	if (gene_set_analysed == 'HRD') {
-	} else if (gene_set_analysed == 'nonHRD') {
+	if (gene_set_analysed == 'panel_6_28') {
+	} else if (gene_set_analysed == 'panel_28_only') {
 		panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
 		somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
 	}
@@ -217,7 +217,7 @@ prepare_data_for_oncoprint_generation (
 	nonTP53_relapse_variants=snakemake@input[['filtered_non_TP53_variants_relapse']],
 	TP53_variants=snakemake@input[['filtered_TP53_variants_with_MAFs']],
 	TP53_variant_clonality_status=snakemake@input[['clonality_status_of_TP53_variants']],
-	gene_set_analysed=snakemake@wildcards$HRD_or_nonHRD,
+	gene_set_analysed=snakemake@wildcards$analysis_type,
 	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
 	samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
 	samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
