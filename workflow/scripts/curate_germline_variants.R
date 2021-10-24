@@ -22,6 +22,9 @@ curate_germline_variants = function(germline_variants_output_file) {
 	
 	# collate all germline variants together
 	germline_variants_all = rbind(germline_snvs, germline_indels)
+
+	# filter for the relevant gene set
+	germline_variants_all = germline_variants_all %>% dplyr::filter(gene_symbol %in% snakemake@params$gene_set_analysed)
 	
 	# read in samples table
 	samples = dbReadTable(britroc_con, 'sample')
