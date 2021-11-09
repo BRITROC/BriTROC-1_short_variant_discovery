@@ -1,3 +1,4 @@
+# A script to ensure that technical replicates match for any given variant for any given DNA sample
 
 library(magrittr)
 

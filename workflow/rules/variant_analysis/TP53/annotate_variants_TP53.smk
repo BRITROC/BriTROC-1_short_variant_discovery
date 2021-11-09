@@ -50,17 +50,17 @@ rule collate_allele_fraction_data:
 
 rule add_MAFs_to_TP53_variant_table:
 	input:
-		filtered_archival_TP53_variants='results/final_tp53/filtered_archival_vep_calls_octopus.tsv',
-		filtered_relapse_TP53_variants='results/final_tp53/filtered_relapse_vep_calls_octopus.tsv',
-		TP53_variant_MAFs='results/final_tp53/tp53_collated_MAFs.tsv'
-	output: 'results/final_tp53/filtered_TP53_variants_with_MAFs.tsv'
-	script: '../scripts/annotate_variants_TP53/get_tp53_table.R'
+		filtered_archival_TP53_variants='results/variant_analysis/TP53/collated/filtered_archival_vep_calls_octopus.tsv',
+		filtered_relapse_TP53_variants='results/variant_analysis/TP53/collated/filtered_relapse_vep_calls_octopus.tsv',
+		TP53_variant_MAFs='results/variant_analysis/TP53/collated/tp53_collated_MAFs.tsv'
+	output: 'results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv' # results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv
+	script: '../../../scripts/annotate_variants_TP53/get_tp53_table.R'
 
 rule classify_clonality_of_TP53_variants:
 	input:
 		filtered_TP53_variants_with_MAFs=rules.add_MAFs_to_TP53_variant_table.output,
-	output: TP53_variants_classified_by_clonality='results/final_tp53/TP53_variants_with_clonality_classifications.tsv'
-	script: '../scripts/annotate_variants_TP53/get_TP53_clonality_classifications.R'
+	output: TP53_variants_classified_by_clonality='results/variant_analysis/TP53/collated/TP53_variants_with_clonality_classifications.tsv'
+	script: '../../../scripts/annotate_variants_TP53/get_TP53_clonality_classifications.R'
 
 #rule collate_and_filter_relapse_vep_files:
 #	input: expand('results/tumour_sample_vcfs/{sample}.filtered.vep.vcf', sample=paired_relapse_samples)
