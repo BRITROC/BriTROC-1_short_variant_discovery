@@ -194,9 +194,9 @@ annotations = annotations %>% dplyr::filter(
 #grepl('low_confidence',annotations$SIFT) 
 #c(grepl('possibly',annotations$PolyPhen)) & c(grepl('low_confidence',annotations$SIFT))
 
-annotations = annotations %>% dplyr::filter(
-  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
-)
+#annotations = annotations %>% dplyr::filter(
+#  SYMBOL %in% c('BARD1','BRCA1','BRCA2','BRIP1','FANCM','PALB2','RAD51B','RAD51C','RAD51D')
+#)
 
 annotations = annotations %>% dplyr::filter(
   CANONICAL == 'YES'
