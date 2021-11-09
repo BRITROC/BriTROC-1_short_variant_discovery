@@ -96,12 +96,12 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	variant_type_order = c('frameshift', 'stop gained', 'splice region SNV', 'inframe indel', 'missense')
 
 	#TODO: change this and make it more systematic
-	genes_with_variants = c("TP53","BRCA2","BRCA1","NF1","FANCM","BRIP1","PALB2","CDK12","NRAS","RB1","KRAS","BARD1","RAD51D","RAD51B","PIK3CA","EGFR","PTEN")
+	genes_with_variants = c("TP53","BRCA2","BRCA1","NF1","BRIP1","PALB2","CDK12","NRAS","RB1","KRAS","BARD1","RAD51D","RAD51B","PIK3CA","PTEN")
 
 	print(somatic_variants)
 
 	# order tables by archival TP53 variant type	
-	somatic_variants = somatic_variants[, order( factor(somatic_variants[3,], levels=variant_type_order))] # TODO: TP53 row is manually selected here - need to change this
+	somatic_variants = somatic_variants[, order( factor(somatic_variants[1,], levels=variant_type_order))] # TODO: TP53 row is manually selected here - need to change this
 	# ensure heatmap table has the same order as somatic variants
 	heatmap_table = heatmap_table[match(colnames(somatic_variants) %>% as.integer, heatmap_table$fk_britroc_number),]       	
 
@@ -112,8 +112,12 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
         column_title_font_size = 8
 	row_label_font_size = 6
 
-	print(somatic_variants)
+	print(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'][3,] %>% table())
+	print(somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'][3,] %>% table())
 	print(genes_with_variants)
+
+	somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'] %>% dim() %>% print()
+	somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum sensitive'] %>% dim() %>% print()
 	
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
