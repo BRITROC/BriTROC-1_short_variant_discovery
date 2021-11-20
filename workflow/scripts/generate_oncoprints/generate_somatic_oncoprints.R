@@ -14,6 +14,9 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# read in preprocessed data
 	somatic_variants = readr::read_tsv(somatic_variants)
 
+	# remove bad gene
+	somatic_variants = somatic_variants %>% dplyr::filter(!grepl('RAD51L3-RFFL',gene_symbol_tumour_type))
+
 	# create a genes column
 	somatic_variants_tmp = somatic_variants %>% 
 		dplyr::mutate(gene=stringr::str_extract(gene_symbol_tumour_type, pattern='[A-Z0-9]+_') %>% 
@@ -121,11 +124,23 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# TODO: implement a more elegant solution
 	row.names(somatic_variants) = row.names(somatic_variants) %>% stringr::str_replace('_', ' ')
 	all_possible_variant_types = all_possible_variant_types %>% stringr::str_replace('_', ' ')
+
+	print(somatic_variants)
+
+	#TODO : remove this quick fix/fudge
+	#somatic_variants = somatic_variants[-9,]
+
+	#print(somatic_variants)
+	print(all_possible_variant_types)
+
+	print(somatic_variants)
 	
 	png(somatic_oncoprint_output_file, width=1200)	
 
         column_title_font_size = 8
 	row_label_font_size = 6
+
+	somatic_variants %>% dim() %>% print()
 	
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
