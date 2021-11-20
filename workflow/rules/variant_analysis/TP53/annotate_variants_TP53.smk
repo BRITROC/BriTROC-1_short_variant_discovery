@@ -34,14 +34,9 @@ rule vep_octopus_tp53:
 #	script: '../scripts/collate_and_filter_vep_files.R'
 
 rule collate_and_filter_archival_octopus_vep_files_tp53:
-	input: expand('results/tumour_sample_vcfs_octopus/tp53_final/{sample}.filtered.vep.vcf', sample=somatic_tp53_samples)
-	output: 'results/final_tp53/filtered_archival_vep_calls_octopus.tsv'
-	script: '../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
-
-rule collate_and_filter_relapse_octopus_vep_files_tp53:
-	input: expand('results/tumour_sample_vcfs_octopus/tp53_final/{sample}.filtered.vep.vcf', sample=somatic_tp53_samples)
-	output: 'results/final_tp53/filtered_relapse_vep_calls_octopus.tsv'
-	script: '../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
+	input: expand('results/variant_analysis/TP53/{sample}.filtered.vep.vcf', sample=somatic_tp53_samples)
+	output: 'results/variant_analysis/TP53/collated/filtered_{tumour_type}_vep_calls_octopus.tsv'
+	script: '../../../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
 
 rule collate_allele_fraction_data:
 	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered2.vcf', sample=somatic_tp53_samples)

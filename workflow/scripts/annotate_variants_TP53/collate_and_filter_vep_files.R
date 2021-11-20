@@ -181,7 +181,7 @@ clarity_con <- dbConnect(RPostgres::Postgres(),
 )
 
 
-samples = dbReadTable(britroc_con, 'sample')
+samples = dbReadTable(britroc_con, 'sample') %>% dplyr::select(-fk_histological_id,-fk_block_id,-glasgow_comment)
 
 annotations = dplyr::inner_join(annotations,samples, by=c('sample_id'='name'))
 
@@ -190,42 +190,42 @@ annotations = dplyr::inner_join(annotations,samples, by=c('sample_id'='name'))
 #print(vep_files %>% length)
 
 vep_sample_list = stringr::str_extract(string=vep_files, pattern='(IM_[0-9]+)|JBLAB-[0-9]+')
-non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420',
-			'IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424',
-			'IM_302','IM_303','IM_304','IM_305',
-			'JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44')
+#non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420',
+#			'IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424',
+#			'IM_302','IM_303','IM_304','IM_305',
+#			'JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44')
 
 
 # IM_44 was not sequenced for sWGS but very likely non-HGSOC as IM_43 was identified as non-HGSOC
 
-samples_with_no_good_sequencing = c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441') 
+#samples_with_no_good_sequencing = c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441') 
 
-samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200',
-				'IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309',
-				'IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392')
+#samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200',
+#				'IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309',
+#				'IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392')
 
-vep_sample_list = vep_sample_list[!vep_sample_list %in% non_hgsoc_samples]
-vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_no_good_sequencing]
-vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_very_low_purity]
+#vep_sample_list = vep_sample_list[!vep_sample_list %in% non_hgsoc_samples]
+#vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_no_good_sequencing]
+#vep_sample_list = vep_sample_list[!vep_sample_list %in% samples_with_very_low_purity]
 
 annotations = annotations %>% dplyr::filter(sample_id %in% vep_sample_list) # evidence that we may be filtering genuine variants
-x = annotations %>% dplyr::group_by(fk_britroc_number,SYMBOL) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
-	dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(n)
+#x = annotations %>% dplyr::group_by(fk_britroc_number,SYMBOL) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
+#	dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(n)
 
-num_patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels %>% length()
-patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels()
+#num_patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels %>% length()
+#patients_with_paired_samples = samples %>% dplyr::filter(name %in% vep_sample_list) %>% .$fk_britroc_number %>% as.factor %>% levels()
 
 #samples %>% dplyr::filter(name %in% vep_sample_list) %>% print()
 
-print('num patients with sequencing')
-print(num_patients_with_paired_samples)
+#print('num patients with sequencing')
+#print(num_patients_with_paired_samples)
 
 #non_hgsoc_patients = c(10,19,27,111,119,120,144,157,164,170,176,183,197,243,258,274)
 
 # determine samples without a variant after the filtering which occurs in this script
 
-patients_sequenced = samples %>% dplyr::filter(name %in% vep_sample_list)
-print(patients_with_paired_samples[!patients_with_paired_samples %in% annotations$fk_britroc_number] %>% unique())
+#patients_sequenced = samples %>% dplyr::filter(name %in% vep_sample_list)
+#print(patients_with_paired_samples[!patients_with_paired_samples %in% annotations$fk_britroc_number] %>% unique())
 #print(vep_sample_list[!vep_sample_list %in% annotations$sample_id])
 
 #num_patients_with_paired_samples = 141
@@ -258,21 +258,21 @@ print(patients_with_paired_samples[!patients_with_paired_samples %in% annotation
 
 ##################################################################################
 
-x = x %>% dplyr::mutate(prop_patients_with_mutation=n/num_patients_with_paired_samples)
-print(x)
+#x = x %>% dplyr::mutate(prop_patients_with_mutation=n/num_patients_with_paired_samples)
+#print(x)
 
-print('BRCA1 patients')
+#print('BRCA1 patients')
 
-annotations %>% dplyr::filter(SYMBOL=='BRCA1') %>% .$fk_britroc_number %>% unique()
+#annotations %>% dplyr::filter(SYMBOL=='BRCA1') %>% .$fk_britroc_number %>% unique()
 
-print('BRCA2 patients')
+#print('BRCA2 patients')
 
-annotations %>% dplyr::filter(SYMBOL=='BRCA2') %>% .$fk_britroc_number %>% unique()
+#annotations %>% dplyr::filter(SYMBOL=='BRCA2') %>% .$fk_britroc_number %>% unique()
 
-print('Total BRCA somatic mutation rate - patient level')
+#print('Total BRCA somatic mutation rate - patient level')
 
-z = annotations %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2')) %>% .$fk_britroc_number %>% unique() %>% length
-print(z / num_patients_with_paired_samples)
+#z = annotations %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2')) %>% .$fk_britroc_number %>% unique() %>% length
+#print(z / num_patients_with_paired_samples)
 
 # add records for samples without any mutations
 samples_with_no_mutations = vep_sample_list[!vep_sample_list %in% annotations$sample_id]
@@ -283,9 +283,19 @@ samples_with_no_mutations_annotations$sample_id = samples_with_no_mutations
 samples_with_no_mutations_annotations = samples_with_no_mutations_annotations %>% dplyr::select(-type,-fk_britroc_number)
 samples_with_no_mutations_annotations = dplyr::inner_join(samples_with_no_mutations_annotations, samples, by=c('sample_id'='name'))
 
+#print(samples_with_no_mutations_annotations)
+
+print(annotations)
 print(samples_with_no_mutations_annotations)
 
+setdiff(colnames(annotations), colnames(samples_with_no_mutations_annotations))
+
 annotations = rbind(annotations,samples_with_no_mutations_annotations)
+
+# filter for variants of a particular tumour type
+print(snakemake@wildcards[['tumour_type']])
+
+annotations = annotations %>% dplyr::filter(type==snakemake@wildcards[['tumour_type']])
 
 readr::write_tsv(annotations, snakemake@output[[1]])
 
