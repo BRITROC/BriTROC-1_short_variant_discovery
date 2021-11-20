@@ -53,6 +53,8 @@ remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_
 		       dplyr::summarise(n=dplyr::n()) %>%
 		       tidyr::pivot_wider(names_from=type, values_from=n) %>%
 		       dplyr::filter(!is.na(germline))
+		} else if (analysis_type=='cohort') {
+		relevant_samples = sequenced_samples
 		}
 
 	return(relevant_samples)
