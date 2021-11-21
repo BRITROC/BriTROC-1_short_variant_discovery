@@ -8,11 +8,12 @@ def get_tumour_bam_files(wildcards):
 	elif wildcards.analysis_type == 'panel_28_only':
 		analysis_type = 'antijoined_panel_28_6' 
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.{analysis_type}.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'], analysis_type=analysis_type)
+	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
 	bam_files = []
 
 	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
+		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
+		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
 		bam_files.append(new_bam_name)
 
 	return(bam_files)
@@ -31,12 +32,12 @@ def get_normal_bam_files(wildcards):
 	elif wildcards.analysis_type == 'panel_28_only':
 		analysis_type = 'antijoined_panel_28_6' 
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.{analysis_type}.bam', zip, SLX_ID=normal_metadata['fk_slx'], barcodes=normal_metadata['fk_barcode'], flowcell=normal_metadata['flowcell'], lane=normal_metadata['lane'], analysis_type=analysis_type) 
-
+	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=normal_metadata['fk_slx'], barcodes=normal_metadata['fk_barcode'], flowcell=normal_metadata['flowcell'], lane=normal_metadata['lane']) 
 	bam_files = []
 
 	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
+		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
+		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
 		bam_files.append(new_bam_name)
 
 	return(bam_files)
@@ -55,14 +56,7 @@ def get_normal_sample_names(wildcards):
 	samples = normal_metadata.set_index('fk_sample', drop=False)
 	samples = samples.index.unique().tolist()	
 
-	if SLX[0] == 'SLX-9629':
-		samples[0] = samples[0].replace('-','')
-	elif SLX[0] in ['SLX-13630','SLX-11347','SLX-11111','SLX-11110','SLX-11109','SLX-9856']:
-		# this is accounting for a bug in the formatting of BAM headers
-		samples.append(samples[0] + '_d')
-		samples[0] = samples[0].replace('-','')
-		samples[1] = samples[1].replace('-','')
-	elif SLX[0] == 'SLX-14363':
+	if SLX[0] == 'SLX-14363':
 		samples.append(samples[0] + '_d')
 		samples[0] = '{}.{}'.format(SLX[0], barcodes[0])
 		samples[1] = '{}.{}'.format(SLX[0], barcodes[1])
