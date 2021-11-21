@@ -15,10 +15,13 @@ square_vcf = square_vcf %>% dplyr::rename('CHROM'=`#CHROM`)
 # remove the column in the table which corresponds to the normal sample
 patient_id = snakemake@wildcards$patient_id %>% as.integer()
 
-# remove the germline sample
-germline_metadata = readr::read_tsv(snakemake@input[['germline_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
-germline_sample = germline_metadata %>% dplyr::pull(fk_sample) %>% unique()
-square_vcf = square_vcf %>% dplyr::select(-all_of(germline_sample))
+# remove the germline sample column if it exists in the combined vcf
+if (snakemake@params[['includes_germline_sample_column']]==TRUE) {
+	germline_metadata = readr::read_tsv(snakemake@input[['germline_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
+	germline_sample = germline_metadata %>% dplyr::pull(fk_sample) %>% unique()
+	square_vcf = square_vcf %>% dplyr::select(-all_of(germline_sample))
+} else {
+}
 
 # define samples and sample types
 somatic_metadata = readr::read_tsv(snakemake@input[['matched_somatic_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)

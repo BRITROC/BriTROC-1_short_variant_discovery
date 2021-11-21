@@ -18,7 +18,15 @@ rule vep_octopus:
 			--port 3337'
 
 rule ensure_tech_rep_genotypes_match:
-	input: rules.concat_vcfs.output
+	input: 
+		combined_vcfs=rules.concat_vcfs.output,
+		germline_metadata='config/matched_germline_metadata.tsv',
+		matched_somatic_metadata='config/matched_somatic_metadata.tsv'
+	params:
+		variant_quality_score_threshold=500,
+		C_to_G_maf_threshold=0.23,
+		C_to_G_maf_diff_threshold=0.30,
+		includes_germline_sample_column=True
 	output: 
 		tumour_samples_union='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.filtered3.vcf',
 		archival_samples='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.archival.filtered3.vcf',
@@ -26,7 +34,7 @@ rule ensure_tech_rep_genotypes_match:
 		library_MAFs='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.library_MAFs.vcf',
 		library_depths='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.library_depths.vcf',
 		sample_genotypes='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.sample_genotypes.vcf'
-	script: '../scripts/annotate_variants_joined/view_square_vcfs.R'
+	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 def get_relevant_patient_list(wildcards):
 	if wildcards.analysis_type=='panel_6_28':
