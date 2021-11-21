@@ -2,10 +2,7 @@
 
 library(magrittr)
 
-#file_name = 'results/tumour_sample_vcfs_octopus/105.filtered2.vcf'
-
 square_vcf = readr::read_tsv(snakemake@input[['all_patient_vcf']], comment='##')  #'results/tumour_sample_vcfs_octopus/123.filtered3.vcf'
-#square_vcf = readr::read_tsv(file_name, comment='##')
 square_vcf = square_vcf %>% dplyr::rename('CHROM'=`#CHROM`)
 
 # remove the column in the table which corresponds to the normal sample
