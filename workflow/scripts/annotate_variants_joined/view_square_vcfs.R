@@ -2,111 +2,113 @@
 
 library(magrittr)
 
-#file_name = 'results/tumour_sample_vcfs_octopus/105.filtered2.vcf'
+# define new operator
+`%notin%` = function(x,y) !(x %in% y)
 
-square_vcf = readr::read_tsv(snakemake@input[[1]], comment='##')  #'results/tumour_sample_vcfs_octopus/123.filtered3.vcf'
-#square_vcf = readr::read_tsv(file_name, comment='##')
+# read in the data and reformat
+square_vcf = readr::read_tsv(snakemake@input[['combined_vcfs']], comment='##')
 square_vcf = square_vcf %>% dplyr::rename('CHROM'=`#CHROM`)
 
 # remove the column in the table which corresponds to the normal sample
 patient_id = snakemake@wildcards$patient_id %>% as.integer()
-#patient_id = file_name %>% stringr::str_extract('[0-9]+') %>% as.integer()
 
-germline_metadata = readr::read_tsv('config/matched_germline_metadata.tsv') %>% dplyr::filter(fk_britroc_number==patient_id)
+# remove the germline sample
+germline_metadata = readr::read_tsv(snakemake@input[['germline_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
 germline_sample = germline_metadata %>% dplyr::pull(fk_sample) %>% unique()
-germline_slx = germline_metadata %>% dplyr::pull(fk_slx) %>% unique()
-
-if (germline_slx[1] %in% c('SLX-11110','SLX-11347','SLX-11109','SLX-11111','SLX-9629','SLX-9856')) {
-	germline_sample = germline_sample %>% stringr::str_remove('-')
-} else {
-}
-
 square_vcf = square_vcf %>% dplyr::select(-all_of(germline_sample))
 
 # define samples and sample types
-somatic_metadata = readr::read_tsv('config/matched_somatic_metadata.tsv') %>% dplyr::filter(fk_britroc_number==patient_id)
+somatic_metadata = readr::read_tsv(snakemake@input[['matched_somatic_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
 archival_samples = somatic_metadata %>% dplyr::filter(type=='archival') %>% dplyr::pull(fk_sample) %>% unique()
 relapse_samples = somatic_metadata %>% dplyr::filter(type=='relapse') %>% dplyr::pull(fk_sample) %>% unique()
 samples = c(archival_samples, relapse_samples)
 
 # filter by quality score
-square_vcf = square_vcf %>% dplyr::filter(QUAL>500)
-#square_vcf = square_vcf[10,]
-genotype_table = square_vcf
+square_vcf = square_vcf %>% dplyr::filter(QUAL>snakemake@params[['variant_quality_score_threshold']])
 
-# this assumed library names use sample names as a prefix
-libraries = genotype_table %>% dplyr::select(dplyr::starts_with(samples)) %>% colnames()
-
-for (lib in libraries) {
-	genotype_table[[lib]] = genotype_table[[lib]] %>% stringr::str_extract(pattern='[01\\|]+')
-}
-
-# go from a library genotype table to a sample genotype table - first by removing all library fields
-sample_genotype_table = genotype_table %>% dplyr::select(-dplyr::any_of(libraries)) 
-
-# write empty data frame to file if data frame is empty at this point
-
-#print('shoe')
-
-if (sample_genotype_table %>% dim() %>% .[1] == 0) {
-	readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']])
-	readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
+# write empty data frame to file if data frame is empty at this point and exit script
+if (square_vcf %>% dim() %>% .[1] == 0) {
+	readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']])
+	readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
 	readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']])
 
 	readr::write_tsv(square_vcf, path=snakemake@output[['library_MAFs']])
 	readr::write_tsv(square_vcf, path=snakemake@output[['library_depths']])
 
-	readr::write_tsv(sample_genotype_table, path=snakemake@output[['sample_genotypes']])
+	readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['sample_genotypes']])
 
 	quit()
 } else {
 }
 
-check_genotypes = function(row_index, genotype_table) {
-	
-	new_genotype_table = genotype_table[row_index,]
-	if (new_genotype_table[1,1] == new_genotype_table[1,2]) {
-		return(new_genotype_table[1,1])
-	} else {
-		return(NA)
+# TODO: formalise the process of mapping libraries to samples
+identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_vcf) {
+	# square_vcf: A joined vcf table where each column represents one library
+	# output - sample_genotype_table: For each variant in square_vcf, a genotype for each sample where multiple libraries map onto single samples
+
+	# create space for creating a table of genotypes
+	genotype_table = square_vcf
+
+	# this assumed library names use sample names as a prefix (i.e. JBLAB-001 and JBLAB-001_d)
+	libraries = genotype_table %>% dplyr::select(dplyr::starts_with(samples)) %>% colnames()
+
+	# extract the predicted genotype for each variant
+	for (lib in libraries) {
+		genotype_table[[lib]] = genotype_table[[lib]] %>% stringr::str_extract(pattern='[01\\|]+')
 	}
-}
 
+	# go from a library genotype table to a sample genotype table - first by removing all library fields
+	sample_genotype_table = genotype_table %>% dplyr::select(-dplyr::any_of(libraries)) 
 
-# convert filtered samples to the '0|0' genotype
-square_vcf_ft = square_vcf
+	check_genotypes = function(row_index, genotype_table) {
+		# genotype_table = A table of variants and their predicted genotypes for a set of libraries
 
-#print(genotype_table %>% dplyr::select('#CHROM','POS','REF',IM_5), n=100)
-
-for (lib in libraries) {
-	square_vcf_ft[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[17]]
+		# output: A genotype table which only includes variants where the genotypes match between duplicate libraries
 	
-	genotype_table[[lib]] = ifelse(square_vcf_ft[[lib]] != 'PASS', '0|0', genotype_table[[lib]])
+		new_genotype_table = genotype_table[row_index,]
+		if (new_genotype_table[1,1] == new_genotype_table[1,2]) {
+			return(new_genotype_table[1,1])
+		} else {
+			return(NA)
+		}
+	}
+
+	# convert filtered/non-PASSed samples to the '0|0' genotype
+	# FT refers to the FT field which scores each library on whether they passed all filters for a given variant
+	square_vcf_ft = square_vcf
+
+	for (lib in libraries) {
+		square_vcf_ft[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[17]]
+
+		genotype_table[[lib]] = ifelse(square_vcf_ft[[lib]] != 'PASS', '0|0', genotype_table[[lib]])
+	}
+
+	# test that the two technical replicates are the same according to their predicted genotype
+	for (sample in samples) {
+		# subset to libraries relevant to a particular sample identifier
+		relevant_libraries = genotype_table %>% dplyr::select(starts_with(sample)) 
+
+		relevant_libraries$sample_genotype = purrr::map(.x=1:dim(relevant_libraries)[1], .f=check_genotypes, relevant_libraries) %>% unlist()
+
+		# map the result of check_genotype onto a new sample-based table
+		sample_genotype_table[[sample]] = relevant_libraries$sample_genotype
+	}
+
+	# filter for row records with at least one variant sample
+	sample_genotype_table = sample_genotype_table %>% dplyr::filter(dplyr::if_any(dplyr::all_of(samples), `%notin%`, c(NA,"0|0")))
+
+	sample_genotype_table = sample_genotype_table %>% dplyr::inner_join(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), by=c('CHROM','POS','REF','ALT'))
+
+	return(sample_genotype_table)
 }
 
-#print(genotype_table %>% dplyr::select('#CHROM','POS','REF',IM_5), n=100)
-#print(square_vcf_ft %>% dplyr::select('#CHROM','POS','REF',IM_5), n=100)
+sample_genotype_table = identify_variants_with_tech_rep_mismatch_in_joined_vcf_table(square_vcf) 
 
-# test that the two technical replicates are the same according to their predicted genotype
-for (sample in samples) {
-	relevant_libraries = genotype_table %>% dplyr::select(starts_with(sample))
-	#relevant_libraries$sample_genotype = relevant_libraries[,1] == relevant_libraries[,2] 
-
-	relevant_libraries$sample_genotype = purrr::map(.x=1:dim(relevant_libraries)[1], .f=check_genotypes, relevant_libraries) %>% unlist()
-
-	#relevant_libraries$sample_genotype = ifelse(relevant_libraries[,1] == relevant_libraries[,2], relevant_libraries %>% dplyr::select(ends_with('_d')), NA)
-	sample_genotype_table[[sample]] = relevant_libraries$sample_genotype
-}
-
-# filter row records with at least one variant sample
-`%notin%` = function(x,y) !(x %in% y)
-sample_genotype_table = sample_genotype_table %>% dplyr::filter(dplyr::if_any(dplyr::all_of(samples), `%notin%`, c(NA,"0|0")))
-
+# join the results of this test/filter into the main table
 square_vcf = square_vcf %>% dplyr::inner_join(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), by=c('CHROM','POS','REF','ALT'))
 
-#print(square_vcf)
-
-sample_genotype_table = sample_genotype_table %>% dplyr::inner_join(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), by=c('CHROM','POS','REF','ALT'))
+print(square_vcf, width=Inf)
+quit()
 
 #print(sample_genotype_table, n=5)
 
