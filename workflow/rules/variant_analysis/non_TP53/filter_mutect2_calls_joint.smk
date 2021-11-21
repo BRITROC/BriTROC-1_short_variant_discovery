@@ -60,5 +60,5 @@ rule concat_vcfs:
 	wildcard_constraints:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
-	output: 'results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.filtered2.vcf'
+	output: protected('results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.filtered2.vcf')
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
