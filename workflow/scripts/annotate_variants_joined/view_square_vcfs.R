@@ -24,10 +24,15 @@ if (snakemake@params[['includes_germline_sample_column']]==TRUE) {
 }
 
 # define samples and sample types
-somatic_metadata = readr::read_tsv(snakemake@input[['matched_somatic_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
-archival_samples = somatic_metadata %>% dplyr::filter(type=='archival') %>% dplyr::pull(fk_sample) %>% unique()
-relapse_samples = somatic_metadata %>% dplyr::filter(type=='relapse') %>% dplyr::pull(fk_sample) %>% unique()
-samples = c(archival_samples, relapse_samples)
+somatic_metadata = readr::read_tsv(snakemake@input[['tumour_metadata']]) %>% dplyr::filter(fk_britroc_number==patient_id)
+
+if (snakemake@params[['includes_tumour_type_analysis']]==TRUE) {
+	archival_samples = somatic_metadata %>% dplyr::filter(type=='archival') %>% dplyr::pull(fk_sample) %>% unique()
+	relapse_samples = somatic_metadata %>% dplyr::filter(type=='relapse') %>% dplyr::pull(fk_sample) %>% unique()
+	samples = c(archival_samples, relapse_samples)
+} else {
+	samples = somatic_metadata %>% dplyr::pull(fk_sample) %>% unique()
+}
 
 # filter by quality score
 square_vcf = square_vcf %>% dplyr::filter(QUAL>snakemake@params[['variant_quality_score_threshold']])
@@ -35,8 +40,12 @@ square_vcf = square_vcf %>% dplyr::filter(QUAL>snakemake@params[['variant_qualit
 # write empty data frame to file if data frame is empty at this point and exit script
 if (square_vcf %>% dim() %>% .[1] == 0) {
        readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']])
-       readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
-       readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']])
+
+	if (snakemake@params[['includes_tumour_type_analysis']]==TRUE) {
+		readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
+		readr::write_tsv(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']])
+	} else {
+	}
 
        readr::write_tsv(square_vcf, path=snakemake@output[['library_MAFs']])
        readr::write_tsv(square_vcf, path=snakemake@output[['library_depths']])
@@ -66,8 +75,12 @@ square_vcf_depth = square_vcf
 # write straight to disk if variant table is empty at this point
 if (square_vcf_MAF %>% dim() %>% .[1] == 0) {
 	readr::write_tsv(square_vcf_MAF %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']])
-	readr::write_tsv(square_vcf_MAF %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
-	readr::write_tsv(square_vcf_MAF %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']])
+	
+	if (snakemake@params[['includes_tumour_type_analysis']]==TRUE) {
+		readr::write_tsv(square_vcf_MAF %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']])
+		readr::write_tsv(square_vcf_MAF %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']])
+	} else {
+	}
 
 	readr::write_tsv(square_vcf_MAF, path=snakemake@output[['library_MAFs']])
 	readr::write_tsv(square_vcf_depth, path=snakemake@output[['library_depths']])
@@ -80,16 +93,18 @@ if (square_vcf_MAF %>% dim() %>% .[1] == 0) {
 
 sample_genotype_table = implement_substitution_type_specific_filters(square_vcf)
 
-# subset for variants which appear in at least one archival sample
-sample_genotype_table_archival = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(archival_samples), `%notin%`, c(NA,"0|0")))
-
-# subset for variants which appear in at least one relapse sample
-sample_genotype_table_relapse = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(relapse_samples), `%notin%`, c(NA,"0|0")))
-
 # write data objects to disk
 readr::write_tsv(square_vcf_MAF, path=snakemake@output[['library_MAFs']])
 readr::write_tsv(square_vcf_depth, path=snakemake@output[['library_depths']])
 readr::write_tsv(sample_genotype_table, path=snakemake@output[['sample_genotypes']])
 readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']], append=FALSE)
-readr::write_tsv(sample_genotype_table_archival %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']], append=FALSE)
-readr::write_tsv(sample_genotype_table_relapse %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']], append=FALSE)
+
+if (snakemake@params[['includes_tumour_type_analysis']]==TRUE) {
+	# subset for variants which appear in at least one of the tumour types
+	sample_genotype_table_archival = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(archival_samples), `%notin%`, c(NA,"0|0")))
+	sample_genotype_table_relapse = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(relapse_samples), `%notin%`, c(NA,"0|0")))
+
+	readr::write_tsv(sample_genotype_table_archival %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']], append=FALSE)
+	readr::write_tsv(sample_genotype_table_relapse %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']], append=FALSE)
+} else {
+}

@@ -18,15 +18,22 @@ rule vep_octopus:
 			--port 3337'
 
 rule ensure_tech_rep_genotypes_match:
-	input: 
-		all_patient_vcf=rules.concat_vcfs.output,
-		metadata_sheet='config/all_tumour_metadata.tsv'
+	input:
+		combined_vcfs=rules.concat_vcfs.output,
+		tumour_metadata='config/all_tumour_metadata.tsv'
+	params:
+		variant_quality_score_threshold=500,
+		C_to_G_maf_threshold=0.23,
+		C_to_G_maf_diff_threshold=0.30,
+		includes_germline_sample_column=False,
+		includes_tumour_type_analysis=False,
+		includes_germline_variants=True
 	output: 
 		tumour_samples_union='results/variant_analysis/cohort/{patient_id}.filtered3.vcf',
 		library_MAFs='results/variant_analysis/cohort/{patient_id}.library_MAFs.vcf',
 		library_depths='results/variant_analysis/cohort/{patient_id}.library_depths.vcf',
 		sample_genotypes='results/variant_analysis/cohort/{patient_id}.sample_genotypes.vcf'
-	script: '../../../scripts/annotate_variants_joined/view_square_vcfs_cohort.R'
+	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_and_filter_tumour_type_specific_vcf_files:
 	input: lambda wildcards: expand('results/variant_analysis/cohort/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
@@ -42,8 +49,15 @@ rule collate_and_filter_octopus_vep_files:
 
 rule ensure_tech_rep_genotypes_match_with_tumour_type:
 	input: 
-		all_patient_vcf=rules.concat_vcfs.output,
-		metadata_sheet='config/all_tumour_metadata.tsv'
+		combined_vcfs=rules.concat_vcfs.output,
+		tumour_metadata='config/tumour_metadata_with_one_of_both_types.tsv'
+	params:
+		variant_quality_score_threshold=500,
+		C_to_G_maf_threshold=0.23,
+		C_to_G_maf_diff_threshold=0.30,
+		includes_germline_sample_column=False,
+		includes_tumour_type_analysis=True,
+		includes_germline_variants=True
 	output: 
 		tumour_samples_union='results/variant_analysis/cohort/both/{patient_id}.filtered3.vcf',
 		archival_samples='results/variant_analysis/cohort/both/{patient_id}.archival.filtered3.vcf',
@@ -51,7 +65,7 @@ rule ensure_tech_rep_genotypes_match_with_tumour_type:
 		library_MAFs='results/variant_analysis/cohort/both/{patient_id}.library_MAFs.vcf',
 		library_depths='results/variant_analysis/cohort/both/{patient_id}.library_depths.vcf',
 		sample_genotypes='results/variant_analysis/cohort/both/{patient_id}.sample_genotypes.vcf'
-	script: '../../../scripts/annotate_variants_joined/view_square_vcfs_no_germline.R'
+	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_and_filter_tumour_type_specific_vcf_files_with_tumour_type:
 	input: lambda wildcards: expand('results/variant_analysis/cohort/both/{patient_id}.{tumour_type}.filtered3.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)

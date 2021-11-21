@@ -21,12 +21,14 @@ rule ensure_tech_rep_genotypes_match:
 	input: 
 		combined_vcfs=rules.concat_vcfs.output,
 		germline_metadata='config/matched_germline_metadata.tsv',
-		matched_somatic_metadata='config/matched_somatic_metadata.tsv'
+		tumour_metadata='config/matched_somatic_metadata.tsv'
 	params:
 		variant_quality_score_threshold=500,
 		C_to_G_maf_threshold=0.23,
 		C_to_G_maf_diff_threshold=0.30,
-		includes_germline_sample_column=True
+		includes_germline_sample_column=True,
+		includes_tumour_type_analysis=True,
+		includes_germline_variants=False
 	output: 
 		tumour_samples_union='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.filtered3.vcf',
 		archival_samples='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.archival.filtered3.vcf',
