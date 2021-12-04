@@ -60,5 +60,3 @@ rule octopus:
 				--regions-file {input.interval_file} \
 				--output {output.tumour_vcf} \
 				-R {input.reference_genome}'
-
-
