@@ -34,7 +34,7 @@ rule octopus_tp53:
 				--min-expected-somatic-frequency 0.03 \
 				--min-credible-somatic-frequency 0.01 \
 				--max-somatic-haplotypes 2 \
-				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.0001 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
+				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.0001 | AFB > 0.50 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
 				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.0001" \
 				--annotations SB SD AF FRF \
 				--threads \
@@ -69,7 +69,7 @@ rule filter_calls2_TP53:
 				--disable-downsampling \
 				--threads \
 				-w temp/ \
-				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.25 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
+				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.50 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
 				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | FRF > 0.5 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.03" \
 				--filter-vcf {input.vcf_file} \
 				-I {input.tumour_bams} \
