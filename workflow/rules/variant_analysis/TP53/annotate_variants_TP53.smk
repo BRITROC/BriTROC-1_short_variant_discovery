@@ -1,7 +1,7 @@
 rule vep_octopus_tp53:
 	input: rules.concat_vcfs_sample_level.output
-	output: 'results/tumour_sample_vcfs_octopus/tp53_final/{sample}.vep.vcf'
-	conda: '../../config/vep.yaml'
+	output: 'results/variant_analysis/TP53/{sample}.filtered.vep.vcf'
+	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \
 			-o {output} \
@@ -24,7 +24,7 @@ rule collate_and_filter_octopus_vep_files_tp53:
 
 rule collate_allele_fraction_data:
 	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered2.vcf', sample=somatic_tp53_samples)
-	output: 'results/final_TP53/tp53_collated_MAFs.tsv'
+	output: 'results/variant_analysis/TP53/collated/tp53_collated_MAFs.tsv'
 	script: '../scripts/annotate_variants_TP53/extract_info_from_vcf.R'
 
 rule add_MAFs_to_TP53_variant_table:
