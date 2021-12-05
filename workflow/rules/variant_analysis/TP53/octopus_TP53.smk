@@ -28,6 +28,7 @@ rule octopus_tp53:
 	threads: 4
 	shell: '../octopus/bin/octopus \
 				-C cancer \
+				--disable-downsampling \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \
 				--min-expected-somatic-frequency 0.03 \
