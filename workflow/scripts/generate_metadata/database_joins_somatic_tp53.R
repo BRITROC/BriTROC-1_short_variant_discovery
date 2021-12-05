@@ -5,7 +5,6 @@ library(DBI)
 library(RPostgres)
 
 readRenviron('~/.Renviron')
-
 britroc_con <- dbConnect(RPostgres::Postgres(),
                  dbname='britroc1',
                  host='jblab-db.cri.camres.org',
@@ -13,6 +12,17 @@ britroc_con <- dbConnect(RPostgres::Postgres(),
                  user = Sys.getenv('jblab_db_username'),
                  password = Sys.getenv('jblab_db_password')
 )
+
+clarity_con <- dbConnect(RPostgres::Postgres(),
+                 dbname='clarity',
+                 host='jblab-db.cri.camres.org',
+                 port = 5432,
+                 user = Sys.getenv('jblab_db_username'),
+                 password = Sys.getenv('jblab_db_password')
+)
+
+
+source('functions.R')
 
 # example usage
 samples = RPostgres::dbReadTable(britroc_con, 'sample')
@@ -31,5 +41,17 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 somatic_metadata$fk_amplicon_panel = ifelse(somatic_metadata$fk_amplicon_panel == 18, 10, somatic_metadata$fk_amplicon_panel)
 
 somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+
+# remove samples which have not passed QC
+relevant_samples = remove_non_relevant_samples( 
+	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
+       samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
+        samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
+	britroc_con=britroc_con,
+	clarity_con=clarity_con,
+        analysis_type='cohort'
+) %>% dplyr::pull(name)
+
+somatic_metadata = somatic_metadata %>% dplyr::filter(fk_sample %in% relevant_samples)
 
 write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')

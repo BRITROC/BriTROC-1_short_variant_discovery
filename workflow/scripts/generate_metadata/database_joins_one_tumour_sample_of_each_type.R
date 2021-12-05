@@ -30,6 +30,14 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 # only include patients that have at least one tumour sample of each type
 print(somatic_metadata %>% tibble::as_tibble())
 
+# QC filtering
+#somatic_metadata = remove_non_relevant_samples( 
+#	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
+#       samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
+#        samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
+#        analysis_type='cohort'
+#)
+
 patients_with_tumour_samples_of_both_types = 
 	somatic_metadata %>% dplyr::group_by(fk_britroc_number,type) %>% dplyr::summarise(n=dplyr::n()) %>% 
 	dplyr::group_by(fk_britroc_number) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::filter(n==2) %>% dplyr::pull(fk_britroc_number)
@@ -37,5 +45,14 @@ patients_with_tumour_samples_of_both_types =
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% patients_with_tumour_samples_of_both_types)
 
 somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+
+tp53_somatic_metadata = readr::read_tsv(snakemake@input[['somatic_tp53_metadata']])
+
+patients_with_tp53_samples_of_both_types = 
+	tp53_somatic_metadata %>% dplyr::group_by(fk_britroc_number,type) %>% dplyr::summarise(n=dplyr::n()) %>% 
+	dplyr::group_by(fk_britroc_number) %>% dplyr::summarise(n=dplyr::n()) %>% dplyr::filter(n==2) %>% dplyr::pull(fk_britroc_number)
+
+# filter so we only examine non-TP53 genes for patient which had TP53 sequencing for both tumour types
+somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% patients_with_tp53_samples_of_both_types)
 
 write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')

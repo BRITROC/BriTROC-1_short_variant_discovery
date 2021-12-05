@@ -88,6 +88,14 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
 			dplyr::mutate(SYMBOL='TP53')
+	
+	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
+
+	print(non_tp53_variants)
+	print(tp53_variants)
+	print(relevant_samples %>% tibble::as_tibble())
+
+	tp53_variants = dplyr::semi_join(tp53_variants,relevant_samples, by=c('sample_id'='name'))
 
 	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
 	#if (gene_set_analysed == 'panel_6_28') {
@@ -200,10 +208,12 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	## remove non-relevant samples
 	# TODO: remove SLX-13716 from the database
 		
-	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
-
 	# only retain variants in patients with at least one germline, relapse and archival sampl
 	all_variants = all_variants %>% dplyr::filter(patient_id %in% relevant_samples$fk_britroc_number)
+	print(all_variants %>% tibble::as_tibble())
+	print(relevant_samples %>% tibble::as_tibble())
+	#x=all_variants %>% tibble::as_tibble()
+	#readr::write_tsv(x,'tmp.tsv')
 
 	# reformat
 	all_variants =
