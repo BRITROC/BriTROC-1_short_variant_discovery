@@ -14,8 +14,8 @@ rule get_somatic_samples_tp53:
 
 # generate metadata for all tumour samples
 rule get_all_tumour_metadata:
-	output:
-		somatic_metadata='config/all_tumour_metadata.tsv'
+	input: somatic_tp53_metadata=rules.get_somatic_samples_tp53.output
+	output: somatic_metadata='config/all_tumour_metadata.tsv'
 	script: '../scripts/generate_metadata/database_joins.R'
 
 # generate metadata for all patients with at least one archival and relapse sample but not necessarily a germline sample
