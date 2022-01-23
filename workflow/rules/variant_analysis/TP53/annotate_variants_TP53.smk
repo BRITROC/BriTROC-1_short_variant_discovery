@@ -23,9 +23,9 @@ rule collate_and_filter_octopus_vep_files_tp53:
 	script: '../../../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
 
 rule collate_allele_fraction_data:
-	input: expand('results/tumour_sample_vcfs_octopus/{sample}.filtered2.vcf', sample=somatic_tp53_samples)
+	input: expand('results/variant_analysis/TP53/{sample}.vcf', sample=somatic_tp53_samples)
 	output: 'results/variant_analysis/TP53/collated/tp53_collated_MAFs.tsv'
-	script: '../scripts/annotate_variants_TP53/extract_info_from_vcf.R'
+	script: '../../../scripts/annotate_variants_TP53/extract_info_from_vcf.R'
 
 rule add_MAFs_to_TP53_variant_table:
 	input:
