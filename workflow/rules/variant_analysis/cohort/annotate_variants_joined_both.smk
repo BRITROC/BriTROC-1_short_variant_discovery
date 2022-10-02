@@ -37,6 +37,42 @@ rule ensure_tech_rep_genotypes_match_with_tumour_type:
 		sample_genotypes='results/variant_analysis/cohort/both/{patient_id}.sample_genotypes.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
+rule get_interval_file_for_targeted_calling:
+	input: rules.ensure_tech_rep_genotypes_match_with_tumour_type.output.tumour_samples_union
+	output: 'results/variant_analysis/cohort/both/{patient_id}.interval_file.txt'
+	script: '../../../scripts/annotate_variants_joined/get_intervals_for_targeted_calling.R'
+
+rule octopus_targeted_calling:
+	input:
+		reference_genome=config['reference_genome'],
+		interval_file=rules.get_interval_file_for_targeted_calling.output, 
+		tumour_bams=get_tumour_bam_files,
+		tumour_bam_indexes=get_tumour_bam_index_files
+	output: 
+		tumour_vcf='results/variant_analysis/cohort/{patient_id}.{nonoverlapping_id}.targeted.vcf',
+	threads: 16
+	wildcard_constraints:
+		nonoverlapping_id='[1-9]'
+	shell: 'octopus \
+				-C cancer \
+				--disable-downsampling \
+				--allow-marked-duplicates \
+				--allow-octopus-duplicates \
+				--forest resources/germline.v0.7.2.forest \
+				--somatic-forest resources/somatic.v0.7.2.forest \
+				--max-somatic-haplotypes 2 \
+				--annotations SB SD AF AD FRF \
+				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.50 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
+				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | FRF > 0.5 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.0001" \
+				--min-expected-somatic-frequency 0.03 \
+				--min-credible-somatic-frequency 0.01 \
+				--threads \
+				-w temp/ \
+				-I {input.tumour_bams} \
+				--regions-file {input.interval_file} \
+				--output {output.tumour_vcf} \
+				-R {input.reference_genome}'
+
 rule collate_and_filter_tumour_type_specific_vcf_files_with_tumour_type:
 	input: lambda wildcards: expand('results/variant_analysis/cohort/both/{patient_id}.{tumour_type}.filtered3.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
 	output: 'results/variant_analysis/cohort/collated/{tumour_type}_filtered3_joined.tsv'
