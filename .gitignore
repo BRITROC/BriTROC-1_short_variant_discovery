@@ -1,4 +1,5 @@
 *.vcf
+*.txt
 .RData
 .Rprofile
 .Rhistory
