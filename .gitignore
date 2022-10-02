@@ -1,10 +1,17 @@
 *.vcf
+.RData
+.Rprofile
+.Rhistory
+Rplots.pdf
+*.pdf
+*.png
 *.idx
 *.out
 *.gz
 *.stats
 *.tbi
 *.bed
+*tmp*
 tumour_vcfs/
 normal_vcfs/
 slurm-submit.general
