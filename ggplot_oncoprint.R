@@ -3,9 +3,10 @@
 library(patchwork)
 library(ggplot2)
 
-theme_set(theme_gray(base_size = 22))
+theme_set(theme_gray(base_size = 19))
 
 # read in data
+
 oncoprint_data = readr::read_tsv('results/data_for_whole_cohort_oncoprint_intercalated.targeted.tsv')
 
 # remove NA results
@@ -37,7 +38,9 @@ britroc_con <- dbConnect(RPostgres::Postgres(),
 
 patient_table = dbReadTable(britroc_con, 'patients') %>% tibble::as_tibble()
 patient_table = patient_table %>% dplyr::select(britroc_number, age, histological_type, tumour_location_at_diagnosis, tumour_stage_at_diagnosis, 
-					pt_sensitivity_at_reg)
+					pt_sensitivity_at_reg, diagnosis_date, registration_date)
+patient_table = patient_table %>% dplyr::mutate(day_diff=registration_date - diagnosis_date) %>%
+	dplyr::select(-diagnosis_date,-registration_date)
 
 patient_table$britroc_number = as.factor(patient_table$britroc_number)
 
@@ -85,7 +88,7 @@ transform_data = function(patient, gene) {
 	new_combined_table_tmp = tibble::tibble(britroc_number=patient, gene_list=gene, variant_type=NA)
 
 	new_combined_table_tmp$variant_type  = dplyr::if_else(combined_table_tmp$variant_type[1] == 'mutation_present' & combined_table_tmp$variant_type[2] == 'mutation_present', 'shared mutation' , as.character(NA))
-	new_combined_table_tmp$variant_type  = dplyr::if_else(combined_table_tmp$variant_type[1] == 'mutation_present' & combined_table_tmp$variant_type[2] == 'mutation_not_present', 'archival only mutation' , new_combined_table_tmp$variant_type)
+	new_combined_table_tmp$variant_type  = dplyr::if_else(combined_table_tmp$variant_type[1] == 'mutation_present' & combined_table_tmp$variant_type[2] == 'mutation_not_present', 'diagnosis only mutation' , new_combined_table_tmp$variant_type)
 	new_combined_table_tmp$variant_type  = dplyr::if_else(combined_table_tmp$variant_type[1] == 'mutation_not_present' & combined_table_tmp$variant_type[2] == 'mutation_present', 'relapse only mutation' , new_combined_table_tmp$variant_type)
 	new_combined_table_tmp$variant_type  = dplyr::if_else(combined_table_tmp$variant_type[1] == 'mutation_not_present' & combined_table_tmp$variant_type[2] == 'mutation_not_present', 'no mutation' , new_combined_table_tmp$variant_type)
 
@@ -113,13 +116,89 @@ new_combined_table$gene_list = factor(new_combined_table$gene_list,
 
 
 new_combined_table2 = dplyr::inner_join(new_combined_table, patient_table, by='britroc_number')
-new_combined_table2$variant_type = factor(new_combined_table2$variant_type, levels=c('shared mutation','archival only mutation','relapse only mutation','no mutation'))
-new_combined_table2 = new_combined_table2 %>% dplyr::arrange(variant_type)
-#new_combined_table2$britroc_number = factor(new_combined_table2$britroc_number, levels=new_combined_table2$britroc_number %>% unique())
+#new_combined_table2$variant_type = factor(new_combined_table2$variant_type, levels=c('shared mutation','archival only mutation','relapse only mutation','no mutation'))
 
-print(new_combined_table2)
+# strictly for the purpose of matrix ordering and nothing else
+#new_combined_table2$variant_type_no_tp53 = new_combined_table2$variant_type
 
-quit()
+print(new_combined_table2) 
+
+new_combined_table2$gene_list_not_factor = new_combined_table2$gene_list %>% as.character()
+
+print(new_combined_table2) 
+
+new_combined_table2$variant_type_BRCA1 = 
+	dplyr::if_else(
+	new_combined_table2$gene_list == 'BRCA1',
+	new_combined_table2$variant_type %>% as.character(),
+	'no mutation'
+)
+
+new_combined_table2$variant_type_BRCA1 = new_combined_table2$variant_type_BRCA1 %>%
+	dplyr::recode(
+	'shared mutation'=1L,
+	'diagnosis only mutation'=1L,
+	'relapse only mutation'=1L,
+	'no mutation'=200L
+	)
+
+new_combined_table2$variant_type_BRCA2 = 
+	dplyr::if_else(
+	new_combined_table2$gene_list == 'BRCA2',
+	new_combined_table2$variant_type %>% as.character(),
+	'no mutation'
+)
+
+new_combined_table2$variant_type_BRCA2 = new_combined_table2$variant_type_BRCA2 %>%
+	dplyr::recode(
+	'shared mutation'=2L,
+	'diagnosis only mutation'=2L,
+	'relapse only mutation'=2L,
+	'no mutation'=200L
+	)
+
+new_combined_table2$variant_type_BRIP1 = 
+	dplyr::if_else(
+	new_combined_table2$gene_list == 'BRIP1',
+	new_combined_table2$variant_type %>% as.character(),
+	'no mutation'
+)
+
+new_combined_table2$variant_type_BRIP1 = new_combined_table2$variant_type_BRIP1 %>%
+	dplyr::recode(
+	'shared mutation'=3L,
+	'diagnosis only mutation'=3L,
+	'relapse only mutation'=3L,
+	'no mutation'=200L
+	)
+
+#new_combined_table2$variant_type_BRCA1 = factor(
+#	new_combined_table2$variant_type_BRCA1, 
+#	levels=c('shared mutation','archival only mutation','relapse only mutation','no mutation')
+#)
+
+new_combined_table2$variant_type_BRCA1_BRCA2_BRIP1 = 
+	new_combined_table2$variant_type_BRCA1 + 
+	new_combined_table2$variant_type_BRCA2 +
+	new_combined_table2$variant_type_BRIP1
+
+new_combined_table2$britroc_number = 
+	forcats::fct_reorder(
+		new_combined_table2$britroc_number, 
+		new_combined_table2$variant_type_BRCA1_BRCA2_BRIP1, 
+		.fun=min
+)
+
+new_combined_table2$britroc_number %>% levels() %>% print()
+
+# create table
+
+# ensure the britroc number is not being used as a factor 
+#new_combined_table2$britroc_number = new_combined_table2$britroc_number %>% as.integer()
+
+#new_combined_table2 = new_combined_table2 %>% dplyr::arrange(variant_type_BRCA1)
+
+print(new_combined_table2, n=50)
 
 p1 = ggplot(new_combined_table2, aes(x=britroc_number, y=gene_list, width=1.0)) +  geom_tile(aes(fill = variant_type), colour = "white", size=1.3) +
 	     scale_fill_manual(values=c('#FFD700','#D3D3D3','#604187','#00FFFF')) +
@@ -135,6 +214,14 @@ p1 = ggplot(new_combined_table2, aes(x=britroc_number, y=gene_list, width=1.0)) 
 		) + ylab('')
 
 # integerate additional patient information
+
+# reorder factor
+new_combined_table$britroc_number = 
+	forcats::fct_reorder(
+		new_combined_table$britroc_number, 
+		new_combined_table2$variant_type_BRCA1_BRCA2_BRIP1, 
+		.fun=min
+)
 
 new_combined_table = new_combined_table %>% dplyr::select(britroc_number) %>% dplyr::mutate(goo='Histological type') %>% unique()
 
@@ -155,7 +242,7 @@ new_combined_table$pt_sensitivity_at_reg = new_combined_table$pt_sensitivity_at_
 	'sensitive'='Pt sensitive'
 	)
 
-new_combined_table = new_combined_table %>% dplyr::arrange(pt_sensitivity_at_reg)
+new_combined_table = new_combined_table %>% dplyr::arrange(britroc_number)
 new_combined_table$britroc_number = factor(new_combined_table$britroc_number, levels=new_combined_table$britroc_number)
 
 print(new_combined_table, width=Inf)
@@ -213,7 +300,7 @@ p4 = ggplot(new_combined_table,
 
 p5 = ggplot(new_combined_table, 
 		aes(x=britroc_number, y=goo, width=1.0)) +  geom_tile(aes(fill = pt_sensitivity_at_reg), colour = "white") +
-		scale_fill_manual(values=c('#DCE319FF', '#20A387FF')) +
+		scale_fill_manual(values=c("#F8766D","#00BFC4")) +   # '#DCE319FF', '#20A387FF'
 		theme(
 			axis.title.x=element_blank(),
 			axis.text.x=element_blank(),
@@ -247,9 +334,11 @@ print(new_combined_table, n=Inf)
 
 new_combined_table$goo = new_combined_table$goo %>% dplyr::recode('Tumour stage'='Lines of chemotherapy')
 
+print(new_combined_table)
+
 p6 = ggplot(new_combined_table, 
 		aes(x=britroc_number, y=goo, width=1.0)) +  geom_tile(aes(fill = num_lines), colour = "white") +
-		scale_fill_manual(values=c('#FFC0CB','#FFB6C1','#FF69B4','#FF1493','#C71585')) +
+		scale_fill_manual(values=c("#ffffcc","#c2e699","#78c679","#238443",'#023020')) +  # '#FFC0CB','#FFB6C1','#FF69B4','#FF1493','#C71585'
 		theme(
 			axis.title.x=element_blank(),
 			axis.text.x=element_blank(),
@@ -262,6 +351,31 @@ p6 = ggplot(new_combined_table,
 			legend.box.margin=margin(-10,-10,-10,-10)
 		) + ylab('')
 
-p_final = p5 / p1 / p2 / p4 / p3 / p6  + plot_layout(heights = c(1, 16, 1, 1, 1, 1))
+new_combined_table$day_diff %>% print()
+new_combined_table$day_diff = new_combined_table$day_diff / 30
+new_combined_table$day_diff %>% max(na.rm=TRUE)
+new_combined_table$day_diff %>% min(na.rm=TRUE)
 
-ggsave('tmp3.png', p_final, device='png', width=33, height=16, scale=0.65)
+new_combined_table$day_diff = new_combined_table$day_diff %>% as.double()
+
+new_combined_table$goo = new_combined_table$goo %>% dplyr::recode('Lines of chemotherapy'='Diagnosis->Reg')
+
+p7 = ggplot(new_combined_table, 
+		aes(x=britroc_number, y=goo, width=1.0)) +  geom_tile(aes(fill = day_diff), colour = "white") +
+		scale_fill_continuous(low='#89CFF0', high='#0047AB', labels = c(50,150), breaks=c(50,150)) +
+		theme(
+			axis.title.x=element_blank(),
+			axis.text.x=element_blank(),
+			axis.ticks.x=element_blank(),
+			legend.direction='horizontal',
+			legend.title=element_blank(),
+			axis.text.y = element_text(face="bold"),
+			plot.margin=margin(0.001, 0.001, 0.001, 0.001, 'cm'),
+			legend.margin=margin(0, 0, 0, 0),
+			legend.box.margin=margin(-10,-10,-10,-10)
+		) + ylab('')
+
+p_final = p5 / p1 / p2 / p4 / p3 / p6 / p7  + plot_layout(heights = c(1, 16, 1, 1, 1, 1, 1))
+
+ggsave('BriTROC-1_manuscript2_figure2.png', p_final, device='png', width=33, height=16, scale=0.65)
+ggsave('BriTROC-1_manuscript2_figure2.pdf', p_final, device='pdf', width=33, height=16, scale=0.65)
