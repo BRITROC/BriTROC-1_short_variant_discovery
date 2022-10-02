@@ -115,6 +115,8 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# set the order variants appear in the oncoprint
 	variant_type_order = c('frameshift', 'stop gained', 'splice region SNV', 'inframe indel', 'missense')
 
+	print(somatic_variants)
+
 	# order tables by archival TP53 variant type	
 	somatic_variants = somatic_variants[, order( factor(somatic_variants[1,], levels=variant_type_order))]
 	# ensure heatmap table has the same order as somatic variants
@@ -134,14 +136,49 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	print(all_possible_variant_types)
 
 	print(somatic_variants)
+	readr::write_tsv(somatic_variants %>% as.data.frame(), file="whole_cohort_intercalated_matrix.txt", col_names=TRUE)
 	
 	png(somatic_oncoprint_output_file, width=1200)	
 
         column_title_font_size = 8
 	row_label_font_size = 6
 
+	somatic_variants = somatic_variants[!rownames(somatic_variants) %in% 'SHOE foo', ]  # ! is logical negation
+
 	somatic_variants %>% dim() %>% print()
-	
+
+	print(somatic_variants)
+	print(all_possible_variant_types)
+
+# [1] "BRCA1 archival"  "BRCA1 relapse"   "BRCA2 archival"  "BRCA2 relapse"
+# [5] "RAD51D archival" "RAD51D relapse"  "BRIP1 archival"  "BRIP1 relapse"
+# [9] "PALB2 archival"  "PALB2 relapse"   "BARD1 archival"  "BARD1 relapse"
+#[13] "CDK12 archival"  "CDK12 relapse"   "TP53 archival"   "TP53 relapse"
+#[17] "KRAS archival"   "KRAS relapse"    "PIK3CA archival" "PIK3CA relapse"
+#[21] "NF1 archival"    "NF1 relapse"     "RB1 archival"    "RB1 relapse"
+#[25] "NRAS archival"   "NRAS relapse"
+
+	all_possible_variant_types = c(
+	'TP53 archival','TP53 relapse',
+	'BRCA1 archival','BRCA1 relapse',
+	'BRCA2 archival','BRCA2 relapse',
+	'BARD1 archival', 'BARD1 relapse',
+	'FANCM archival', 'FANCM relapse'
+	#"RAD51D archival" ,"RAD51D relapse",
+	#"BRIP1 archival","BRIP1 relapse",
+	#"PALB2 archival","PALB2 relapse",
+	#"BARD1 archival","BARD1 relapse",
+	#"CDK12 archival","CDK12 relapse",
+	#"KRAS archival","KRAS relapse",
+	#"PIK3CA archival","PIK3CA relapse",
+	#"NF1 archival","NF1 relapse",
+	#"RB1 archival","RB1 relapse",
+	#"NRAS archival","NRAS relapse"
+	)
+
+	print(all_possible_variant_types)
+	print(somatic_variants[,1:50])
+
 	combined_oncoprint = ComplexHeatmap::oncoPrint(
 	  mat=somatic_variants[,heatmap_table$pt_sensitivity_at_reg=='platinum resistant'],
 	  alter_fun = alter_fun,

@@ -78,7 +78,8 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL!='TP53')
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!Location %in% bad_variants)	
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!grepl('dup',HGVSc))
+	#TODO: Try and figure out why I initially put in this line
+	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(!grepl('dup',HGVSc))
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!`#Uploaded_variation` %in% bad_variants2)	
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL != 'FANCM')
 
@@ -282,6 +283,16 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	)
  	
 	#for simplicity for now - only one mutation per patient-gene group
+
+	print(somatic_variants)
+
+	somatic_variants2 = somatic_variants %>% tibble::as_tibble() %>%
+		dplyr::group_by(patient_id,tumour_type,gene_symbol) %>%
+		dplyr::summarise(n=dplyr::n()) %>% dplyr::arrange(patient_id,gene_symbol) %>% 
+		dplyr::filter(gene_symbol!='TP53') %>% print(n=Inf)
+
+	readr::write_tsv(somatic_variants2, 'tmp.tsv')
+
 	somatic_variants = somatic_variants %>% tibble::as_tibble() %>% 
 	  dplyr::group_by(patient_id,tumour_type,gene_symbol) %>%
 	  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
@@ -293,7 +304,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	# reformat
 	somatic_variants = somatic_variants %>% 
 		tidyr::unite(gene_symbol_tumour_type, c(gene_symbol,tumour_type), remove=TRUE, sep='_') %>%
-		dplyr::arrange(patient_id)
+		dplyr::arrange(patient_id,gene_symbol_tumour_type)
 
 	print(somatic_variants)
 	print(output)

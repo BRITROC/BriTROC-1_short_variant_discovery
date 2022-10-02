@@ -77,6 +77,7 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 	# go from a library genotype table to a sample genotype table - first by removing all library fields
 	sample_genotype_table = genotype_table %>% dplyr::select(-dplyr::any_of(libraries)) 
 
+	#TODO: revise this. Decide whether to keep this or not. For now keep but neutralise
 	check_genotypes = function(row_index, genotype_table) {
 		# genotype_table = A table of variants and their predicted genotypes for a set of libraries
 
@@ -86,7 +87,7 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 		if (new_genotype_table[1,1] == new_genotype_table[1,2]) {
 			return(new_genotype_table[1,1])
 		} else {
-			return(NA)
+			return(new_genotype_table[1,1])
 		}
 	}
 
