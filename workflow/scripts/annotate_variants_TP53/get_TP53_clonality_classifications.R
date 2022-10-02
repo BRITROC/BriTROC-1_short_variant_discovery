@@ -12,6 +12,9 @@ mutation_freq = tp53_variants_with_MAFs %>%
 		dplyr::summarise(num_samples_with_variant=dplyr::n())
 
 # determine the number of tumour samples of each type for each patient
+
+# fix this to include samples without TP53
+
 sample_freq = tp53_variants_with_MAFs %>% 
 		dplyr::select(fk_britroc_number,type,sample_id) %>% 
 		unique() %>% 
@@ -114,7 +117,7 @@ classify_clonality_status = function(patient_id) {
 	x$tumour_type_penalty = ifelse(x$num_samples_archival == 0 | x$num_samples_relapse == 0 , 0, x$tumour_type_penalty)
 
 	# calculate the sum of ranks
-	x$rank_total = x$rank_num_samples + x$rank_MAF + x$rank_QUAL + x$tumour_type_penalty
+	x$rank_total = (3*x$rank_num_samples) + x$rank_MAF + x$rank_QUAL + (3*x$tumour_type_penalty)
 
 	# order by lowest summed rank
 	x = x %>% dplyr::arrange(rank_total)
