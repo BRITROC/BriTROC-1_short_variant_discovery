@@ -2,6 +2,7 @@ library(magrittr)
 library(DBI)
 library(RPostgres)
 library(ggplot2)
+library(patchwork)
 
 generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output_file, gene_set_analysed) {
 
@@ -47,10 +48,19 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	)
 
 	# fill in blanks for those patient-gene combinations without a mutation
+	# add in data from patients with no mutations in any gene type
+	metadata = readr::read_tsv('config/all_tumour_metadata.tsv')
+
+	#no_mutation_table = tibble::tibble(
+	#	patient_id=somatic_variants$patient_id %>% unique(),
+	#	variant_type='no mutation'	
+	#)
+
 	no_mutation_table = tibble::tibble(
-		patient_id=somatic_variants$patient_id %>% unique(),
+		patient_id=metadata$fk_britroc_number %>% unique(),
 		variant_type='no mutation'	
 	)
+
 	gene_mutation_table_tmp = tibble::tibble(
 		gene_symbol=somatic_variants$gene_symbol %>% unique()
 	)
@@ -79,70 +89,102 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	somatic_variants$patient_id = somatic_variants$patient_id %>% as.factor()
 	somatic_variants$gene_symbol = somatic_variants$gene_symbol %>% as.factor()
 
-	oncoprint_data$variant_type_TP53 = 
+	somatic_variants$variant_type_TP53 = 
 		dplyr::if_else(
-			oncoprint_data$gene_symbol == 'TP53',
-			oncoprint_data$variant_type %>% as.character(),
+			somatic_variants$gene_symbol == 'TP53',
+			somatic_variants$variant_type %>% as.character(),
 			'no mutation'
 		)
 
-	oncoprint_data$variant_type_TP53 = oncoprint_data$variant_type_TP53 %>%
+	somatic_variants$variant_type_TP53 = somatic_variants$variant_type_TP53 %>%
 		dplyr::recode(
-		'frameshift'=1L,
-		'missense'=4L,
-		'splice region SNV'=3L,
-		'stop gained'=2L,
-		'inframe indel'=5L,
-		'no mutation'=200L
-		)
-
-	oncoprint_data$variant_type_BRCA1 = 
-		dplyr::if_else(
-		oncoprint_data$gene_symbol == 'BRCA1',
-		oncoprint_data$variant_type %>% as.character(),
-		'no mutation'
-	)
-
-	oncoprint_data$variant_type_BRCA1 = oncoprint_data$variant_type_BRCA1 %>%
-		dplyr::recode(
-			'frameshift'=5L,
-			'missense'=8L,
-			'splice region SNV'=7L,
-			'stop gained'=6L,
-			'inframe indel'=9L,
+			'frameshift'=1L,
+			'missense'=1L,
+			'splice region SNV'=1L,
+			'stop gained'=1L,
+			'inframe indel'=1L,
 			'no mutation'=200L
 		)
 
-	oncoprint_data$variant_type_BRCA2 = 
+	somatic_variants$variant_type_BRCA1 = 
 		dplyr::if_else(
-			oncoprint_data$gene_symbol == 'BRCA2',
-			oncoprint_data$variant_type %>% as.character(),
+		somatic_variants$gene_symbol == 'BRCA1',
+		somatic_variants$variant_type %>% as.character(),
+		'no mutation'
+	)
+
+	somatic_variants$variant_type_BRCA1 = somatic_variants$variant_type_BRCA1 %>%
+		dplyr::recode(
+			'frameshift'=2L,
+			'missense'=2L,
+			'splice region SNV'=2L,
+			'stop gained'=2L,
+			'inframe indel'=2L,
+			'no mutation'=200L
+		)
+
+	somatic_variants$variant_type_BRCA2 = 
+		dplyr::if_else(
+			somatic_variants$gene_symbol == 'BRCA2',
+			somatic_variants$variant_type %>% as.character(),
 			'no mutation'
 		)
 
-	oncoprint_data$variant_type_BRCA2 = oncoprint_data$variant_type_BRCA2 %>%
+	somatic_variants$variant_type_BRCA2 = somatic_variants$variant_type_BRCA2 %>%
 		dplyr::recode(
-		'frameshift'=9L,
-		'missense'=12L,
-		'splice region SNV'=11L,
-		'stop gained'=10L,
-		'inframe indel'=13L,
-		'no mutation'=200L
+			'frameshift'=3L,
+			'missense'=3L,
+			'splice region SNV'=3L,
+			'stop gained'=3L,
+			'inframe indel'=3L,
+			'no mutation'=200L
 		)
 
-	oncoprint_data$variant_type_TP53_BRCA1_BRCA2 = 
-		oncoprint_data$variant_type_TP53 + 
-		oncoprint_data$variant_type_BRCA1 +
-		oncoprint_data$variant_type_BRCA2
+	sum_table = somatic_variants %>% dplyr::group_by(
+		patient_id
+	) %>% dplyr::summarise(sum=sum(variant_type_TP53, variant_type_BRCA1, variant_type_BRCA2))
 
-	oncoprint_data$fk_britroc_number = 
+	print(sum_table)
+	print(somatic_variants)
+
+	somatic_variants = 
+		dplyr::left_join(
+			somatic_variants,
+			sum_table,
+			by='patient_id'
+		)
+
+	print(somatic_variants, width=Inf)
+
+	#quit()
+
+	somatic_variants = somatic_variants %>% dplyr::select(-variant_type_TP53, -variant_type_BRCA1, -variant_type_BRCA2)
+
+	somatic_variants$patient_id = 
 		forcats::fct_reorder(
-			oncoprint_data$fk_britroc_number, 
-			oncoprint_data$variant_type_TP53_BRCA1_BRCA2, 
+			somatic_variants$patient_id, 
+			somatic_variants$sum, 
 			.fun=min
 	)
 
-	p1 = ggplot(somatic_variants, aes(x=patient_id, y=gene_symbol)) +
+	somatic_variants %>% print(width=Inf)
+
+	gene_symbol_percentages = 
+		somatic_variants %>%
+		dplyr::filter(variant_type!='no mutation') %>%
+		dplyr::group_by(gene_symbol) %>%
+		dplyr::summarise(n = dplyr::n()) %>%
+		dplyr::mutate(percentage = n / length(somatic_variants$patient_id %>% unique())) %>%
+		.$percentage %>%
+                `*`(100) %>%  
+		round(digits=0) %>%
+		as.character() %>%
+		paste('%',sep='')
+
+	print(gene_symbol_percentages)
+	class(gene_symbol_percentages) %>% print()	
+
+	p1 = ggplot(somatic_variants, aes(x=patient_id, y=as.numeric(gene_symbol))) +
                 geom_tile(aes(fill = variant_type), colour='white', size=0.9) +
 		scale_fill_manual(values=c('#604187','#FF1493','#FFD700','#00FFFF','#0FFF50','#D3D3D3')) +
                 theme(
@@ -155,9 +197,67 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
                         legend.margin=margin(0, 0, 0, 0),
                         legend.box.margin=margin(-10,-10,-10,-10),
                         legend.position='bottom'
-                )
+                ) + 
+		ylab('') +
+                scale_y_continuous(
+			breaks = 1:length(somatic_variants$gene_symbol %>% unique()),
+			labels = 
+				somatic_variants$gene_symbol %>% as.factor() %>% levels(),
+				sec.axis = sec_axis(
+					~.,
+					breaks = 1:length(somatic_variants$gene_symbol %>% unique()),
+					labels = gene_symbol_percentages
+					)
+		)
 
-	ggsave(somatic_oncoprint_output_file, p1, dev='png', width=16.0, height=9.0, scale=0.75, dpi=300)
+	patient_table = dbReadTable(britroc_con, 'patients')
+	patient_table = patient_table %>% dplyr::select(britroc_number, pt_sensitivity_at_reg)
+	patient_table$britroc_number = patient_table$britroc_number %>% as.factor()
+
+	new_combined_table = dplyr::inner_join(somatic_variants, patient_table, by=c('patient_id'='britroc_number'))
+	new_combined_table$pt_sensitivity_at_reg = new_combined_table$pt_sensitivity_at_reg %>% as.factor()
+
+	new_combined_table = new_combined_table %>% dplyr::select(patient_id,pt_sensitivity_at_reg,sum) %>%
+		dplyr::mutate(goo='Histological type') %>% 
+		unique()
+
+	new_combined_table$patient_id =
+		forcats::fct_reorder(
+			new_combined_table$patient_id,
+			new_combined_table$sum,
+			.fun=min
+	)
+
+	print(new_combined_table$patient_id %>% levels)
+	print(somatic_variants$patient_id %>% levels %>% length())
+	print(new_combined_table$patient_id %>% unique() %>% length())
+
+	new_combined_table$pt_sensitivity_at_reg = new_combined_table$pt_sensitivity_at_reg %>%
+		dplyr::recode(
+			'sensitive'='Pt sensitive',
+			'resistant'='Pt resistant'
+		)
+
+	p5 = ggplot(new_combined_table,
+                aes(x=patient_id, y=goo, width=1.0)) +  geom_tile(aes(fill = pt_sensitivity_at_reg), colour = "white") +
+                scale_fill_manual(values=c("#F8766D", "#00BFC4")) +
+                theme(
+                        axis.title.x=element_blank(),
+                        axis.text.x=element_blank(),
+                        axis.ticks.x=element_blank(),
+                        axis.text.y=element_blank(),
+                        axis.ticks.y=element_blank(),
+                        legend.title=element_blank(),
+                        legend.direction='horizontal',
+                        plot.margin=margin(0.001, 0.001, 0.001, 0.001, 'cm'),
+                        legend.margin=margin(0, 0, 0, 0),
+                        legend.box.margin=margin(-10,-10,-10,-10),
+                        legend.position='top'
+                ) + ylab('')
+
+	p_final = p5 / p1 + plot_layout(heights = c(1, 16))
+
+	ggsave(somatic_oncoprint_output_file, p_final, dev='png', width=16.0, height=9.0, scale=0.75, dpi=300)
 
 	return()
 }
