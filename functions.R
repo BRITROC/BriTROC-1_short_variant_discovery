@@ -87,7 +87,7 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 		if (new_genotype_table[1,1] == new_genotype_table[1,2]) {
 			return(new_genotype_table[1,1])
 		} else {
-			return(new_genotype_table[1,1])
+			return(NA)
 		}
 	}
 
@@ -97,6 +97,9 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 	if (snakemake@params[['includes_germline_variants']]==FALSE) {
 		for (lib in libraries) {
 			square_vcf_ft[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[17]]
+
+			#print(lib)
+			#print(square_vcf_ft[[lib]])
 
 			genotype_table[[lib]] = ifelse(square_vcf_ft[[lib]] != 'PASS', '0|0', genotype_table[[lib]])
 		}
@@ -140,7 +143,9 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 
 	# filter for row records with at least one variant sample
 
+	sample_genotype_table %>% dplyr::filter(POS==68301921) %>% print()
 	sample_genotype_table = sample_genotype_table %>% dplyr::filter(dplyr::if_any(dplyr::all_of(samples), `%notin%`, c(NA,"0|0")))
+	sample_genotype_table %>% dplyr::filter(POS==68301921) %>% print()
 
 	sample_genotype_table = sample_genotype_table %>% dplyr::inner_join(square_vcf %>% dplyr::select(CHROM,POS,REF,ALT), by=c('CHROM','POS','REF','ALT'))
 

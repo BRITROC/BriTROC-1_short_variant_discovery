@@ -37,3 +37,9 @@ rule get_matched_metadata_panel_28_only:
 		germline_metadata='config/germline_metadata_panel_28_only.tsv',
 		somatic_metadata='config/somatic_metadata_panel_28_only.tsv'
 	script: '../scripts/generate_metadata/matched_database_joins_panel_28_only.R'
+
+rule get_matched_and_unpaired_only:
+	output: 
+		germline_metadata='config/germline_metadata_panel_matched_and_unpaired.tsv',
+		somatic_metadata='config/somatic_metadata_panel_matched_and_unpaired.tsv'
+	script: '../scripts/generate_metadata/matched_database_joins_matched_and_unpaired.R'

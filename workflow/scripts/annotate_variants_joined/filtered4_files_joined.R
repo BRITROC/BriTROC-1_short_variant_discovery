@@ -8,7 +8,9 @@ library(RPostgres)
 readRenviron('~/.Renviron')
 
 vep_files = snakemake@input %>% unlist
-patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+') 
+
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+.filtered3.vcf$') %>%
+        stringr::str_extract('[0-9]+')
 
 # a rudimentary helper function to add the sample IDs to the annotation output table
 mutate_x_y = function(x,y) {

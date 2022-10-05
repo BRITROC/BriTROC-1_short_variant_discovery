@@ -1,21 +1,21 @@
-# filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
+#filter filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
 
 rule symlink_bams:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bwamem.homo_sapiens.bam'
-	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam'
+	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bam'
+	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam'
 	wildcard_constraints:
 		barcode='FLD[0-9]+',
 		flowcell="[A-Z0-9-]+",
-		lane='s_[1-8]'           #"((?!_bwamem).)*"
+		lane='[1-8]'           #"((?!_bwamem).)*"
 	shell: 'ln {input} {output}'
 
 rule symlink_bam_indexes:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bwamem.homo_sapiens.bai'
-	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai'
+	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bai'
+	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai'
 	wildcard_constraints:
 		barcode='FLD[0-9]+',
 		flowcell="[A-Z0-9-]+",
-		lane='s_[1-8]'           #"((?!_bwamem).)*"
+		lane='[1-8]'           #"((?!_bwamem).)*"
 	shell: 'ln {input} {output}'
 
 rule create_nonoverlapping_amplicons_TP53:
@@ -161,9 +161,9 @@ rule clean_bams_panel_28:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
 		amplicon_intervals='resources/nonoverlapping.panel_28.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam=temp('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bam'),
-		bam_index=temp('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bai'),
-		coverage=temp('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.coverage.txt')
+		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bam',
+		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bai',
+		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
 	shell: 

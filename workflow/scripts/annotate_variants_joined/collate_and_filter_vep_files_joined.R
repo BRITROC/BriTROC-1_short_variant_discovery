@@ -11,7 +11,10 @@ vep_files = snakemake@input$vep_files %>% unlist
 
 print(vep_files %>% length)
 
-patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+') 
+print(vep_files)
+
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+.filtered.vep.vcf$') %>%
+	stringr::str_extract('[0-9]+')
 
 print(patient_names)
 
@@ -46,7 +49,6 @@ annotations = purrr::map(
 
 annotations = annotations %>% unique()
 print(annotations %>% dplyr::filter(nchar(Allele) != 1) %>% dplyr::select('#Uploaded_variation',Location,Allele), n=100)
-
 
 # filter to ensure tech reps had matching genotypes
 vcf = readr::read_tsv(snakemake@input$vcf_file)
@@ -106,6 +108,9 @@ print('foo')
 
 vcf = purrr::map_dfr(.x=1:dim(vcf)[1], .f=get_vep_variant_format)
 vcf$patient_id = vcf$patient_id %>% as.character()
+
+print(vcf$patient_id)
+
 
 print('goo')
 
