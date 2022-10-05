@@ -5,13 +5,13 @@ def get_gene_set_analysed(wildcards):
 		return(['TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'])
 
 rule curate_germline_variants:
-	output: filtered_germline_variants='results/variant_analysis/non_TP53/{analysis_type}/collated/final_germline_variants.tsv'
+	output: filtered_germline_variants='results/variant_analysis/non_TP53/panel_6_28/collated/final_germline_variants.tsv'
 	params: gene_set_analysed=get_gene_set_analysed
 	script: '../scripts/curate_germline_variants.R'
 
 rule generate_germline_oncoprints:
 	input: filtered_germline_variants=rules.curate_germline_variants.output.filtered_germline_variants
-	output: germline_oncoprint='plots/britroc_germline_oncoprint.png' 
+	output: germline_oncoprint='plots/britroc_germline_oncoprint.pdf' 
 	script: '../scripts/generate_oncoprints/generate_germline_oncoprint.R'
 
 rule prepare_data_for_somatic_oncoprint_generation:
@@ -20,7 +20,7 @@ rule prepare_data_for_somatic_oncoprint_generation:
 		filtered_non_TP53_variants_relapse='results/variant_analysis/non_TP53/{analysis_type}/collated/filtered_relapse_vep_calls_octopus_joined.tsv',
 		filtered_TP53_variants_with_MAFs='results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv',
 		clonality_status_of_TP53_variants='results/variant_analysis/TP53/collated/TP53_variants_with_clonality_classifications.tsv',
-	output: data_for_somatic_oncoprint=temp('results/data_for_somatic_oncoprint_{analysis_type}.tsv')
+	output: data_for_somatic_oncoprint='results/data_for_somatic_oncoprint_{analysis_type}.tsv'
 	script: '../scripts/generate_oncoprints/prepare_data_for_somatic_oncoprints.R'
 
 rule generate_germline_and_somatic_oncoprints:
@@ -31,6 +31,24 @@ rule generate_germline_and_somatic_oncoprints:
 		gene_set_analysed=get_gene_set_analysed
 	output: germline_and_somatic_oncoprint='plots/{analysis_type}/germline_and_somatic_oncoprint.png' 
 	script: '../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint.R'
+
+rule generate_somatic_oncoprints_ggplot2:
+	input:
+		data_for_somatic_oncoprint=rules.prepare_data_for_somatic_oncoprint_generation.output.data_for_somatic_oncoprint,
+		germline_data=rules.curate_germline_variants.output.filtered_germline_variants
+	params: 
+		gene_set_analysed=get_gene_set_analysed
+	output: germline_and_somatic_oncoprint='plots/{analysis_type}/germline_and_somatic_oncoprint_ggplot2.png' 
+	script: '../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2.R'
+
+rule generate_somatic_oncoprints_ggplot2_2:
+	input:
+		data_for_somatic_oncoprint=rules.prepare_data_for_somatic_oncoprint_generation.output.data_for_somatic_oncoprint,
+		germline_data=rules.curate_germline_variants.output.filtered_germline_variants
+	params: 
+		gene_set_analysed=get_gene_set_analysed
+	output: germline_and_somatic_oncoprint='plots/{analysis_type}/germline_and_somatic_oncoprint_ggplot2_2.png' 
+	script: '../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2_2.R'
 
 rule generate_somatic_oncoprints_intercalated:
 	input:
