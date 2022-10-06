@@ -84,7 +84,7 @@ def get_relevant_bed_file(wildcards):
 rule convert_bed6_to_oct_format:
 	input:  get_relevant_bed_file                                           
 	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'
-	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
+	script: '../../../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
 rule octopus:
 	input:
