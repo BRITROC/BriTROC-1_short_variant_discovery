@@ -3,7 +3,7 @@
 rule filter_octopus_raw_calls:
 	input: 
 		filtered_vcf=rules.octopus.output
-	output: 'results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
+	output: 'results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 rule filter_calls2:
@@ -14,7 +14,7 @@ rule filter_calls2:
 		normal_bams=get_normal_bam_files,
 		vcf_file=rules.filter_octopus_raw_calls.output
 	output: 
-		tumour_vcf='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
+		tumour_vcf='results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
 	threads: 4
 	params:
 		normal_sample_identifier=get_normal_sample_names
@@ -38,12 +38,12 @@ rule filter_calls2:
 rule bgzip_vcf:
 	input: rules.filter_calls2.output.tumour_vcf
 	output: 
-		compressed_vcf=temp('results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz')
+		compressed_vcf=temp('results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz')
 	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
 
 rule index_compressed_vcf:
 	input: rules.bgzip_vcf.output
-	output: 'results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi'
+	output: 'results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
 
 def get_nonoverlapping_id_list(wildcards):
@@ -55,10 +55,10 @@ def get_nonoverlapping_id_list(wildcards):
 
 rule concat_vcfs:
 	input:
-		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id),
-		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id)
+		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id),
+		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id)
 	wildcard_constraints:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
-	output: protected('results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.filtered2.vcf')
+	output: protected('results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.filtered2.vcf')
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'

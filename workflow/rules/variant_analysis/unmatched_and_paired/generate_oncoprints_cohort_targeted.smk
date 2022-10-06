@@ -3,8 +3,8 @@ def get_gene_set_analysed(wildcards):
 
 rule prepare_data_for_whole_oncoprint_generation_intercalated_targeted:
 	input:
-		filtered_non_TP53_variants_archival='results/variant_analysis/cohort/collated/filtered_archival_vep_calls_octopus_joined.targeted.tsv',
-		filtered_non_TP53_variants_relapse='results/variant_analysis/cohort/collated/filtered_relapse_vep_calls_octopus_joined.targeted.tsv',
+		filtered_non_TP53_variants_archival='results/variant_analysis/unmatched/collated/filtered_archival_vep_calls_octopus_joined.targeted.tsv',
+		filtered_non_TP53_variants_relapse='results/variant_analysis/unmatched/collated/filtered_relapse_vep_calls_octopus_joined.targeted.tsv',
 		filtered_TP53_variants_with_MAFs='results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv',
 		clonality_status_of_TP53_variants='results/variant_analysis/TP53/collated/TP53_variants_with_clonality_classifications.tsv',
 	output: data_for_somatic_oncoprint='results/data_for_whole_cohort_oncoprint_intercalated.targeted.tsv'

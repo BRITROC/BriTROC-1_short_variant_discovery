@@ -1,6 +1,6 @@
 rule vep_octopus:
 	input: rules.concat_vcfs.output
-	output: 'results/variant_analysis/cohort/{patient_id}.filtered.vep.vcf'
+	output: 'results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \
@@ -19,7 +19,7 @@ rule vep_octopus:
 
 rule ensure_tech_rep_genotypes_match_with_tumour_type:
 	input: 
-		combined_vcfs='results/variant_analysis/cohort/{patient_id}.filtered2.vcf',
+		combined_vcfs='results/variant_analysis/unmatched/{patient_id}.filtered2.vcf',
 		tumour_metadata='config/tumour_metadata_with_one_of_both_types.tsv'
 	params:
 		variant_quality_score_threshold=500,
@@ -29,17 +29,17 @@ rule ensure_tech_rep_genotypes_match_with_tumour_type:
 		includes_tumour_type_analysis=True,
 		includes_germline_variants=True
 	output: 
-		tumour_samples_union='results/variant_analysis/cohort/both/{patient_id}.filtered3.vcf',
-		archival_samples='results/variant_analysis/cohort/both/{patient_id}.archival.filtered3.vcf',
-		relapse_samples='results/variant_analysis/cohort/both/{patient_id}.relapse.filtered3.vcf',
-		library_MAFs='results/variant_analysis/cohort/both/{patient_id}.library_MAFs.vcf',
-		library_depths='results/variant_analysis/cohort/both/{patient_id}.library_depths.vcf',
-		sample_genotypes='results/variant_analysis/cohort/both/{patient_id}.sample_genotypes.vcf'
+		tumour_samples_union='results/variant_analysis/unmatched/paired/{patient_id}.filtered3.vcf',
+		archival_samples='results/variant_analysis/unmatched/paired/{patient_id}.archival.filtered3.vcf',
+		relapse_samples='results/variant_analysis/unmatched/paired/{patient_id}.relapse.filtered3.vcf',
+		library_MAFs='results/variant_analysis/unmatched/paired/{patient_id}.library_MAFs.vcf',
+		library_depths='results/variant_analysis/unmatched/paired/{patient_id}.library_depths.vcf',
+		sample_genotypes='results/variant_analysis/unmatched/paired/{patient_id}.sample_genotypes.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule get_interval_file_for_targeted_calling:
 	input: rules.ensure_tech_rep_genotypes_match_with_tumour_type.output.tumour_samples_union
-	output: 'results/variant_analysis/cohort/both/{patient_id}.interval_file.txt'
+	output: 'results/variant_analysis/unmatched/paired/{patient_id}.interval_file.txt'
 	script: '../../../scripts/annotate_variants_joined/get_intervals_for_targeted_calling.R'
 
 rule octopus_targeted_calling:
@@ -49,7 +49,7 @@ rule octopus_targeted_calling:
 		tumour_bams=get_tumour_bam_files,
 		tumour_bam_indexes=get_tumour_bam_index_files
 	output: 
-		tumour_vcf='results/variant_analysis/cohort/{patient_id}.{nonoverlapping_id}.targeted.vcf',
+		tumour_vcf='results/variant_analysis/unmatched/{patient_id}.{nonoverlapping_id}.targeted.vcf',
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
@@ -74,13 +74,13 @@ rule octopus_targeted_calling:
 				-R {input.reference_genome}'
 
 rule collate_and_filter_tumour_type_specific_vcf_files_with_tumour_type:
-	input: lambda wildcards: expand('results/variant_analysis/cohort/both/{patient_id}.{tumour_type}.filtered3.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
-	output: 'results/variant_analysis/cohort/collated/{tumour_type}_filtered3_joined.tsv'
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/paired/{patient_id}.{tumour_type}.filtered3.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
+	output: 'results/variant_analysis/unmatched/collated/{tumour_type}_filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule collate_and_filter_octopus_vep_files_with_tumour_type:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/cohort/{patient_id}.filtered.vep.vcf',patient_id=all_patients_with_tumour_samples_of_both_types),
+		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_patients_with_tumour_samples_of_both_types),
 		vcf_file=rules.collate_and_filter_tumour_type_specific_vcf_files_with_tumour_type.output
-	output: 'results/variant_analysis/cohort/collated/filtered_{tumour_type}_vep_calls_octopus_joined.tsv'
+	output: 'results/variant_analysis/unmatched/collated/filtered_{tumour_type}_vep_calls_octopus_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'

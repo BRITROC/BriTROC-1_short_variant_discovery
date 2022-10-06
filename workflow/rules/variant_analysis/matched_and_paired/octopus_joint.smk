@@ -89,7 +89,7 @@ rule octopus:
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files
 	output: 
-		tumour_vcf='results/variant_analysis/non_TP53/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf',
+		tumour_vcf='results/variant_analysis/matched_and_paired/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf',
 	threads: 4
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
