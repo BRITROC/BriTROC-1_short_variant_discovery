@@ -12,12 +12,12 @@ curate_germline_variants = function(germline_variants_output_file) {
 	
 	# read in germline SNVs
 	germline_snvs = dbReadTable(britroc_con, 'germline_snvs') %>% 
-	  dplyr::select(fk_sample,gene_symbol,chromosome,position,allele_fraction_1,allele_fraction_2,variant_type,confidence,cdna_effect,protein_effect,
+	  dplyr::select(fk_sample,gene_symbol,chromosome,position,ref,alt,allele_fraction_1,allele_fraction_2,variant_type,confidence,cdna_effect,protein_effect,
 	                existing_variation,clinical_signficance,thousand_genomes_allele_frequency,gnomad_allele_frequency)
 	
 	# read in germline indels
 	germline_indels = dbReadTable(britroc_con, 'germline_indels') %>% 
-	  dplyr::select(fk_sample,gene_symbol,chromosome,position,allele_fraction_1,allele_fraction_2,variant_type,confidence,cdna_effect,protein_effect,
+	  dplyr::select(fk_sample,gene_symbol,chromosome,position,ref,alt,allele_fraction_1,allele_fraction_2,variant_type,confidence,cdna_effect,protein_effect,
 	                existing_variation,clinical_signficance,thousand_genomes_allele_frequency,gnomad_allele_frequency)
 	
 	# collate all germline variants together
