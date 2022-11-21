@@ -5,9 +5,9 @@ def get_gene_set_analysed(wildcards):
 		return(['TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'])
 
 rule curate_germline_variants:
-	output: filtered_germline_variants='results/variant_analysis/non_TP53/panel_6_28/collated/final_germline_variants.tsv'
+	output: filtered_germline_variants='results/variant_analysis/germline/{analysis_type}/collated/final_germline_variants.tsv'
 	params: gene_set_analysed=get_gene_set_analysed
-	script: '../scripts/curate_germline_variants.R'
+	script: '../../../scripts/curate_germline_variants.R'
 
 rule generate_germline_oncoprints:
 	input: filtered_germline_variants=rules.curate_germline_variants.output.filtered_germline_variants
