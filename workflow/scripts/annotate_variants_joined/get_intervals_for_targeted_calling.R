@@ -5,6 +5,12 @@ library(magrittr)
 
 filter3_calls = readr::read_tsv(snakemake@input[[1]])
 
+# If set of calls is empty then create an empty file
+if(dim(filter3_calls)[1] == 0) {
+	file.create(snakemake@output[[1]])
+	quit()
+}
+
 print(filter3_calls)
 
 # generate a column corresponding to the correct octopus interval for each record
