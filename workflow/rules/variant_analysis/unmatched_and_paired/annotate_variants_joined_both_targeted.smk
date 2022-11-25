@@ -29,17 +29,17 @@ rule ensure_tech_rep_genotypes_match_with_tumour_type_targeted:
 		includes_tumour_type_analysis=True,
 		includes_germline_variants=True
 	output: 
-		tumour_samples_union='results/variant_analysis/unmatched/both/{patient_id}.filtered3.targeted.vcf',
-		archival_samples='results/variant_analysis/unmatched/both/{patient_id}.archival.filtered3.targeted.vcf',
-		relapse_samples='results/variant_analysis/unmatched/both/{patient_id}.relapse.filtered3.targeted.vcf',
-		library_MAFs='results/variant_analysis/unmatched/both/{patient_id}.library_MAFs.targeted.vcf',
-		library_depths='results/variant_analysis/unmatched/both/{patient_id}.library_depths.targeted.vcf',
-		sample_genotypes='results/variant_analysis/unmatched/both/{patient_id}.sample_genotypes.targeted.vcf'
+		tumour_samples_union='results/variant_analysis/unmatched/paired/{patient_id}.filtered3.targeted.vcf',
+		archival_samples='results/variant_analysis/unmatched/paired/{patient_id}.archival.filtered3.targeted.vcf',
+		relapse_samples='results/variant_analysis/unmatched/paired/{patient_id}.relapse.filtered3.targeted.vcf',
+		library_MAFs='results/variant_analysis/unmatched/paired/{patient_id}.library_MAFs.targeted.vcf',
+		library_depths='results/variant_analysis/unmatched/paired/{patient_id}.library_depths.targeted.vcf',
+		sample_genotypes='results/variant_analysis/unmatched/paired/{patient_id}.sample_genotypes.targeted.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 
 rule collate_and_filter_tumour_type_specific_vcf_files_with_tumour_type_targeted:
-	input: lambda wildcards: expand('results/variant_analysis/unmatched/both/{patient_id}.{tumour_type}.filtered3.targeted.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/paired/{patient_id}.{tumour_type}.filtered3.targeted.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
 	output: 'results/variant_analysis/unmatched/collated/{tumour_type}_filtered3_joined.targeted.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
