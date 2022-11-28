@@ -6,8 +6,8 @@ def get_gene_set_analysed(wildcards):
 
 rule prepare_data_for_somatic_oncoprint_generation:
 	input:
-		filtered_matched_and_paired_variants_archival='results/variant_analysis/matched_and_paired/{analysis_type}/collated/filtered_archival_vep_calls_octopus_joined.tsv',
-		filtered_matched_and_paired_variants_relapse='results/variant_analysis/matched_and_paired/{analysis_type}/collated/filtered_relapse_vep_calls_octopus_joined.tsv',
+		filtered_matched_and_paired_variants_archival='results/variant_analysis/matched/{analysis_type}/paired/collated/filtered_archival_vep_calls_octopus_joined.tsv',
+		filtered_matched_and_paired_variants_relapse='results/variant_analysis/matched/{analysis_type}/paired/collated/filtered_relapse_vep_calls_octopus_joined.tsv',
 		filtered_TP53_variants_with_MAFs='results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv',
 		clonality_status_of_TP53_variants='results/variant_analysis/TP53/collated/TP53_variants_with_clonality_classifications.tsv',
 	output: data_for_somatic_oncoprint='results/data_for_somatic_oncoprint_{analysis_type}.tsv'
