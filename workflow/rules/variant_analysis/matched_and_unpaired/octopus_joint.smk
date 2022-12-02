@@ -93,7 +93,7 @@ rule octopus:
 		tumour_bams=get_tumour_bam_files,
 		normal_bams=get_normal_bam_files
 	output: 
-		tumour_vcf='results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf',
+		tumour_vcf=protected('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
 	threads: 4
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
@@ -103,8 +103,8 @@ rule octopus:
 				-C cancer \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \
-				--somatic-forest-model resources/somatic.v0.7.2.forest \
-				--somatics-only \
+				--forest resources/germline.v0.7.2.forest \
+				--somatic-forest resources/somatic.v0.7.2.forest \
 				--disable-downsampling \
 				--annotations SB SD AF AD FRF \
 				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.25 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
