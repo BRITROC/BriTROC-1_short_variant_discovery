@@ -86,6 +86,7 @@ rule convert_bed6_to_oct_format:
 	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'
 	script: '../../../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
+# octopus only permits the use of one normal sample
 rule octopus:
 	input:
 		reference_genome=config['reference_genome'],
