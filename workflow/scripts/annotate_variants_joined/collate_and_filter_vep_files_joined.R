@@ -244,7 +244,6 @@ print(annotations %>% dplyr::select(patient_id,`#Uploaded_variation`,Allele), n=
 vcf = dplyr::inner_join(vcf,annotations, by=c('vep_format'='#Uploaded_variation', 'patient_id'))
 
 readr::write_tsv(annotations, path=snakemake@output[[1]], append=FALSE) #'tmp_annotations_joined_archival.tsv'
-readr::write_tsv(vcf, path='tmp_annotations_joined_archival2.tsv', append=FALSE)
 
 annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% arrange(n) %>% print(n=Inf)
 annotations %>% group_by(patient_id,SYMBOL) %>% summarise(n=n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
