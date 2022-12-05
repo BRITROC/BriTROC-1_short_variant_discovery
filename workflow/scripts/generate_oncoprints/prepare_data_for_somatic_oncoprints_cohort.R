@@ -9,69 +9,45 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	source('/Users/bradle02/.Renviron')
 	source('functions.R')
 
-	bad_variants2 =c(
-	'17_29579995_GA/G',
-	'17_29579999_A/G'
-	)
-	bad_variants = c(
-	'chr13:32913984',  
-	'chr17:37618737',
-	'chr14:69061271',
-	'chr7:55269052',
-	'chr7:55259443',
-	'chr2:215593684',
-	'chr1:115256605', 
-	'chr17:59858326', 
-	'chr17:59857677', 
-	'chr17:59820499', 
-	'chr17:59820498', 
-	'chr17:59760966', 
-	'chr17:41245230', 
-	'chr17:41243899', 
-	'chr17:41243625', 
-	'chr17:37687471', 
-	'chr17:37686932', 
-	'chr17:37686902', 
-	'chr17:37686895', 
-	'chr17:37672025', 
-	'chr17:37646880', 
-	'chr17:33446545', 
-	'chr17:33434077', 
-	'chr17:33430296', 
-	'chr17:29664828', 
-	'chr17:29664383', 
-	'chr17:29662041', 
-	'chr17:29562972', 
-	'chr17:29560179', 
-	'chr17:29557886', 
-	'chr17:29556974', 
-	'chr17:29556923', 
-	'chr17:29556140',  
-	'chr17:29541476', 
-	'chr17:29509592', 
-	'chr16:23649235', 
-	'chr16:23641275', 
-	'chr16:23637692', 
-	'chr14:68353826', 
-	'chr14:68331847', 
-	'chr13:32930699', 
-	'chr13:32914779',  
-	'chr13:32913558',  
-	'chr13:32913549', 
-	'chr13:32906765', 
-	'chr13:32900639', 
-	'chr10:89720683'
-	)
-
 	britroc_con = make_connection_to_postgres_server('britroc1', 'jblab-db.cri.camres.org', 5432)
 	clarity_con = make_connection_to_postgres_server('clarity', 'jblab-db.cri.camres.org', 5432)
 
 	# read in tumour samples variants
 	non_tp53_variants = readr::read_tsv(nonTP53_variants) %>% dplyr::filter(SYMBOL!='TP53')
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!Location %in% bad_variants)	
+	non_tp53_variants$HGVS_united = dplyr::coalesce(non_tp53_variants$HGVSp,non_tp53_variants$HGVSc)
+	print(non_tp53_variants %>% dplyr::select(SYMBOL,HGVSc,HGVSp,POS), n=Inf, width=Inf)
+	#readr::write_tsv(non_tp53_variants %>% dplyr::select(HGVS_united) %>% unique(), file='tmp.txt', col_names=FALSE)
+	non_tp53_variants$HGVS_united = non_tp53_variants$HGVS_united %>% stringr::str_remove('ENS[A-Z0-9]+\\.[0-9]+:')
+
+	non_tp53_variants$HGVS_united %>% unique() %>% print()
+
+	# MTBP job code: OCTOPUS_MATCHED_SOMATIC
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(
+		HGVS_united %in% c(
+				'p.Gln1396Ter',
+				'p.Arg1203Ter',
+				'p.Phe697SerfsTer4',
+				'p.Lys654SerfsTer47',
+				'p.Ile605TyrfsTer9',
+				'p.Thr3033LeufsTer29',
+				'p.Lys1691AsnfsTer15',
+				'p.Asn986IlefsTer5',
+				'p.Asn1784ThrfsTer7',
+				'p.Glu2029Ter',
+				'p.Glu2981LysfsTer7',
+				'p.Asp172MetfsTer40',
+				'p.Ser1125ValfsTer16',
+				'p.Glu237Ter',
+				'p.Gly185IlefsTer12',
+				'p.Gln1135ValfsTer16',
+				'p.Gly185IlefsTer8'
+			)
+		)
+
+	non_tp53_variants$HGVS_united %>% unique() %>% print()	
+
+	#quit()
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!grepl('dup',HGVSc))
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!`#Uploaded_variation` %in% bad_variants2)	
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL != 'FANCM')
 
 	# remove suspected aritfacts
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
@@ -185,9 +161,9 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	  unique()
 
 	# remove synonymous and intron variants
-	all_variants = 
-	  all_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
-	  unique()
+	#all_variants = 
+	#  all_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
+	#  unique()
 	
 	# this information is needed so that the oncoprint shows information even for patients without a mutation in any one gene
 	# TODO: consider removing - purpose is not clear
