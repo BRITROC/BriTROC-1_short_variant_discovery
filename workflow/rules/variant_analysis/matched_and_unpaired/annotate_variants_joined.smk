@@ -1,6 +1,6 @@
 rule vep_octopus:
 	input: rules.concat_vcfs.output
-	output: 'results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.filtered.vep.vcf'
+	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \
@@ -17,9 +17,14 @@ rule vep_octopus:
 			-a GRCh37 \
 			--port 3337'
 
+rule get_somatic_variants_only:
+	input: rules.concat_vcfs.output
+	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'
+	shell: 'grep -e "SOMATIC" -e "#" {input} > {output}'
+
 rule ensure_tech_rep_genotypes_match:
 	input: 
-		combined_vcfs=rules.concat_vcfs.output,
+		combined_vcfs=rules.get_somatic_variants_only.output,
 		germline_metadata='config/germline_metadata_panel_matched_and_unpaired.tsv',
 		tumour_metadata='config/somatic_metadata_panel_matched_and_unpaired.tsv'
 	params:
@@ -30,20 +35,20 @@ rule ensure_tech_rep_genotypes_match:
 		includes_tumour_type_analysis=False,
 		includes_germline_variants=False
 	output: 
-		tumour_samples_union='results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.filtered3.vcf',
-		library_MAFs='results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.library_MAFs.vcf',
-		library_depths='results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.library_depths.vcf',
-		sample_genotypes='results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.sample_genotypes.vcf'
+		tumour_samples_union='results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered3.vcf',
+		library_MAFs='results/variant_analysis/matched/{analysis_type}/{patient_id}.library_MAFs.vcf',
+		library_depths='results/variant_analysis/matched/{analysis_type}/{patient_id}.library_depths.vcf',
+		sample_genotypes='results/variant_analysis/matched/{analysis_type}/{patient_id}.sample_genotypes.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
-rule collate_and_filter_tumour_type_specific_vcf_files:
-	input: lambda wildcards: expand('results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type)
+rule collate_and_filter_vcf_files:
+	input: lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type)
 	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule collate_and_filter_octopus_vep_files:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/matched_and_unpaired/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type),
-		vcf_file=rules.collate_and_filter_tumour_type_specific_vcf_files.output
+		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type),
+		vcf_file=rules.collate_and_filter_vcf_files.output
 	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
