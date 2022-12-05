@@ -237,6 +237,22 @@ implement_substitution_type_specific_filters = function(square_vcf) {
 
 	# only retain variants which appear in at least one sample
 	sample_genotype_table = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(samples), `%notin%`, c(NA,"0|0")))
+	
+	# use sample genotype table as a reference to filter other tables
+	square_vcf_MAF = 
+		dplyr::semi_join(
+			square_vcf_MAF,
+			sample_genotype_table,
+			by=c('CHROM','POS','REF','ALT')
+		)
+	square_vcf_depth = 
+		dplyr::semi_join(
+			square_vcf_depth,
+			sample_genotype_table,
+			by=c('CHROM','POS','REF','ALT')
+		)
 
-	return(sample_genotype_table)
+	output_list = list(genotypes=sample_genotype_table,MAFs=square_vcf_MAF,depths=square_vcf_depth)
+
+	return(output_list)
 }

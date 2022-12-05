@@ -91,7 +91,10 @@ if (square_vcf_MAF %>% dim() %>% .[1] == 0) {
 } else {
 	}
 
-sample_genotype_table = implement_substitution_type_specific_filters(square_vcf)
+output_data_list = implement_substitution_type_specific_filters(square_vcf)
+sample_genotype_table = output_data_list[['genotypes']]
+square_vcf_MAF = output_data_list[['MAFs']]
+square_vcf_depth = output_data_list[['depths']]
 
 # write data objects to disk
 readr::write_tsv(square_vcf_MAF, path=snakemake@output[['library_MAFs']])
