@@ -1,7 +1,25 @@
 #filter filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
 
+#rule symlink_bams:
+#	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bam'
+#	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam'
+#	wildcard_constraints:
+#		barcode='FLD[0-9]+',
+#		flowcell="[A-Z0-9-]+",
+#		lane='[1-8]'           #"((?!_bwamem).)*"
+#	shell: 'ln {input} {output}'
+
+#rule symlink_bam_indexes:
+#	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bai'
+#	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai'
+#	wildcard_constraints:
+#		barcode='FLD[0-9]+',
+#		flowcell="[A-Z0-9-]+",
+#		lane='[1-8]'           #"((?!_bwamem).)*"
+#	shell: 'ln {input} {output}'
+
 rule symlink_bams:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bam'
+	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.bam'
 	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam'
 	wildcard_constraints:
 		barcode='FLD[0-9]+',
@@ -10,7 +28,7 @@ rule symlink_bams:
 	shell: 'ln {input} {output}'
 
 rule symlink_bam_indexes:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bai'
+	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.bai'
 	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai'
 	wildcard_constraints:
 		barcode='FLD[0-9]+',
@@ -92,8 +110,8 @@ rule clean_bams:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
 		amplicon_intervals='resources/tp53.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam',
-		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai',
+		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
+		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
 		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
@@ -115,8 +133,8 @@ rule clean_bams2:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
 		amplicon_intervals='resources/panel_6_28.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bam',
-		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bai',
+		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bam'),
+		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bai'),
 		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
@@ -138,8 +156,8 @@ rule clean_bams_panel_28_only:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
 		amplicon_intervals='resources/nonoverlapping.antijoined_panel_28_6.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bam',
-		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bai',
+		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bam'),
+		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bai'),
 		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
@@ -161,8 +179,8 @@ rule clean_bams_panel_28:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
 		amplicon_intervals='resources/nonoverlapping.panel_28.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bam',
-		bam_index='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bai',
+		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bam'),
+		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bai'),
 		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.coverage.txt'
 	wildcard_constraints:
 		barcode='FLD[0-9]+'
