@@ -46,9 +46,22 @@ rule collate_and_filter_vcf_files:
 	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
+rule reformat_somatic_vcf_for_MTBP:
+	input: rules.collate_and_filter_vcf_files.output
+	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered3_joined_MTBP_format.tsv'
+	script: '../../../scripts/annotate_variants_joined/get_MTBP_format.R'
+
+rule MTBP_filter_curated_results:
+	input: rules.collate_and_filter_vcf_files.output
+	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered3_joined_MTBP_filtered.tsv'
+	script: '../../../scripts/annotate_variants_joined/apply_MTBP_filter.R'
+
 rule collate_and_filter_octopus_vep_files:
 	input: 
 		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type),
-		vcf_file=rules.collate_and_filter_vcf_files.output
-	output: 'results/variant_analysis/matched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv'
+		vcf_file=rules.MTBP_filter_curated_results.output
+	output: 
+		vep_output='results/variant_analysis/matched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv',
+		vep_reduced='results/variant_analysis/matched/{analysis_type}/collated/BriTROC-1_matched_and_unpaired_somatic_variants.tsv',
+		vcf_output='results/variant_analysis/matched/{analysis_type}/collated/filtered_calls_octopus_joined.vcf'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'

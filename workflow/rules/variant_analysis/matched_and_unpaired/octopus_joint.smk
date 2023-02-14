@@ -77,7 +77,7 @@ def get_relevant_bed_file(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
 		output_file='resources/panel_6_28.nonoverlapping.targets.{}.bed'.format(wildcards.nonoverlapping_id)
 	elif wildcards.analysis_type == 'panel_28_only':
-		output_file='resources/nonoverlapping.antijoined_panel_28_6.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
+		output_file='resources/nonoverlapping.antijoined_panel_28_6.targets.{}.bed'.format(wildcards.nonoverlapping_id)
 	
 	return(output_file)
 
