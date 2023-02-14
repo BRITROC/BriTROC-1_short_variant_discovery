@@ -1,6 +1,6 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
-library(tidyverse)
+library(magrittr)
 library(DBI)
 library(RPostgres)
 
@@ -39,6 +39,9 @@ annotations = purrr::map(
   dplyr::select(patient_id, everything())
 
 annotations = annotations %>% unique()
+
+# remove TP53 mutations which are not analysed as this part of the analysis
+annotations = annotations %>% dplyr::filter(!  (`CHROM`=='chr17' & grepl('^757[0-9]+',POS))  )
 
 readr::write_tsv(annotations, path=snakemake@output[[1]], append=FALSE)
 quit()
