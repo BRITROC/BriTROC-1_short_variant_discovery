@@ -38,7 +38,7 @@ rule octopus:
 		tumour_bams=get_tumour_bam_files,
 		tumour_bam_indexes=get_tumour_bam_index_files
 	output: 
-		tumour_vcf='results/variant_analysis/unmatched/{patient_id}.{nonoverlapping_id}.vcf',
+		tumour_vcf=protected('results/variant_analysis/unmatched/{patient_id}.{nonoverlapping_id}.vcf')
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'

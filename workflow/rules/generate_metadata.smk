@@ -24,6 +24,10 @@ rule get_tumour_metadata_one_each_type:
 	output: somatic_metadata='config/tumour_metadata_with_one_of_both_types.tsv',
 	script: '../scripts/generate_metadata/database_joins_one_tumour_sample_of_each_type.R'
 
+rule get_germline_metadata:
+	output: germline_metadata='config/germline_metadata.tsv'
+	script: '../scripts/generate_metadata/germline_metadata.R'
+
 # generate germline and somatic metadata for the exmaination of all genes found in both panel 6 and panel 28 - ensuring there is at least one sample of each type
 rule get_matched_metadata:
 	output: 

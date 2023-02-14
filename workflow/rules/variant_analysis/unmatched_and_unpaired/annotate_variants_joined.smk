@@ -1,6 +1,6 @@
 rule vep_octopus:
 	input: rules.concat_vcfs.output
-	output: 'results/variant_analysis/cohort/{patient_id}.filtered.vep.vcf'
+	output: 'results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \
@@ -29,20 +29,30 @@ rule ensure_tech_rep_genotypes_match:
 		includes_tumour_type_analysis=False,
 		includes_germline_variants=True
 	output: 
-		tumour_samples_union='results/variant_analysis/cohort/{patient_id}.filtered3.vcf',
-		library_MAFs='results/variant_analysis/cohort/{patient_id}.library_MAFs.vcf',
-		library_depths='results/variant_analysis/cohort/{patient_id}.library_depths.vcf',
-		sample_genotypes='results/variant_analysis/cohort/{patient_id}.sample_genotypes.vcf'
+		tumour_samples_union='results/variant_analysis/unmatched/{patient_id}.filtered3.vcf',
+		library_MAFs='results/variant_analysis/unmatched/{patient_id}.library_MAFs.vcf',
+		library_depths='results/variant_analysis/unmatched/{patient_id}.library_depths.vcf',
+		sample_genotypes='results/variant_analysis/unmatched/{patient_id}.sample_genotypes.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
-rule collate_and_filter_tumour_type_specific_vcf_files:
-	input: lambda wildcards: expand('results/variant_analysis/cohort/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
-	output: 'results/variant_analysis/cohort/collated/filtered3_joined.tsv'
+rule collate_and_filter_vcf_files:
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
+	output: 'results/variant_analysis/unmatched/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
+
+rule reformat_vcf_for_MTBP:
+	input: rules.collate_and_filter_vcf_files.output
+	output: 'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_format.tsv'
+	script: '../../../scripts/annotate_variants_joined/get_MTBP_format.R'
+
+rule MTBP_filter_curated_results:
+	input: rules.collate_and_filter_vcf_files.output
+	output: 'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_filtered.tsv'
+	script: '../../../scripts/annotate_variants_joined/apply_MTBP_filter_unmatched_and_unpaired.R'
 
 rule collate_and_filter_octopus_vep_files:
 	input: 
 		vep_files= lambda wildcards: expand('results/variant_analysis/cohort/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
-		vcf_file=rules.collate_and_filter_tumour_type_specific_vcf_files.output
+		vcf_file=rules.collate_and_filter_vcf_files.output
 	output: 'results/variant_analysis/cohort/collated/filtered_vep_calls_octopus_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'

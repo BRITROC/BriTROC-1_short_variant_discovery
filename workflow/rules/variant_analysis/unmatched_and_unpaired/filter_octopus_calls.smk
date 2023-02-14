@@ -4,6 +4,7 @@ rule filter_octopus_raw_calls:
 	output: 'results/variant_analysis/unmatched/{patient_id}.{nonoverlapping_id}.filtered.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
+# Note well the removal of the FRF filter for this particular call to octopus
 rule filter_calls2:
 	input:
 		reference_genome=config['reference_genome'],
@@ -23,7 +24,7 @@ rule filter_calls2:
 				--threads \
 				-w temp/ \
 				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.25 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
-				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.01" \
+				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.03" \
 				--filter-vcf {input.vcf_file} \
 				-I {input.tumour_bams} \
 				--regions-file {input.interval_file} \
@@ -48,5 +49,5 @@ rule concat_vcfs:
 	wildcard_constraints:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
-	output: protected('results/variant_analysis/unmatched/{patient_id}.filtered2.vcf')
+	output: 'results/variant_analysis/unmatched/{patient_id}.filtered2.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}' 
