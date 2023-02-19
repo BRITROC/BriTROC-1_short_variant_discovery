@@ -26,12 +26,12 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	# identify genes in which a variant has been found in at least one patient
 	# is later used to remove genes in which did not have any observed variants for all tumour types
 	genes_with_variants = somatic_variants_tmp %>% dplyr::filter(!is.na(variant_type)) %>%  
-		dplyr::filter(!gene_symbol %in% c('RAD51L3-RFFL','SHOE')) %>% dplyr::pull(gene_symbol) %>% unique()
+		dplyr::filter(!gene_symbol %in% c('RAD51L3-RFFL','CTD-2196E14.3','SHOE')) %>% dplyr::pull(gene_symbol) %>% unique()
 	print(genes_with_variants)
 	rm(somatic_variants_tmp)
 
 	# remove redundant genes
-	somatic_variants = somatic_variants %>% dplyr::filter(!gene_symbol %in% c('RAD51L3-RFFL'))
+	somatic_variants = somatic_variants %>% dplyr::filter(!gene_symbol %in% c('RAD51L3-RFFL','CTD-2196E14.3'))
 
 	# remove NA entries
 	somatic_variants = somatic_variants %>% dplyr::filter(!is.na(variant_type)) %>% dplyr::filter(variant_type != 'NA')
@@ -44,12 +44,13 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	
 	somatic_variants$gene_symbol = factor(
 		somatic_variants$gene_symbol,
-		levels=rev(c('TP53','BRCA1','BRCA2','NF1','BRIP1','PALB2','CDK12','NRAS','RB1','KRAS','BARD1','RAD51D','RAD51B','PIK3CA','PTEN'))
+		levels=rev(c('TP53','BRCA1','BRCA2','NF1','BRIP1','PALB2','CDK12','NRAS','RB1','KRAS','BARD1','RAD51D','RAD51C','RAD51B','PIK3CA','PTEN'))
 	)
 
 	# fill in blanks for those patient-gene combinations without a mutation
 	# add in data from patients with no mutations in any gene type
 	metadata = readr::read_tsv('config/all_tumour_metadata.tsv')
+	somatic_variants = somatic_variants %>% dplyr::filter(patient_id %in% metadata$fk_britroc_number)	
 
 	#no_mutation_table = tibble::tibble(
 	#	patient_id=somatic_variants$patient_id %>% unique(),
@@ -167,8 +168,6 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 			.fun=min
 	)
 
-	somatic_variants %>% print(width=Inf)
-
 	gene_symbol_percentages = 
 		somatic_variants %>%
 		dplyr::filter(variant_type!='no mutation') %>%
@@ -183,6 +182,11 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 
 	print(gene_symbol_percentages)
 	class(gene_symbol_percentages) %>% print()	
+
+	# drop unused levels
+	somatic_variants$gene_symbol = droplevels(somatic_variants$gene_symbol)
+	droplevels(somatic_variants$gene_symbol) %>% levels() %>% print()
+	somatic_variants$gene_symbol %>% unique() %>% print()
 
 	p1 = ggplot(somatic_variants, aes(x=patient_id, y=as.numeric(gene_symbol))) +
                 geom_tile(aes(fill = variant_type), colour='white', size=0.9) +
@@ -202,7 +206,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
                 scale_y_continuous(
 			breaks = 1:length(somatic_variants$gene_symbol %>% unique()),
 			labels = 
-				somatic_variants$gene_symbol %>% as.factor() %>% levels(),
+				droplevels(somatic_variants$gene_symbol) %>% levels(),
 				sec.axis = sec_axis(
 					~.,
 					breaks = 1:length(somatic_variants$gene_symbol %>% unique()),

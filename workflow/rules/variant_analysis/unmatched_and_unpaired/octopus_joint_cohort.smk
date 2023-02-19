@@ -46,6 +46,7 @@ rule octopus:
 				-C cancer \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \
+				--disable-downsampling \
 				--forest resources/germline.v0.7.2.forest \
 				--somatic-forest resources/somatic.v0.7.2.forest \
 				--max-somatic-haplotypes 2 \

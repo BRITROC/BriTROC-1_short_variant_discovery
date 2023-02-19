@@ -52,7 +52,10 @@ rule MTBP_filter_curated_results:
 
 rule collate_and_filter_octopus_vep_files:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/cohort/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
-		vcf_file=rules.collate_and_filter_vcf_files.output
-	output: 'results/variant_analysis/cohort/collated/filtered_vep_calls_octopus_joined.tsv'
+		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
+		vcf_file=rules.MTBP_filter_curated_results.output
+	output: 
+		vep_output='results/variant_analysis/unmatched/collated/filtered_vep_calls_octopus_joined.tsv',
+		vep_reduced='results/variant_analysis/unmatched/collated/BriTROC-1_unmatched_and_unpaired_variants.tsv',
+		vcf_output='results/variant_analysis/unmatched/collated/filtered_calls_octopus_joined.vcf'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'

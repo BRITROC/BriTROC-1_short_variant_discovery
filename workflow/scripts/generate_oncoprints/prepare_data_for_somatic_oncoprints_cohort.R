@@ -2,12 +2,12 @@ library(magrittr)
 library(DBI)
 library(RPostgres)
 
-# TODO: move samples QC filtering upstream
-
-prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variants, TP53_variant_clonality_status, gene_set_analysed, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output, analysis_type) {
+prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variants, TP53_variant_clonality_status, non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, output, analysis_type) {
 
 	source('/Users/bradle02/.Renviron')
 	source('functions.R')
+
+	print('goo1')
 
 	britroc_con = make_connection_to_postgres_server('britroc1', 'jblab-db.cri.camres.org', 5432)
 	clarity_con = make_connection_to_postgres_server('clarity', 'jblab-db.cri.camres.org', 5432)
@@ -16,53 +16,25 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	non_tp53_variants = readr::read_tsv(nonTP53_variants) %>% dplyr::filter(SYMBOL!='TP53')
 	non_tp53_variants$HGVS_united = dplyr::coalesce(non_tp53_variants$HGVSp,non_tp53_variants$HGVSc)
 	print(non_tp53_variants %>% dplyr::select(SYMBOL,HGVSc,HGVSp,POS), n=Inf, width=Inf)
-	#readr::write_tsv(non_tp53_variants %>% dplyr::select(HGVS_united) %>% unique(), file='tmp.txt', col_names=FALSE)
 	non_tp53_variants$HGVS_united = non_tp53_variants$HGVS_united %>% stringr::str_remove('ENS[A-Z0-9]+\\.[0-9]+:')
 
-	non_tp53_variants$HGVS_united %>% unique() %>% print()
-
-	# MTBP job code: OCTOPUS_MATCHED_SOMATIC
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(
-		HGVS_united %in% c(
-				'p.Gln1396Ter',
-				'p.Arg1203Ter',
-				'p.Phe697SerfsTer4',
-				'p.Lys654SerfsTer47',
-				'p.Ile605TyrfsTer9',
-				'p.Thr3033LeufsTer29',
-				'p.Lys1691AsnfsTer15',
-				'p.Asn986IlefsTer5',
-				'p.Asn1784ThrfsTer7',
-				'p.Glu2029Ter',
-				'p.Glu2981LysfsTer7',
-				'p.Asp172MetfsTer40',
-				'p.Ser1125ValfsTer16',
-				'p.Glu237Ter',
-				'p.Gly185IlefsTer12',
-				'p.Gln1135ValfsTer16',
-				'p.Gly185IlefsTer8'
-			)
-		)
-
-	non_tp53_variants$HGVS_united %>% unique() %>% print()	
-
-	#quit()
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!grepl('dup',HGVSc))
 
+	print('goo2')
+
 	# remove suspected aritfacts
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
+	# evidence of existence in germline, v. likely spurious, inflated frequency compared to much higher confidence matched variant analysis
+
+	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41245587_T/-')
+ 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr13_32954023_A/-') 
 
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
 			dplyr::mutate(SYMBOL='TP53')
 
-	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
-	#if (gene_set_analysed == 'panel_6_28') {
-	#} else if (gene_set_analysed == 'panel_28_only') {
-	#	panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
-	#	tp53_variants = tp53_variants %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
-	#}
-	
+	## most samples have multiple TP53 mutations, so where applicable, we want to only select the clonal mutation
+
 	# read in TP53 variant clonality predictions
 	tp53_variant_clonality = readr::read_tsv(TP53_variant_clonality_status)
 
@@ -71,8 +43,6 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 		dplyr::pull(fk_britroc_number)
 
 	join_TP53_variants_with_clonality_status = function(TP53_variant_set, TP53_variant_clonality_status) {
-
-	## most samples have multiple TP53 mutations, so where applicable, we want to only select the clonal mutation
 
 	# join the two TP53 variant tables
 	TP53_variants_clonal_mutations = dplyr::inner_join(
@@ -95,35 +65,12 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 
 	# bind TP53 variants together
 	tp53_variants = rbind(tp53_variants_clonal_mutations, tp53_variants_no_clonal_mutation)
+
+	print('foo1')
 	
 	# reformat variant information
 	non_tp53_variants = non_tp53_variants %>% dplyr::select(patient_id,Consequence,SYMBOL)
 	tp53_variants = tp53_variants %>% dplyr::rename(patient_id=fk_britroc_number)
-
-	# filter variants by type and by gene symbol on the basis of TMBP assigned pathogenicity status
-	# TODO: automate use MTBP pipeline
-
-	#if (gene_set_analysed=='panel_6_28') {
-
-	# TODO: rerun pipeline with the correct parameterisation
-	# add variants that were previously filtered due to an overly harsh MAF threshold
-	#non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift', type='archival')
-	#non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift', type='archival')
-	#non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='FANCM', patient_id=176, Consequence='frameshift', type='relapse')
-
-	# removed variants on the basis of annotations in the MTBP pipeline
-	#non_tp53_variants = non_tp53_variants %>%  # remove suspected artifacts
-	#	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69 & type=='archival')) %>% 
-	#	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==123 & type=='relapse')) %>%
-	#	dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77 & type=='relapse'))
-
-	# MTBP specific processing filters
-	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
-	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
-
-	#} else if (gene_set_analysed == 'panel_28_only') {
-
-	#}
 
 	# bind TP53 and nonTP53 variants together
 	all_variants = rbind(tp53_variants, non_tp53_variants) %>% unique()
@@ -152,32 +99,22 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 		
 	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
 
-	# only retain variants in patients with at least one germline, relapse and archival sampl
+	# only retain variants in patients with relevant sample types available
 	all_variants = all_variants %>% dplyr::filter(patient_id %in% relevant_samples$fk_britroc_number)
 
 	# reformat
 	all_variants =
 	  all_variants %>% dplyr::select(patient_id,SYMBOL,Consequence) %>%
 	  unique()
-
-	# remove synonymous and intron variants
-	#all_variants = 
-	#  all_variants %>% dplyr::filter(!Consequence %in% c('intron_variant','synonymous_variant')) %>%
-	#  unique()
 	
+	print('foo2')
+
 	# this information is needed so that the oncoprint shows information even for patients without a mutation in any one gene
 	# TODO: consider removing - purpose is not clear
 	somatic_samples_with_no_mutations = dplyr::anti_join(
 	  relevant_samples, all_variants, by=c('fk_britroc_number'='patient_id')
 	)
-
-	# restrict the TP53 variants analysed wrt patients based on the gene set analysis type
-	#if (gene_set_analysed == 'panel_6_28') {
-	#} else if (gene_set_analysed == 'panel_28_only') {
-	#	panel_28_only_sequencing_metadata = readr::read_tsv('config/somatic_metadata_panel_28_only.tsv')
-	#	somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::filter(fk_britroc_number %in% panel_28_only_sequencing_metadata$fk_britroc_number)
-	#}
-
+	
 	# reformat
 	somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>%
 	  dplyr::rename(patient_id='fk_britroc_number') %>%
@@ -193,6 +130,33 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	# bind data together
 	somatic_variants = rbind(somatic_samples_with_mutations, somatic_samples_with_no_mutations)
 
+	print('foo3')
+
+
+	# add in high confidence germline variants
+	# this is because octopus erroneously removes germline variants in most cases
+	germline_variants = readr::read_tsv(snakemake@input[['germline_variants']])
+
+	print(somatic_variants$patient_id %>% unique())
+	somatic_variants$patient_id %>% unique() %>% length() %>% print()
+	
+	germline_variants = germline_variants %>% dplyr::filter(final_call_set==TRUE)
+	germline_variants = germline_variants %>% dplyr::filter(fk_britroc_number %in% somatic_variants$patient_id)
+	germline_variants = germline_variants %>% dplyr::filter(!is.na(variant_type))
+	germline_variants = germline_variants %>% dplyr::rename(patient_id=fk_britroc_number)
+
+
+	germline_variants = germline_variants %>% dplyr::select(patient_id,gene_symbol,variant_type) %>% unique()
+
+	#print(somatic_variants)
+	#print(germline_variants)
+
+	somatic_variants = rbind(somatic_variants,germline_variants) %>% unique()
+	#somatic_variants = somatic_variants %>% dplyr::filter(!gene_symbol %in% c('RAD51L3-RFFL','CTD-2196E14.3','SHOE'))
+
+	somatic_variants$patient_id %>% unique() %>% print()
+        somatic_variants$patient_id %>% unique() %>% length() %>% print()
+
 	# remap variant type categories
 	somatic_variants$variant_type = dplyr::recode(
 	  somatic_variants$variant_type,
@@ -203,6 +167,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	  'inframe_insertion'='inframe indel',
 	  'stop_gained'='stop gained',
 	  'stop_gained,splice_region_variant'='stop gained',
+	  'stop_gained,splice_region'='stop gained',
 	  'splice_acceptor'='splice region SNV',
 	  'splice_region,intron'='splice region SNV',
 	  'splice_region,synonymous'='splice region SNV',
@@ -221,34 +186,18 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	  dplyr::group_by(patient_id,gene_symbol) %>%
 	  dplyr::filter(dplyr::row_number()==1) %>% dplyr::ungroup()
 
-	# reformat
-	#somatic_variants = somatic_variants %>% 
-	#	tidyr::unite(gene_symbol_tumour_type, c(gene_symbol,tumour_type), remove=TRUE, sep='_') %>%
-	#	dplyr::arrange(patient_id)
-
 	readr::write_tsv(somatic_variants, output)					
 }
+
+print('shoe1')
 
 prepare_data_for_oncoprint_generation (
 	nonTP53_variants=snakemake@input[['filtered_non_TP53_variants']],
 	TP53_variants=snakemake@input[['filtered_TP53_variants_with_MAFs']],
 	TP53_variant_clonality_status=snakemake@input[['clonality_status_of_TP53_variants']],
-	gene_set_analysed=snakemake@wildcards$analysis_type,
 	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
 	samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
 	samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
 	output = snakemake@output[['data_for_somatic_oncoprint']],
 	analysis_type='cohort'
 )
-
-#prepare_data_for_oncoprint_generation (
-#	nonTP53_archival_variants='results/filtered_archival_vep_calls_octopus_joined.tsv',
-#	nonTP53_relapse_variants='results/filtered_relapse_vep_calls_octopus_joined.tsv',
-#	TP53_variants='results/final_tp53/filtered_TP53_variants_with_MAFs.tsv',
-#	TP53_variant_clonality_status='results/final_tp53/TP53_variants_with_clonality_classifications.tsv',
-#	non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420','IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424','IM_302','IM_303','IM_304','IM_305','JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44'),
-#	gene_set_analysed='HRD',
-#	samples_with_no_good_sequencing =  c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441'),
-#	samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM_27','IM_69','IM_86','IM_90','IM_93','IM_94','IM_173','IM_177','IM_179','IM_200','IM_241','IM_242','IM_417','IM_418','IM_419','IM_420','IM_221','IM_264','IM_329','IM_289','IM_308','IM_309','IM_338','IM_339','IM_340','IM_341','IM_342','IM_432','IM_372','IM_272','IM_392'),
-#	output='somatic_variants_for_oncoprint.tsv'	
-#)
