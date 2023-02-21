@@ -43,24 +43,24 @@ include: 'workflow/rules/bam_preprocessing/clean_bams.smk'
 #include: 'workflow/rules/variant_analysis/TP53/octopus_TP53.smk'
 #include: 'workflow/rules/variant_analysis/TP53/annotate_variants_TP53.smk'
 
-# matched and paired variant analysis
-#include: 'workflow/rules/variant_analysis/matched_and_paired/octopus_joint.smk'
-#include: 'workflow/rules/variant_analysis/matched_and_paired/filter_mutect2_calls_joint.smk'
-#include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_joined.smk'
-#include: 'workflow/rules/variant_analysis/matched_and_paired/filter_octopus_calls_targeted.smk'
-
 # matched and unpaired variant analysis
-#include: 'workflow/rules/variant_analysis/matched_and_unpaired/octopus_joint.smk'
-#include: 'workflow/rules/variant_analysis/matched_and_unpaired/filter_mutect2_calls_joint.smk'
+include: 'workflow/rules/variant_analysis/matched_and_unpaired/octopus_joint.smk'
+include: 'workflow/rules/variant_analysis/matched_and_unpaired/filter_mutect2_calls_joint.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_unpaired/get_matched_germline_variants.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_unpaired/annotate_variants_joined.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_unpaired/generate_oncoprints.smk'
 
+# matched and paired variant analysis
+#include: 'workflow/rules/variant_analysis/matched_and_paired/octopus_joint.smk'
+#include: 'workflow/rules/variant_analysis/matched_and_paired/filter_mutect2_calls_joint.smk'
+include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_joined.smk'
+#include: 'workflow/rules/variant_analysis/matched_and_paired/filter_octopus_calls_targeted.smk'
+
 # unmatched and unpaired analyses
-include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/octopus_joint_cohort.smk'
-include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/filter_octopus_calls.smk'
-include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/annotate_variants_joined.smk'
-include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/generate_oncoprints_cohort.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/octopus_joint_cohort.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/filter_octopus_calls.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/annotate_variants_joined.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/generate_oncoprints_cohort.smk'
 
 #include: 'workflow/rules/variant_analysis/unmatched/filter_octopus_calls_targeted.smk'
 #include: 'workflow/rules/variant_analysis/unmatched/annotate_variants_joined_both_targeted.smk'
@@ -96,10 +96,14 @@ rule all:
 		#'results/variant_analysis/unmatched_germline/panel_6_28/deepvariant/all_patients.vep.filtered.vcf',
 		#'results/variant_analysis/germline/ampliconseq_pipeline/panel_6_28/collated/final_germline_variants.tsv',
 		#'results/variant_analysis/germline/octopus_unmatched/panel_6_28/merged/collated/filtered_vep_calls_octopus_joined.tsv'		
-		'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_filtered.tsv',
-		'results/variant_analysis/unmatched/collated/filtered_vep_calls_octopus_joined.tsv',
-		'results/data_for_somatic_oncoprint.tsv',
-		'plots/whole_cohort_oncoprints_not_intercalated_ggplot2.png'
+		#'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_filtered.tsv',
+		#'results/variant_analysis/unmatched/collated/filtered_vep_calls_octopus_joined.tsv',
+		#'results/data_for_somatic_oncoprint.tsv',
+		#'plots/whole_cohort_oncoprints_not_intercalated_ggplot2.png',
+		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_archival_joined_MTBP_filtered.tsv',
+		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_relapse_joined_MTBP_filtered.tsv',
+		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_archival.tsv',
+		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_relapse.tsv'
 		#expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients)
 		#'results/variant_analysis/matched/panel_28_only/collated/filtered3_joined.tsv'
 

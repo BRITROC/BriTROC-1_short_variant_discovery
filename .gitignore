@@ -10,6 +10,7 @@ Rplots.pdf
 *.out
 *.gz
 *.stats
+*.swp
 *.tbi
 *.bed
 *tmp*

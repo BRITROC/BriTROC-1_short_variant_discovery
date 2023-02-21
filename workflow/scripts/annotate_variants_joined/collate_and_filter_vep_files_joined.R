@@ -136,16 +136,13 @@ annotations = annotations %>% dplyr::filter(
 
 # this called a splice mutation as low impact so probably not a good filter
 
-annotations = annotations %>% dplyr::filter(
-  !Consequence %in% c(
-    'downstream_gene_variant', 'upstream_gene_variant'
-  )
-)
+#annotations = annotations %>% dplyr::filter(
+#  !Consequence %in% c(
+#    'downstream_gene_variant', 'upstream_gene_variant'
+#  )
+#)
 
 vcf = dplyr::inner_join(vcf,annotations, by=c('vep_format'='#Uploaded_variation', 'patient_id'))
-
-print(vcf)
-print(annotations)
 
 annotations$patient_id = annotations$patient_id %>% as.integer()
 annotations = annotations %>% dplyr::arrange(patient_id)
