@@ -46,15 +46,18 @@ include: 'workflow/rules/bam_preprocessing/clean_bams.smk'
 # matched and unpaired variant analysis
 include: 'workflow/rules/variant_analysis/matched_and_unpaired/octopus_joint.smk'
 include: 'workflow/rules/variant_analysis/matched_and_unpaired/filter_mutect2_calls_joint.smk'
-#include: 'workflow/rules/variant_analysis/matched_and_unpaired/get_matched_germline_variants.smk'
+include: 'workflow/rules/variant_analysis/matched_and_unpaired/get_matched_germline_variants.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_unpaired/annotate_variants_joined.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_unpaired/generate_oncoprints.smk'
 
 # matched and paired variant analysis
-#include: 'workflow/rules/variant_analysis/matched_and_paired/octopus_joint.smk'
+
+include: 'workflow/rules/variant_analysis/unmatched_germline/generate_oncoprints.smk'
+
 #include: 'workflow/rules/variant_analysis/matched_and_paired/filter_mutect2_calls_joint.smk'
 include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_joined.smk'
 #include: 'workflow/rules/variant_analysis/matched_and_paired/filter_octopus_calls_targeted.smk'
+include: 'workflow/rules/variant_analysis/matched_and_paired/generate_oncoprints.smk'
 
 # unmatched and unpaired analyses
 #include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/octopus_joint_cohort.smk'
@@ -62,8 +65,12 @@ include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_j
 #include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/annotate_variants_joined.smk'
 #include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/generate_oncoprints_cohort.smk'
 
+# unmatched and paired analysis
 #include: 'workflow/rules/variant_analysis/unmatched/filter_octopus_calls_targeted.smk'
-#include: 'workflow/rules/variant_analysis/unmatched/annotate_variants_joined_both_targeted.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_paired/annotate_variants_joined_both.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_paired/octopus_joined_targeted.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_paired/filter_octopus_calls_targeted.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_and_paired/annotate_variants_joined_both_targeted.smk'
 
 # oncoprint generation
 #include: 'workflow/rules/generate_oncoprints.smk'
@@ -100,10 +107,18 @@ rule all:
 		#'results/variant_analysis/unmatched/collated/filtered_vep_calls_octopus_joined.tsv',
 		#'results/data_for_somatic_oncoprint.tsv',
 		#'plots/whole_cohort_oncoprints_not_intercalated_ggplot2.png',
-		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_archival_joined_MTBP_filtered.tsv',
-		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_relapse_joined_MTBP_filtered.tsv',
-		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_archival.tsv',
-		'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_relapse.tsv'
+		#'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_archival_joined_MTBP_filtered.tsv',
+		#'results/variant_analysis/matched/panel_6_28/paired/collated/filtered3_relapse_joined_MTBP_filtered.tsv',
+		#'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_archival.tsv',
+		#'results/variant_analysis/matched/panel_6_28/paired/collated/filtered_vep_calls_octopus_joined_relapse.tsv',
+		'results/variant_analysis/unmatched/paired/collated/archival_filtered3_joined_MTBP_filtered.tsv',
+		'results/variant_analysis/unmatched/paired/collated/relapse_filtered3_joined_MTBP_filtered.tsv',
+		'results/variant_analysis/unmatched/paired/collated/archival_BriTROC-1_unmatched_and_paired_variants.tsv',
+		'results/variant_analysis/unmatched/paired/collated/relapse_BriTROC-1_unmatched_and_paired_variants.tsv',
+		expand('results/variant_analysis/unmatched/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, nonoverlapping_id=[1,2,3,4]),
+		expand('results/variant_analysis/unmatched/paired/{patient_id}.filtered2.targeted.vcf', patient_id=all_patients_with_tumour_samples_of_both_types),
+		'results/variant_analysis/unmatched/paired/collated/archival_BriTROC-1_unmatched_and_paired_variants.targeted.tsv',
+		'results/variant_analysis/unmatched/paired/collated/relapse_BriTROC-1_unmatched_and_paired_variants.targeted.tsv'
 		#expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients)
 		#'results/variant_analysis/matched/panel_28_only/collated/filtered3_joined.tsv'
 

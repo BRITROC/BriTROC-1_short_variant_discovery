@@ -120,7 +120,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	somatic_variants$gene_symbol_tumour_type = factor(
 		somatic_variants$gene_symbol_tumour_type,
 		levels=rev(
-			c('TP53 diagnosis','TP53 relapse','BRCA1 diagnosis','BRCA1 relapse','BRCA2 diagnosis','BRCA2 relapse','FANCM diagnosis','FANCM relapse','BARD1 diagnosis','BARD1 relapse','RAD51C diagnosis','RAD51C relapse'))
+			c('TP53 diagnosis','TP53 relapse','BRCA1 diagnosis','BRCA1 relapse','BRCA2 diagnosis','BRCA2 relapse','BARD1 diagnosis','BARD1 relapse'))
 	)
 
 	#quit()
@@ -227,6 +227,13 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 
 	print(gene_symbol_tumour_type_percentages)
 	class(gene_symbol_tumour_type_percentages) %>% print()	
+
+	# remove samples which don't have both valid samples for both diagnosis and relapse tumour types for TP53
+	# TODO: formalise and generalise this
+	# TODO: label IM_384 (patient 235) as a low celluarity sample in the config file
+	somatic_variants = somatic_variants %>% dplyr::filter(!patient_id %in% c(7,15,46,68,122,235,270)) #191
+	print(somatic_variants)
+	#quit()
 
 	p1 = ggplot(somatic_variants, aes(x=patient_id, y=as.numeric(gene_symbol_tumour_type))) +
                 geom_tile(aes(fill = variant_type), colour='white', size=0.9) +

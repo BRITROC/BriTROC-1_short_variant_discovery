@@ -20,7 +20,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	non_tp53_variants = rbind(non_tp53_variants_archival, non_tp53_variants_relapse)
 	
 	# remove suspected aritfacts
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(vep_format!='chr17_41231352_T/C')
 
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
@@ -84,25 +84,23 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	tp53_variants = tp53_variants %>% dplyr::rename(patient_id=fk_britroc_number)
 
 	# filter variants by type and by gene symbol on the basis of TMBP assigned pathogenicity status
-	# TODO: automate use MTBP pipeline
+	non_tp53_variants$SYMBOL %>% unique() %>% print()
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!SYMBOL %in% c('IFIT1P1'))
 
 	if (gene_set_analysed=='panel_6_28') {
 
-	# TODO: rerun pipeline with the correct parameterisation
-	# add variants that were previously filtered due to an overly harsh MAF threshold
-	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift', type='archival')
-	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift', type='archival')
-	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='FANCM', patient_id=176, Consequence='frameshift', type='relapse')
+	# variants changed due to manual curation
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=1, Consequence='frameshift_variant', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=39, Consequence='frameshift_variant', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='TP53', patient_id=102, Consequence='frameshift_variant', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=103, Consequence='frameshift_variant', type='archival')
+	non_tp53_variants = non_tp53_variants %>% tibble::add_row(SYMBOL='BRCA2', patient_id=141, Consequence='frameshift_variant', type='archival')
 
-	# removed variants on the basis of annotations in the MTBP pipeline
-	non_tp53_variants = non_tp53_variants %>%  # remove suspected artifacts
-		dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==69 & type=='archival')) %>% 
-		dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==123 & type=='relapse')) %>%
-		dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77 & type=='relapse'))
-
-	# MTBP specific processing filters
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
-	non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
+	# variants removed due to manual curation
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77 & type=='relapse'))
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!(SYMBOL == 'TP53' & patient_id==102 & type=='archival' & Consequence=='missense_variant')) # fixation artifact
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==112 & type=='archival'))
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==114 & type=='relapse'))
 
 	} else if (gene_set_analysed == 'panel_28_only') {
 
@@ -213,8 +211,8 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 }
 
 prepare_data_for_oncoprint_generation (
-	nonTP53_archival_variants=snakemake@input[['filtered_non_TP53_variants_archival']],
-	nonTP53_relapse_variants=snakemake@input[['filtered_non_TP53_variants_relapse']],
+	nonTP53_archival_variants=snakemake@input[['filtered_matched_and_paired_variants_archival']],
+	nonTP53_relapse_variants=snakemake@input[['filtered_matched_and_paired_variants_relapse']],
 	TP53_variants=snakemake@input[['filtered_TP53_variants_with_MAFs']],
 	TP53_variant_clonality_status=snakemake@input[['clonality_status_of_TP53_variants']],
 	gene_set_analysed=snakemake@wildcards$analysis_type,
