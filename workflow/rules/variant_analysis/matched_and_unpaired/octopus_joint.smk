@@ -18,6 +18,26 @@ def get_tumour_bam_files(wildcards):
 
 	return(bam_files)
 
+def get_tumour_bam_index_files(wildcards):
+	# some samples have been sequenced multiple times which is a variable we will have to factor in later
+	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
+
+	# configure 'analysis_type' string
+	if wildcards.analysis_type == 'panel_6_28':
+		analysis_type = 'panel_6_28'
+	elif wildcards.analysis_type == 'panel_28_only':
+		analysis_type = 'antijoined_panel_28_6' 
+
+	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
+	bam_files = []
+
+	for bam_file_name in bam_files_tmp:
+		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
+		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
+		bam_files.append(new_bam_name)
+
+	return(bam_files)
+
 def get_normal_bam_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
