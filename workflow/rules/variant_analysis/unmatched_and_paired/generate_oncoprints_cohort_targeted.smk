@@ -1,6 +1,8 @@
 def get_gene_set_analysed(wildcards):
 	return(["BRCA1","BRCA2","RAD51C","RAD51D","RAD51B","BRIP1","FANCM","PALB2","BARD1","CDK12","EGFR","PTEN","TP53","KRAS","BRAF","PIK3CA","CTNNB1","NF1","RB1","NRAS"])
 
+# somatic variants now found at the following path: results/variant_analysis/unmatched/paired/submission_results/collated/
+
 rule prepare_data_for_whole_oncoprint_generation_intercalated_targeted:
 	input:
 		filtered_non_TP53_variants_archival='results/variant_analysis/unmatched/collated/paired/filtered_archival_vep_calls_octopus_joined.targeted.tsv',
