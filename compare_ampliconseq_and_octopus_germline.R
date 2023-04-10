@@ -107,6 +107,8 @@ combined_results$final_call_set = dplyr::if_else(
 	FALSE
 	)
 
+# AD HOC amendements ----
+
 combined_results$final_call_set = dplyr::if_else(
 	combined_results$fk_britroc_number == 191, # A HaplotypeCaller exclusive call corroborated by clinical records - not called by octopus due to strand bias
 	TRUE,
