@@ -3,6 +3,8 @@ make_connection_to_postgres_server = function(database_name, host_name, port_num
 	# input:
 	#	database_name: The name of the database to connect to
 
+	# e.g. make_connection_to_postgres_server('britroc1','jblab-db.cri.camres.org',5432)
+
 	db_connection = DBI::dbConnect(
 			RPostgres::Postgres(),
 			dbname= database_name,
@@ -49,7 +51,7 @@ remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_
 		       dplyr::filter(!is.na(archival) & !is.na(relapse) & !is.na(germline)) # https://stackoverflow.com/questions/27197617/filter-data-frame-by-character-column-name-in-dplyr
 		} else if (analysis_type=='germline') {
 		relevant_samples = sequenced_samples %>%
-		       dplyr::group_by(fk_britroc_number,type) %>%
+			dplyr::group_by(fk_britroc_number,type) %>%
 		       dplyr::summarise(n=dplyr::n()) %>%
 		       tidyr::pivot_wider(names_from=type, values_from=n) %>%
 		       dplyr::filter(!is.na(germline))
@@ -73,9 +75,12 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 	for (lib in libraries) {
 		genotype_table[[lib]] = genotype_table[[lib]] %>% stringr::str_extract(pattern='[01\\|]+')
 	}
+	#print(genotype_table,n=200)
 
 	# go from a library genotype table to a sample genotype table - first by removing all library fields
 	sample_genotype_table = genotype_table %>% dplyr::select(-dplyr::any_of(libraries)) 
+
+	#print(sample_genotype_table)
 
 	#TODO: revise this. Decide whether to keep this or not. For now keep but neutralise
 	check_genotypes = function(row_index, genotype_table) {
@@ -84,6 +89,7 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 		# output: A genotype table which only includes variants where the genotypes match between duplicate libraries
 	
 		new_genotype_table = genotype_table[row_index,]
+		#print(new_genotype_table)
 		if (new_genotype_table[1,1] == new_genotype_table[1,2]) {
 			return(new_genotype_table[1,1])
 		} else {
@@ -110,17 +116,17 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 
 		for (lib in libraries) {
 			# without a somatic haplotype at that locus
-			square_vcf_ft_germline_without_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[13]]
+			square_vcf_ft_germline_without_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[12]]
 			if (grepl('SOMATIC', square_vcf_ft[['INFO']]) %>% any()) { # test if somatic variants are present
-				square_vcf_ft_somatic[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[17]]
-				square_vcf_ft_germline_with_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[14]]
+				square_vcf_ft_somatic[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[16]] # change back to 17
+				square_vcf_ft_germline_with_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[13]]
 
 				square_vcf_ft[[lib]] = dplyr::coalesce(square_vcf_ft_somatic[[lib]],square_vcf_ft_germline_with_sh[[lib]])
 				square_vcf_ft[[lib]] = dplyr::coalesce(square_vcf_ft[[lib]],square_vcf_ft_germline_without_sh[[lib]])
 			 # test if any germline variants occur on somatic haplotypes
 			} else if ( (grepl('HSS', square_vcf_ft[['FORMAT']]) %>% any()) ) {
 				# with somatic haplotype(s) at that locus
-				square_vcf_ft_germline_with_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[14]]
+				square_vcf_ft_germline_with_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[13]]
 				
 				square_vcf_ft[[lib]] = dplyr::coalesce(square_vcf_ft_germline_with_sh[[lib]],square_vcf_ft_germline_without_sh[[lib]])
 			} else {
@@ -154,8 +160,8 @@ identify_variants_with_tech_rep_mismatch_in_joined_vcf_table = function(square_v
 
 implement_substitution_type_specific_filters = function(square_vcf) {
 	# iterate over libraries and extract MAF and read depths
+	print('shoe1')
 	if (snakemake@params[['includes_germline_variants']]==FALSE) {
-	print('foo1')
 		for (lib in libraries) {
 			square_vcf_MAF[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[12]] %>%
 				stringr::str_split(pattern=',') %>% data.table::transpose() %>% .[[2]] %>% stringr::str_replace(pattern='^.$', replacement='0.000') %>%
@@ -170,10 +176,11 @@ implement_substitution_type_specific_filters = function(square_vcf) {
 		square_vcf_MAF_germline_without_sh = square_vcf_MAF # without somatic haplotype
 
 		for (lib in libraries) {
+
 			square_vcf_MAF_germline_with_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[9]] %>%
 				stringr::str_split(pattern=',') %>% data.table::transpose() %>% .[[2]] %>% stringr::str_replace(pattern='^.$', replacement='0.000') %>%
 				as.numeric()
-	
+
 			square_vcf_MAF_germline_without_sh[[lib]] = square_vcf[[lib]] %>% stringr::str_split(pattern=':') %>% data.table::transpose() %>% .[[8]] %>%
 				stringr::str_split(pattern=',') %>% data.table::transpose() %>% .[[2]] %>% stringr::str_replace(pattern='^.$', replacement='0.000') %>%
 				as.numeric()
@@ -195,6 +202,7 @@ implement_substitution_type_specific_filters = function(square_vcf) {
 				as.integer()
 		}
 	}
+	print('foo3')
 
 	sample_weighted_MAF = square_vcf %>% dplyr::select(-all_of(libraries))
 	
