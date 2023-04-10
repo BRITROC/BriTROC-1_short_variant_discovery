@@ -7,6 +7,7 @@ rule prepare_data_for_whole_oncoprint_generation_not_intercalated:
 		filtered_TP53_variants_with_MAFs='results/variant_analysis/TP53/collated/filtered_TP53_variants_with_MAFs.tsv',
 		clonality_status_of_TP53_variants='results/variant_analysis/TP53/collated/TP53_variants_with_clonality_classifications.tsv',
 		germline_variants='BriTROC-1_germline_variants.tsv'
+	conda: '../../../../config/postgres.yaml'
 	output: data_for_somatic_oncoprint='results/data_for_somatic_oncoprint.tsv'
 	script: '../../../scripts/generate_oncoprints/prepare_data_for_somatic_oncoprints_cohort.R'
 
