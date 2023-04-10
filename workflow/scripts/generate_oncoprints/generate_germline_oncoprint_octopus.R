@@ -7,6 +7,8 @@ library(magrittr)
 
 # read in data
 oncoprint_data = readr::read_tsv(snakemake@input[[1]])
+oncoprint_data = oncoprint_data %>% dplyr::filter(analysis_type=='germline')
+oncoprint_data = oncoprint_data %>% dplyr::filter(variant_caller=='clinical testing')
 
 # remove NA results
 oncoprint_data = oncoprint_data %>% dplyr::filter(!is.na(Consequence))

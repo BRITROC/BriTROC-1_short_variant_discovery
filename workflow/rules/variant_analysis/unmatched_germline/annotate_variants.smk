@@ -18,11 +18,11 @@ rule vep_octopus_germline:
 			-a GRCh37 \
 			--port 3337'
 
-rule collate_and_filter_octopus_germline_vep_files:
-	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf', patient_id=germline_patients, analysis_type=wildcards.analysis_type)
-	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/filtered_vep_calls_octopus_joined.tsv'
-	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined_octopus_germline.R'
+#rule collate_and_filter_octopus_germline_vep_files:
+#	input: 
+#		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf', patient_id=germline_patients, analysis_type=wildcards.analysis_type)
+#	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/filtered_vep_calls_octopus_joined.tsv'
+#	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined_octopus_germline.R'
 
 rule collate_and_filter_octopus_germline_vcfs:
 	input: 
@@ -37,3 +37,13 @@ rule MTBP_curate_germline_octopus_vcfs:
 	input: rules.collate_and_filter_octopus_germline_vcfs.output.vcf_full
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/octopus_unmatched_germline_collated_final.vcf'
 	script: '../../../scripts/MTBP_curate_germline_variants_octopus.R'
+
+rule collate_and_filter_octopus_vep_files_germline:
+	input: 
+		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf',patient_id=germline_patients, analysis_type=wildcards.analysis_type),
+		vcf_file=rules.MTBP_curate_germline_octopus_vcfs.output
+	output: 
+		vep_output='results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/filtered_vep_calls_octopus_joined.tsv',
+		vep_reduced='results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/BriTROC-1_matched_and_unpaired_somatic_variants.tsv',
+		vcf_output='results/variant_analysis/germline/octopus_matched/{analysis_type}/merged/collated/filtered_calls_octopus_joined.vcf'
+	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'
