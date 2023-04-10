@@ -65,8 +65,8 @@ sample_genotype_table = identify_variants_with_tech_rep_mismatch_in_joined_vcf_t
 square_vcf = square_vcf %>% dplyr::inner_join(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), by=c('CHROM','POS','REF','ALT'))
 
 # remove duplicate recorded variants due to overlapping amplicons recording the same variant
-square_vcf = square_vcf %>% dplyr::group_by(CHROM,POS,REF,ALT) %>% dplyr::slice(n=1) %>% dplyr::ungroup()
-sample_genotype_table = sample_genotype_table %>% dplyr::group_by(CHROM,POS,REF,ALT) %>% dplyr::slice(n=1) %>% dplyr::ungroup()
+square_vcf = square_vcf %>% dplyr::group_by(CHROM,POS,REF,ALT) %>% dplyr::slice_head(n=1) %>% dplyr::ungroup()
+sample_genotype_table = sample_genotype_table %>% dplyr::group_by(CHROM,POS,REF,ALT) %>% dplyr::slice_head(n=1) %>% dplyr::ungroup()
 
 # get MAFs for each sample
 square_vcf_MAF = square_vcf
