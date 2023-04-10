@@ -4,12 +4,12 @@ def get_relevant_patient_list(wildcards):
 	elif wildcards.analysis_type=='panel_28_only':
 		return(matched_somatic_patients_panel_28_only)
 
-rule get_somatic_variants_only:
-	input: rules.concat_vcfs.output
-	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'
-	shell: 'grep -e "SOMATIC" -e "#" {input} > {output}'
+#rule get_somatic_variants_only:
+#	input: rules.concat_vcfs.output
+#	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'
+#	shell: 'grep -e "SOMATIC" -e "#" {input} > {output}'
 
-rule ensure_tech_rep_genotypes_match:
+rule ensure_tech_rep_genotypes_match_matched_analysis:
 	input: 
 		combined_vcfs=rules.get_somatic_variants_only.output,
 		germline_metadata='config/matched_germline_metadata.tsv',
@@ -47,9 +47,9 @@ rule MTBP_filter_curated_paired_results:
 	output: 'results/variant_analysis/matched/{analysis_type}/paired/collated/filtered3_{tumour_type}_joined_MTBP_filtered.tsv'
 	script: '../../../scripts/annotate_variants_joined/apply_MTBP_filter.R'
 
-rule collate_and_filter_octopus_vep_files:
+rule collate_and_filter_octopus_vep_files_matched_analysis:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type),
+		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_somatic_patients, analysis_type=wildcards.analysis_type),
 		vcf_file=rules.MTBP_filter_curated_paired_results.output
 	output: 
 		vep_output='results/variant_analysis/matched/{analysis_type}/paired/collated/filtered_vep_calls_octopus_joined_{tumour_type}.tsv',
