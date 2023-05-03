@@ -22,11 +22,11 @@ rule generate_somatic_oncoprints_ggplot2:
 	script: '../../../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2.R'
 
 # germline variants from haplotypecaller at this stage
-#rule generate_germline_and_somatic_oncoprints_ggplot2:
-#	input:
-#		data_for_somatic_oncoprint=rules.prepare_data_for_somatic_oncoprint_generation.output.data_for_somatic_oncoprint,
-#		germline_data=rules.curate_germline_variants.output.filtered_germline_variants
-#	params: 
-#		gene_set_analysed=get_gene_set_analysed
-#	output: germline_and_somatic_oncoprint='plots/{analysis_type}/germline_and_somatic_oncoprint_ggplot2_2.png' 
-#	script: '../../../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2_2.R'
+rule generate_germline_and_somatic_oncoprints_ggplot2:
+	input:
+		data_for_somatic_oncoprint=rules.prepare_data_for_somatic_oncoprint_generation.output.data_for_somatic_oncoprint,
+		germline_data='BriTROC-1_germline_variants.tsv'
+	params: 
+		gene_set_analysed=get_gene_set_analysed
+	output: germline_and_somatic_oncoprint='plots/{analysis_type}/germline_and_somatic_oncoprint_ggplot2_2.png' 
+	script: '../../../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2_2.R'
