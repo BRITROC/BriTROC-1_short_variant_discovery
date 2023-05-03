@@ -83,6 +83,11 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	somatic_variants = somatic_variants %>% dplyr::mutate(variant_class='somatic')
 	
 	germline_variants = readr::read_tsv(snakemake@input[['germline_data']])
+
+        germline_variants = germline_variants %>% dplyr::filter(final_call_set==TRUE)
+        germline_variants = germline_variants %>% dplyr::filter(fk_britroc_number %in% somatic_variants$patient_id)
+        germline_variants = germline_variants %>% dplyr::filter(!is.na(variant_type))
+
 	germline_variants = germline_variants %>% dplyr::filter(fk_britroc_number %in% somatic_variants$patient_id)
 	germline_variants = germline_variants %>% dplyr::select(fk_britroc_number, gene_symbol, variant_type) %>% unique()
 	germline_variants$variant_type = germline_variants$variant_type %>%
@@ -160,7 +165,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 	somatic_variants$gene_symbol_tumour_type = factor(
 		somatic_variants$gene_symbol_tumour_type,
 		levels=rev(
-			c('TP53 diagnosis','TP53 relapse','BRCA1 diagnosis','BRCA1 relapse','BRCA2 diagnosis','BRCA2 relapse','FANCM diagnosis','FANCM relapse','BARD1 diagnosis','BARD1 relapse','RAD51C diagnosis','RAD51C relapse'))
+			c('TP53 diagnosis','TP53 relapse','BRCA1 diagnosis','BRCA1 relapse','BRCA2 diagnosis','BRCA2 relapse','BARD1 diagnosis','BARD1 relapse','RAD51C diagnosis','RAD51C relapse'))
 	)
 
 	#quit()
@@ -279,6 +284,11 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 		1.0,
 		0.5
 	)
+
+	# remove samples which don't have both valid samples for both diagnosis and relapse tumour types for TP53
+        # TODO: formalise and generalise this
+        # TODO: label IM_384 (patient 235) as a low celluarity sample in the config file
+        somatic_variants = somatic_variants %>% dplyr::filter(!patient_id %in% c(7,15,46,68,122,235,270)) #191
 
 	p1 = ggplot(somatic_variants, aes(x=patient_id, y=as.numeric(gene_symbol_tumour_type))) +
                 geom_tile(aes(fill = variant_type), colour='white', size=0.9, alpha=somatic_variants$alpha_value) +

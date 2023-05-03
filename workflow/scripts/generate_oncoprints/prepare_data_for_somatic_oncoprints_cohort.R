@@ -28,6 +28,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41231352_T/C')
 	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr17_41245587_T/-')
  	non_tp53_variants = non_tp53_variants %>% dplyr::filter(`#Uploaded_variation`!='chr13_32954023_A/-') 
+	non_tp53_variants = non_tp53_variants %>% dplyr::filter(HGVS_united != 'p.Ile332PhefsTer17')
 
 	# Set of annotated TP53 variants 
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
@@ -65,8 +66,6 @@ prepare_data_for_oncoprint_generation = function (nonTP53_variants, TP53_variant
 
 	# bind TP53 variants together
 	tp53_variants = rbind(tp53_variants_clonal_mutations, tp53_variants_no_clonal_mutation)
-
-	print('foo1')
 	
 	# reformat variant information
 	non_tp53_variants = non_tp53_variants %>% dplyr::select(patient_id,Consequence,SYMBOL)

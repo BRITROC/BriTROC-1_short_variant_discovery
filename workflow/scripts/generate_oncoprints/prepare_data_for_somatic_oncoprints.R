@@ -172,6 +172,9 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	colnames(somatic_samples_with_mutations) = c('patient_id','gene_symbol','variant_type','tumour_type')
 
 	# bind data together
+	somatic_samples_with_no_mutations = somatic_samples_with_no_mutations %>% dplyr::rename(
+		'tumour_type'='type'
+	)
 	somatic_variants = rbind(somatic_samples_with_mutations, somatic_samples_with_no_mutations)
 
 	# remap variant type categories
