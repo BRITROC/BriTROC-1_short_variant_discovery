@@ -22,7 +22,7 @@ rule octopus_tp53:
 		interval_file=rules.convert_bed6_to_oct_format_tp53.output,
 		tumour_bams=get_tumour_bam_files,
 	output: 
-		tumour_vcf='results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.vcf'
+		tumour_vcf=protected('results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.vcf')
 	wildcard_constraints:
 		sample='(JBLAB-[0-9]+|IM_[0-9]+)'
 	threads: 4
