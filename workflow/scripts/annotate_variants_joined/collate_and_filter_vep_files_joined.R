@@ -1,7 +1,5 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
-library(DBI)
-library(RPostgres)
 library(magrittr)
 
 # ensure that the script reads from the users .Renviron text file
@@ -9,7 +7,7 @@ readRenviron('~/.Renviron')
 
 vep_files = snakemake@input$vep_files %>% unlist
 
-patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+.filtered.vep.vcf$') %>%
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+(.filtered)?.vep.vcf$') %>%
 	stringr::str_extract('[0-9]+')
 
 # a rudimentary helper function to add the patient IDs to the annotation output table
@@ -136,11 +134,13 @@ annotations = annotations %>% dplyr::filter(
 
 # this called a splice mutation as low impact so probably not a good filter
 
-#annotations = annotations %>% dplyr::filter(
-#  !Consequence %in% c(
-#    'downstream_gene_variant', 'upstream_gene_variant'
-#  )
-#)
+annotations = annotations %>% dplyr::filter(
+  !Consequence %in% c(
+    'downstream_gene_variant', 'upstream_gene_variant'
+  )
+)
+
+annotations = annotations %>% dplyr::filter(SYMBOL!='RAD51L3-RFFL')
 
 vcf = dplyr::inner_join(vcf,annotations, by=c('vep_format'='#Uploaded_variation', 'patient_id'))
 
@@ -150,7 +150,7 @@ vep_reduced = annotations %>% dplyr::select(patient_id, SYMBOL, CHROM, POS, REF,
 vep_reduced$HGVSc = vep_reduced$HGVSc %>% stringr::str_remove('ENST[0-9]+\\.[0-9]+:')
 vep_reduced$HGVSp = vep_reduced$HGVSp %>% stringr::str_remove('ENSP[0-9]+\\.[0-9]+:')
 
-vep_reduced = vep_reduced %>% dplyr::select(patient_id, SYMBOL, CHROM, POS, REF, ALT, Consequence, HGVSc, HGVSp)
+vep_reduced = vep_reduced %>% dplyr::select(patient_id, SYMBOL, CHROM, POS, REF, ALT, Consequence, HGVSc, HGVSp) %>% unique()
 
 print(vep_reduced)
 print(snakemake@output[['vep_reduced']])

@@ -1,15 +1,13 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
 library(magrittr)
-library(DBI)
-library(RPostgres)
 
 # ensure that the script reads from the users .Renviron text file
 readRenviron('~/.Renviron')
 
 vep_files = snakemake@input %>% unlist
 
-patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+.(archival.|relapse.)?filtered3.vcf$') %>%
+patient_names = stringr::str_extract(string=vep_files, pattern='[0-9]+.(archival.|relapse.)?filtered3.(targeted.)?vcf$') %>%
         stringr::str_extract('[0-9]+')
 
 print(patient_names)
