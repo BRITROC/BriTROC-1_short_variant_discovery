@@ -1,7 +1,5 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
-library(DBI)
-library(RPostgres)
 library(magrittr)
 
 # ensure that the script reads from the users .Renviron text file
@@ -106,63 +104,8 @@ readr::write_tsv(annotations %>% dplyr::select(HGVS_united) %>% unique(), col_na
 
 #annotations %>% dplyr::filter(grepl('+6T',HGVSc)) %>% .$HGVSc %>% print()
 #annotations %>% dplyr::filter(!is.na(HGVS_OFFSET)) %>% .$HGVSp %>% print()
-quit()
 
 annotations %>% .$HGVSp %>% unique()
-
-annotations = annotations %>%
-	dplyr::filter(
-		HGVSp %in% c(
-			'p.Lys654SerfsTer47',
-			'p.Asn1002ThrfsTer22',
-			'p.Lys894ThrfsTer8',
-			'p.Glu881Ter',
-			'p.Asp825GlufsTer21',
-			'p.Glu732Ter',
-			'p.His692MetfsTer9',
-			'p.Val299ArgfsTer4',
-			'p.Lys583AsnfsTer3',
-			'p.Arg1203Ter',
-			'p.Glu23ValfsTer17',
-			'p.Gly1077AlafsTer8',
-			'p.Ser1253ArgfsTer10',
-			'p.Ala1708Glu',
-			'p.Ala1729Glu',
-			'p.Ile1465Ter',
-			'p.Ile1486Ter',
-			'p.Val1736Ala',
-			'p.Val1757Ala',
-			'p.Tyr1625Ter',
-			'p.Tyr1646Ter',
-			'p.Ala1623Gly',
-			'p.Ala1644Gly',
-			'p.Trp1508Ter',
-			'p.Trp1529Ter',
-			'p.Ser1503Ter',
-			'p.Ser1524Ter',
-			'p.Pro9GlnfsTer16',
-			'p.Glu1035Ter',
-			'p.Glu1493ValfsTer10',
-			'p.Glu1571GlyfsTer3',
-			'p.Asn1784HisfsTer2',
-			'p.Ser1982ArgfsTer22',
-			'p.Leu2092ProfsTer7',
-			'p.Gln2829Ter',
-			'p.Thr3033LeufsTer29',
-			'p.Ile605TyrfsTer9',
-			'p.Asp1469LysfsTer11',
-			'p.Gln397LeufsTer25',
-			'p.Val220IlefsTer4',
-			'p.Ile504SerfsTer22',
-			'p.Asn1039IlefsTer2',
-			'p.Arg47Ter',
-			'p.Gln133Ter',
-			'p.Trp268Ter',
-			'p.Trp288Ter',
-			'p.Lys254ArgfsTer19',
-			'p.Arg264Trp'
-		) | HGVSc %in% c('ENST00000471181.2:c.302-2del','ENST00000471181.2:c.4548-2A>G','ENST00000471181.2:c.5049+6T>G')
-	)
 
 annotations %>% .$HGVSp %>% unique()
 annotations %>% .$HGVS_united %>% unique()
