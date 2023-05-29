@@ -88,7 +88,8 @@ rule all:
 		'results/variant_analysis/germline/ampliconseq_pipeline/panel_6_28/collated/final_germline_variants.tsv', # ampliconseq germline variants
 		'plots/panel_6_28_britroc_germline_oncoprint_octopus.png', # octopus germline
 		'plots/matched_and_unpaired_oncoprint_ggplot2_panel_6_28.png',
-		'plots/panel_6_28/germline_and_somatic_oncoprint_ggplot2_2.png'
+		'plots/panel_6_28/matched_and_paired_oncoprint_somatic_variants_only.png',
+		'plots/panel_6_28/matched_and_paired_oncoprint_germline_and_somatic_variants.png'
 		#'plots/matched_and_unpaired_oncoprint_ggplot2_panel_6_28.png'
 		#'plots/panel_6_28/germline_and_somatic_oncoprint.png',
 		#'plots/panel_28_only/somatic_oncoprint.png',
