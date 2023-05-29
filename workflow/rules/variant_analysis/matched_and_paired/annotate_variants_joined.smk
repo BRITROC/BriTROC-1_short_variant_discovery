@@ -1,9 +1,3 @@
-def get_relevant_patient_list(wildcards):
-	if wildcards.analysis_type=='panel_6_28':
-		return(matched_somatic_patients)
-	elif wildcards.analysis_type=='panel_28_only':
-		return(matched_somatic_patients_panel_28_only)
-
 rule get_somatic_variants_only_from_matched_and_paired_analysis:
 	input: rules.concat_vcfs.output
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'

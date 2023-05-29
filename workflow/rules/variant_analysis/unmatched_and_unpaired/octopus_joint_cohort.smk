@@ -26,11 +26,6 @@ def get_tumour_bam_index_files(wildcards):
 
 	return(bam_files)
 
-rule convert_bed6_to_oct_format:
-	input:  'resources/nonoverlapping.panel_28.targets.{nonoverlapping_id}.bed'                                           
-	output: 'resources/panel_28.{nonoverlapping_id}.targets.oct'
-	script: '../../../scripts/octopus_formatting/convert_bed6_to_octopus.R'
-
 rule octopus:
 	input:
 		reference_genome=config['reference_genome'],

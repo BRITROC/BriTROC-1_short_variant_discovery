@@ -1,9 +1,3 @@
-def get_gene_set_analysed(wildcards):
-	if wildcards.analysis_type == 'panel_6_28':
-		return(['TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'])
-	elif wildcards.analysis_type == 'panel_28_only':
-		return(['TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'])
-
 rule curate_germline_variants:
 	output: 
 		filtered_germline_variants='results/variant_analysis/germline/ampliconseq_pipeline/{analysis_type}/collated/filtered_germline_variants.tsv',

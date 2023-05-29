@@ -1,4 +1,4 @@
-#filter filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
+#filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
 
 #rule symlink_bams:
 #	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bam'

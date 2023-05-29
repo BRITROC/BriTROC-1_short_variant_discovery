@@ -40,13 +40,6 @@ rule index_compressed_vcf_octopus_germline:
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered3.vcf.gz.csi'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
 
-def get_nonoverlapping_id_list(wildcards):
-	if wildcards.analysis_type == 'panel_6_28':
-		nonoverlapping_id_list = [1,2,3,4]
-	elif wildcards.analysis_type == 'panel_28_only':
-		nonoverlapping_id_list = [1,2,3]
-	return(nonoverlapping_id_list)
-
 rule concat_vcfs_octopus_germline:
 	input:
 		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered3.vcf.gz', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id),
