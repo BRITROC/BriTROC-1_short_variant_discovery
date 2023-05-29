@@ -7,7 +7,7 @@ rule octopus:
 		tumour_bam_indexes = lambda wildcards: get_tumour_bam_files(wildcards, 'bai'),
 		normal_bams= get_normal_bam_files
 	output: 
-		tumour_vcf=protected('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
+		tumour_vcf=protected('results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
 	threads: 4
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'

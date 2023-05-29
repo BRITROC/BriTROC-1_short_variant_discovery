@@ -15,7 +15,7 @@ rule filter_calls2:
 		normal_bams=get_normal_bam_files,
 		vcf_file=rules.filter_octopus_raw_calls.output
 	output: 
-		tumour_vcf='results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
+		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
 	threads: 4
 	params:
 		normal_sample_identifier=get_normal_sample_names

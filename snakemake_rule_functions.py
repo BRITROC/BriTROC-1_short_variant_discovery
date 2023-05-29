@@ -4,7 +4,12 @@
 def get_tumour_bam_files(wildcards, bam_or_bai):
 
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	# NB: the paired metadata table is a subset of the unpaired table - therefore using the unpaired table for the paired analysis is not inappropriate
+
+	if wildcards.matched_or_unmatched == 'matched':
+		test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	elif wildcards.matched_or_unmatched == 'unmatched':
+		test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]	
 
 	# configure 'analysis_type' string
 	if wildcards.analysis_type == 'panel_6_28':
@@ -145,6 +150,8 @@ def get_gene_set_analysed(wildcards):
 		return(['TP53','BRCA1','BRCA2','FANCM','BARD1','RAD51B','RAD51C','RAD51D','BRIP1','PALB2'])
 	elif wildcards.analysis_type == 'panel_28_only':
 		return(['TP53','NRAS','PIK3CA','CTNNB1','EGFR','BRAF','PTEN','KRAS','RB1','CDK12','NF1'])
+	elif wildcards.analysis_type == 'panel_28':
+		return(["BRCA1","BRCA2","RAD51C","RAD51D","RAD51B","BRIP1","FANCM","PALB2","BARD1","CDK12","EGFR","PTEN","TP53","KRAS","BRAF","PIK3CA","CTNNB1","NF1","RB1","NRAS"])
 
 def get_relevant_patient_list(wildcards):
 	if wildcards.analysis_type=='panel_6_28':

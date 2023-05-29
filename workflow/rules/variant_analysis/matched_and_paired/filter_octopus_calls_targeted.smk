@@ -8,11 +8,11 @@ rule filter_calls2_targeted:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.get_interval_file_for_targeted_calling.output,
-		tumour_bams=get_tumour_bam_files,
-		tumour_bam_indexs=get_tumour_bam_index_files,
+		tumour_bams=lambda wildcards: get_tumour_bam_files(wildcards, 'bam'),
+		tumour_bam_indexes=lambda wildcards: get_tumour_bam_files(wildcards, 'bai'),
 		vcf_file=rules.filter_octopus_raw_calls_targeted.output
 	output: 
-		tumour_vcf='results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf',
+		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf',
 	threads: 4
 	shell:   '../octopus/bin/octopus \
 				-C cancer \
