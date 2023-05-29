@@ -11,14 +11,6 @@ rule prepare_data_for_whole_oncoprint_generation_not_intercalated:
 	output: data_for_somatic_oncoprint='results/data_for_somatic_oncoprint.tsv'
 	script: '../../../scripts/generate_oncoprints/prepare_data_for_somatic_oncoprints_cohort.R'
 
-rule generate_whole_cohort_oncoprint_not_intercalated:
-	input:
-		data_for_somatic_oncoprint=rules.prepare_data_for_whole_oncoprint_generation_not_intercalated.output.data_for_somatic_oncoprint
-	params: 
-		gene_set_analysed=get_gene_set_analysed
-	output: somatic_oncoprint='plots/whole_cohort_oncoprints_not_intercalated.png' 
-	script: '../../../scripts/generate_oncoprints/generate_somatic_oncoprints_cohort.R'
-
 rule generate_whole_cohort_oncoprint_not_intercalated_ggplot2:
 	input:
 		data_for_somatic_oncoprint=rules.prepare_data_for_whole_oncoprint_generation_not_intercalated.output.data_for_somatic_oncoprint
