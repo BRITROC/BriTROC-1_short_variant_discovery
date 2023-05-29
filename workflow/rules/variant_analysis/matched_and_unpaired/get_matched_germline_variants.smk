@@ -14,7 +14,7 @@ rule collate_and_filter_germline_vcf_files:
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined_germline.R'
 
 # contains really inefficient join operations - must fix at some point
-rule collate_and_filter_octopus_vep_files_germline:
+rule collate_and_filter_octopus_vep_files_matched_germline:
 	input: 
 		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_and_unpaired_somatic_metadata_patients, analysis_type=wildcards.analysis_type),
 		vcf_file=rules.collate_and_filter_germline_vcf_files.output
