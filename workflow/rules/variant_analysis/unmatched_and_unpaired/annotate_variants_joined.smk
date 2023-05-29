@@ -1,6 +1,6 @@
-rule vep_octopus:
-	input: rules.concat_vcfs.output
-	output: 'results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf'
+rule generate_vep_annotations_for_unmatched_variants:
+	input: rules.concat_unmatched_vcfs_across_amplicon_groups.output
+	output: 'results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \
@@ -17,9 +17,9 @@ rule vep_octopus:
 			-a GRCh37 \
 			--port 3337'
 
-rule ensure_tech_rep_genotypes_match:
+rule ensure_tech_rep_genotypes_match_for_unmatched_variants:
 	input:
-		combined_vcfs=rules.concat_vcfs.output,
+		combined_vcfs=rules.concat_unmatched_vcfs_across_amplicon_groups.output,
 		tumour_metadata='config/all_tumour_metadata.tsv'
 	params:
 		variant_quality_score_threshold=500,
@@ -29,33 +29,34 @@ rule ensure_tech_rep_genotypes_match:
 		includes_tumour_type_analysis=False,
 		includes_germline_variants=True
 	output: 
-		tumour_samples_union='results/variant_analysis/unmatched/{patient_id}.filtered3.vcf',
-		library_MAFs='results/variant_analysis/unmatched/{patient_id}.library_MAFs.vcf',
-		library_depths='results/variant_analysis/unmatched/{patient_id}.library_depths.vcf',
-		sample_genotypes='results/variant_analysis/unmatched/{patient_id}.sample_genotypes.vcf'
+		tumour_samples_union='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf',
+		library_MAFs='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.library_MAFs.vcf',
+		library_depths='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.library_depths.vcf',
+		sample_genotypes='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.sample_genotypes.vcf'
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
-rule collate_and_filter_vcf_files:
-	input: lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
-	output: 'results/variant_analysis/unmatched/collated/filtered3_joined.tsv'
+rule collate_unmatched_variants_across_patients:
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
+	output: 'results/variant_analysis/unmatched/{analysis_type}/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
 rule reformat_vcf_for_MTBP:
-	input: rules.collate_and_filter_vcf_files.output
-	output: 'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_format.tsv'
+	input: rules.collate_unmatched_variants_across_patients.output
+	output: 'results/variant_analysis/unmatched/{analysis_type}/collated/filtered3_joined_MTBP_format.tsv'
 	script: '../../../scripts/annotate_variants_joined/get_MTBP_format.R'
 
-rule MTBP_filter_curated_results:
-	input: rules.collate_and_filter_vcf_files.output
-	output: 'results/variant_analysis/unmatched/collated/filtered3_joined_MTBP_filtered.tsv'
+# TODO: Abstract MTBP annotations as a seperate data sheet
+rule MTBP_filter_unmatched_variants:
+	input: rules.collate_unmatched_variants_across_patients.output
+	output: 'results/variant_analysis/unmatched/{analysis_type}/collated/filtered3_joined_MTBP_filtered.tsv'
 	script: '../../../scripts/annotate_variants_joined/apply_MTBP_filter_unmatched_and_unpaired.R'
 
-rule collate_and_filter_octopus_vep_files:
+rule filter_unmatched_vcfs_using_vep_annotations:
 	input: 
 		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
 		vcf_file=rules.MTBP_filter_curated_results.output
 	output: 
-		vep_output='results/variant_analysis/unmatched/collated/filtered_vep_calls_octopus_joined.tsv',
-		vep_reduced='results/variant_analysis/unmatched/collated/BriTROC-1_unmatched_and_unpaired_variants.tsv',
-		vcf_output='results/variant_analysis/unmatched/collated/filtered_calls_octopus_joined.vcf'
+		vep_output='results/variant_analysis/unmatched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv',
+		vep_reduced='results/variant_analysis/unmatched/{analysis_type}/collated/BriTROC-1_unmatched_and_unpaired_variants.tsv',
+		vcf_output='results/variant_analysis/unmatched/{analysis_type}/collated/filtered_calls_octopus_joined.vcf'
 	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined.R'

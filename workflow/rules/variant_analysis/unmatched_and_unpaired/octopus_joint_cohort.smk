@@ -1,39 +1,12 @@
-def get_tumour_bam_files(wildcards):
-	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
-
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
-
-	bam_files = []
-
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
-		bam_files.append(new_bam_name)
-
-	return(bam_files)
-
-def get_tumour_bam_index_files(wildcards):
-	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
-
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
-
-	bam_files = []
-
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
-		bam_files.append(new_bam_name)
-
-	return(bam_files)
-
-rule octopus:
+# NB: we use both germline and somatic random forests as we are calling both variant types even though there is no matched normal
+rule octopus_unmatched_with_random_forests:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format.output, 
-		tumour_bams=get_tumour_bam_files,
-		tumour_bam_indexes=get_tumour_bam_index_files
+		tumour_bams= lambda wildcards: get_tumour_bam_files(wildcards, 'bam'),
+		tumour_bam_indexes= lambda wildcards: get_tumour_bam_files(wildcards, 'bai')
 	output: 
-		tumour_vcf=protected('results/variant_analysis/unmatched/{patient_id}.{nonoverlapping_id}.vcf')
+		tumour_vcf=protected('results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
