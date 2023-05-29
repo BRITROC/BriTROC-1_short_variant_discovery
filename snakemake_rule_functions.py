@@ -1,7 +1,8 @@
 # a file containing functions used within snakemake rules
 # This is distinct from the list of functions used within R scripts
 
-def get_tumour_bam_files(wildcards):
+def get_tumour_bam_files(wildcards, bam_or_bai):
+
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
 
@@ -9,9 +10,15 @@ def get_tumour_bam_files(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
 		analysis_type = 'panel_6_28'
 	elif wildcards.analysis_type == 'panel_28_only':
-		analysis_type = 'antijoined_panel_28_6' 
+		analysis_type = 'antijoined_panel_28_6'
+	elif wildcards.analysis_type == 'panel_28':
+		analysis_type = 'panel_28' 
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
+	if bam_or_bai == 'bam':
+		bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
+	elif bam_or_bai == 'bai':
+		bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
+
 	bam_files = []
 
 	for bam_file_name in bam_files_tmp:
@@ -21,25 +28,34 @@ def get_tumour_bam_files(wildcards):
 
 	return(bam_files)
 
-def get_tumour_bam_index_files(wildcards):
+#def get_tumour_bam_files(wildcards):
+#	# some samples have been sequenced multiple times which is a variable we will have to factor in later
+#	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
+#
+#	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
+
+#	bam_files = []
+
+#	for bam_file_name in bam_files_tmp:
+#		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
+#		bam_files.append(new_bam_name)
+
+#	return(bam_files)
+
+#def get_tumour_bam_index_files(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
+#	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
 
-	# configure 'analysis_type' string
-	if wildcards.analysis_type == 'panel_6_28':
-		analysis_type = 'panel_6_28'
-	elif wildcards.analysis_type == 'panel_28_only':
-		analysis_type = 'antijoined_panel_28_6' 
+#	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
 
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
-	bam_files = []
+#	bam_files = []
 
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
-		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
-		bam_files.append(new_bam_name)
+#	for bam_file_name in bam_files_tmp:
+#		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
+#		bam_files.append(new_bam_name)
 
-	return(bam_files)
+#	return(bam_files)
+
 
 def cleaned_normal_bams(wildcards):
 
@@ -141,5 +157,6 @@ def get_relevant_bed_file(wildcards):
 		output_file='resources/panel_6_28.nonoverlapping.targets.{}.bed'.format(wildcards.nonoverlapping_id)
 	elif wildcards.analysis_type == 'panel_28_only':
 		output_file='resources/nonoverlapping.antijoined_panel_28_6.targets.{}.bed'.format(wildcards.nonoverlapping_id)
-	
+	elif wildcards.analysis_type == 'panel_28':
+		output_file='resources/nonoverlapping.panel_28.targets.{}.bed'.format(wildcards.nonoverlapping_id)	
 	return(output_file)
