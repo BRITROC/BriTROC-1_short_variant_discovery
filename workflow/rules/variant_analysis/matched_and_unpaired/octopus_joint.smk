@@ -93,19 +93,6 @@ def get_normal_sample_names(wildcards):
 
 	return(samples)
 
-def get_relevant_bed_file(wildcards):
-	if wildcards.analysis_type == 'panel_6_28':
-		output_file='resources/panel_6_28.nonoverlapping.targets.{}.bed'.format(wildcards.nonoverlapping_id)
-	elif wildcards.analysis_type == 'panel_28_only':
-		output_file='resources/nonoverlapping.antijoined_panel_28_6.targets.{}.bed'.format(wildcards.nonoverlapping_id)
-	
-	return(output_file)
-
-rule convert_bed6_to_oct_format:
-	input:  get_relevant_bed_file                                           
-	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'
-	script: '../../../scripts/octopus_formatting/convert_bed6_to_octopus.R'
-
 # octopus only permits the use of one normal sample
 rule octopus:
 	input:

@@ -96,18 +96,18 @@ sample_genotype_table = output_data_list[['genotypes']]
 square_vcf_MAF = output_data_list[['MAFs']]
 square_vcf_depth = output_data_list[['depths']]
 
-# write data objects to disk
-readr::write_tsv(square_vcf_MAF, path=snakemake@output[['library_MAFs']])
-readr::write_tsv(square_vcf_depth, path=snakemake@output[['library_depths']])
-readr::write_tsv(sample_genotype_table, path=snakemake@output[['sample_genotypes']])
-readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']], append=FALSE)
-
+# TODO: Considrer generating the full set of files in one run of this script rather than in two consecutive runs with different parameterisations
 if (snakemake@params[['includes_tumour_type_analysis']]==TRUE) {
 	# subset for variants which appear in at least one of the tumour types
-	sample_genotype_table_archival = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(archival_samples), `%notin%`, c(NA,"0|0")))
-	sample_genotype_table_relapse = sample_genotype_table %>% dplyr::filter(dplyr::if_any(all_of(relapse_samples), `%notin%`, c(NA,"0|0")))
+	sample_genotype_table_archival = sample_genotype_table %>% dplyr::filter(dplyr::if_any(tidyselect::all_of(archival_samples), `%notin%`, c(NA,"0|0")))
+	sample_genotype_table_relapse = sample_genotype_table %>% dplyr::filter(dplyr::if_any(tidyselect::all_of(relapse_samples), `%notin%`, c(NA,"0|0")))
 
 	readr::write_tsv(sample_genotype_table_archival %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['archival_samples']], append=FALSE)
 	readr::write_tsv(sample_genotype_table_relapse %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['relapse_samples']], append=FALSE)
 } else {
+	# write data objects to disk
+	readr::write_tsv(square_vcf_MAF, path=snakemake@output[['library_MAFs']])
+	readr::write_tsv(square_vcf_depth, path=snakemake@output[['library_depths']])
+	readr::write_tsv(sample_genotype_table, path=snakemake@output[['sample_genotypes']])
+	readr::write_tsv(sample_genotype_table %>% dplyr::select(CHROM,POS,REF,ALT), path=snakemake@output[['tumour_samples_union']], append=FALSE)
 }
