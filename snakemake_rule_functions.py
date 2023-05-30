@@ -35,35 +35,6 @@ def get_tumour_bam_files(wildcards, bam_or_bai):
 
 	return(bam_files)
 
-#def get_tumour_bam_files(wildcards):
-#	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-#	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
-#
-#	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
-
-#	bam_files = []
-
-#	for bam_file_name in bam_files_tmp:
-#		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
-#		bam_files.append(new_bam_name)
-
-#	return(bam_files)
-
-#def get_tumour_bam_index_files(wildcards):
-	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-#	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
-
-#	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.panel_28.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
-
-#	bam_files = []
-
-#	for bam_file_name in bam_files_tmp:
-#		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
-#		bam_files.append(new_bam_name)
-
-#	return(bam_files)
-
-
 def cleaned_normal_bams(wildcards):
 
 	metadata = germline_metadata[(germline_metadata.fk_britroc_number == int(wildcards.patient_id))]
