@@ -56,30 +56,6 @@ def cleaned_normal_bams(wildcards):
 
 	return(bam_files)
 
-def get_normal_bam_files(wildcards):
-	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
-	britroc_number = test_sample_metadata.set_index('fk_britroc_number', drop=False)
-	britroc_number = britroc_number.index.unique().tolist()
-
-	normal_metadata = matched_and_unpaired_germline_metadata[matched_and_unpaired_germline_metadata['fk_britroc_number'] == britroc_number[0]]
-
-	# configure 'analysis_type' string
-	if wildcards.analysis_type == 'panel_6_28':
-		analysis_type = 'panel_6_28'
-	elif wildcards.analysis_type == 'panel_28_only':
-		analysis_type = 'antijoined_panel_28_6' 
-
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=normal_metadata['fk_slx'], barcodes=normal_metadata['fk_barcode'], flowcell=normal_metadata['flowcell'], lane=normal_metadata['lane']) 
-	bam_files = []
-
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
-		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
-		bam_files.append(new_bam_name)
-
-	return(bam_files)
-
 def get_normal_sample_names(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
