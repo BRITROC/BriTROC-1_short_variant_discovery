@@ -17,7 +17,9 @@ def get_tumour_bam_files(wildcards, bam_or_bai):
 	elif wildcards.analysis_type == 'panel_28_only':
 		analysis_type = 'antijoined_panel_28_6'
 	elif wildcards.analysis_type == 'panel_28':
-		analysis_type = 'panel_28' 
+		analysis_type = 'panel_28'
+	elif wildcards.analysis_type == 'TP53':
+		analysis_type = 'union_of_tp53' 
 
 	if bam_or_bai == 'bam':
 		bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])

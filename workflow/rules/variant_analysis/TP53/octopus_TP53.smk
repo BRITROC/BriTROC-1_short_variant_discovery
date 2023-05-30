@@ -1,16 +1,3 @@
-def get_tumour_bam_files(wildcards):
-	test_sample_metadata = somatic_tp53_metadata[(somatic_tp53_metadata.fk_sample == wildcards.sample)]
-
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.place_holder.union_of_tp53.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane']) 
-
-	bam_files = []
-
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('place_holder', wildcards.nonoverlapping_id)
-		bam_files.append(new_bam_name)
-
-	return(bam_files)
-
 rule convert_bed6_to_oct_format_tp53:
 	input:  rules.create_nonoverlapping_amplicons_TP53.output.nonoverlapping_target_intervals                                     
 	output: 'resources/union_of_tp53.{nonoverlapping_id}.targets.oct'
@@ -22,7 +9,7 @@ rule octopus_tp53:
 		interval_file=rules.convert_bed6_to_oct_format_tp53.output,
 		tumour_bams=get_tumour_bam_files,
 	output: 
-		tumour_vcf=protected('results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.vcf')
+		tumour_vcf=protected('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf')
 	wildcard_constraints:
 		sample='(JBLAB-[0-9]+|IM_[0-9]+)'
 	threads: 4
