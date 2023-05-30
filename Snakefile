@@ -48,7 +48,7 @@ include: 'workflow/rules/variant_analysis/TP53/annotate_variants_TP53.smk'
 
 # germline workflow
 include: 'workflow/rules/variant_analysis/unmatched_germline/octopus.smk'
-include: 'workflow/rules/variant_analysis/unmatched_germline/deep_variant.smk'
+#include: 'workflow/rules/variant_analysis/unmatched_germline/deep_variant.smk'
 include: 'workflow/rules/variant_analysis/unmatched_germline/filter_octopus_calls.smk'
 include: 'workflow/rules/variant_analysis/unmatched_germline/annotate_variants.smk'
 include: 'workflow/rules/variant_analysis/unmatched_germline/generate_oncoprints.smk'
@@ -73,11 +73,10 @@ include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/annotate_varian
 include: 'workflow/rules/variant_analysis/unmatched_and_unpaired/generate_oncoprints_cohort.smk'
 
 # unmatched and paired analysis
-#include: 'workflow/rules/variant_analysis/unmatched/filter_octopus_calls_targeted.smk'
-#include: 'workflow/rules/variant_analysis/unmatched_and_paired/annotate_variants_joined_both.smk'
-#include: 'workflow/rules/variant_analysis/unmatched_and_paired/octopus_joined_targeted.smk'
-#include: 'workflow/rules/variant_analysis/unmatched_and_paired/filter_octopus_calls_targeted.smk'
-#include: 'workflow/rules/variant_analysis/unmatched_and_paired/annotate_variants_joined_both_targeted.smk'
+include: 'workflow/rules/variant_analysis/unmatched_and_paired/octopus_joined_targeted.smk'
+include: 'workflow/rules/variant_analysis/unmatched_and_paired/filter_octopus_calls_targeted.smk'
+include: 'workflow/rules/variant_analysis/unmatched_and_paired/annotate_variants_joined_both_targeted.smk'
+include: 'workflow/rules/variant_analysis/unmatched_and_paired/generate_oncoprints_cohort_targeted.smk'
 
 rule all:
 	input:
@@ -88,7 +87,8 @@ rule all:
 		'plots/matched_and_unpaired_oncoprint_ggplot2_panel_6_28.png',
 		'plots/panel_6_28/matched_and_paired_oncoprint_somatic_variants_only.png',
 		'plots/panel_6_28/matched_and_paired_oncoprint_germline_and_somatic_variants.png',
-		'plots/whole_cohort_oncoprints_panel_28_not_intercalated_ggplot2.png'
+		'plots/whole_cohort_oncoprints_panel_28_not_intercalated_ggplot2.png',
+		'plots/whole_cohort_oncoprints_intercalated.targeted.png'
 		#'plots/whole_cohort_oncoprints_not_intercalated_ggplot2.png'
 		#'plots/matched_and_unpaired_oncoprint_ggplot2_panel_6_28.png'
 		#'plots/panel_6_28/germline_and_somatic_oncoprint.png',

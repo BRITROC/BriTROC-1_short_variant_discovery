@@ -1,17 +1,17 @@
-rule get_interval_file_for_targeted_calling:
-	input: rules.ensure_tech_rep_genotypes_match_with_tumour_type.output.tumour_samples_union
-	output: 'results/variant_analysis/unmatched/paired/{patient_id}.interval_file.txt'
+rule get_interval_file_for_targeted_calling_for_unmatched_analysis:
+	input: rules.ensure_tech_rep_genotypes_match_for_unmatched_variants.output.tumour_samples_union
+	output: 'results/variant_analysis/unmatched/{analysis_type}/paired/{patient_id}.interval_file.txt'
 	script: '../../../scripts/annotate_variants_joined/get_intervals_for_targeted_calling.R'
 
 # rerun octopus though this time with more liberal hard thresholds
-rule octopus_targeted_calling:
+rule octopus_unmatched_targeted_calling:
 	input:
 		reference_genome=config['reference_genome'],
-		interval_file=rules.get_interval_file_for_targeted_calling.output, 
-		tumour_bams=get_tumour_bam_files,
-		tumour_bam_indexes=get_tumour_bam_index_files
+		interval_file=rules.get_interval_file_for_targeted_calling_for_unmatched_analysis.output, 
+		tumour_bams=lambda wildcards: get_tumour_bam_files(wildcards, 'bam'),
+		tumour_bam_indexes=lambda wildcards: get_tumour_bam_files(wildcards, 'bai'),
 	output: 
-		tumour_vcf='results/variant_analysis/unmatched/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf',
+		tumour_vcf='results/variant_analysis/unmatched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf',
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
