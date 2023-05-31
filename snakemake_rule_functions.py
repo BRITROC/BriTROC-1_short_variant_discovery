@@ -1,12 +1,15 @@
 # a file containing functions used within snakemake rules
 # This is distinct from the list of functions used within R scripts
 
-def get_tumour_bam_files(wildcards, bam_or_bai):
+def get_bam_files(wildcards, bam_or_bai, sample_type):
 
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	# NB: the paired metadata table is a subset of the unpaired table - therefore using the unpaired table for the paired analysis is not inappropriate
 
-	test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]	
+	if sample_type == 'tumour':
+		test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	elif sample_type == 'normal':
+		test_sample_metadata = germline_metadata[(germline_metadata.fk_britroc_number == int(wildcards.patient_id))]
 
 	# configure 'analysis_type' string
 	if wildcards.analysis_type == 'panel_6_28':

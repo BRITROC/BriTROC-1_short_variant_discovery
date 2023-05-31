@@ -8,8 +8,8 @@ rule filter_calls2_targeted:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.get_interval_file_for_targeted_calling.output,
-		tumour_bams=lambda wildcards: get_tumour_bam_files(wildcards, 'bam'),
-		tumour_bam_indexes=lambda wildcards: get_tumour_bam_files(wildcards, 'bai'),
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
+		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour'),
 		vcf_file=rules.filter_octopus_raw_calls_targeted.output
 	output: 
 		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf',

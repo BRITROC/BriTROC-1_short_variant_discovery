@@ -7,7 +7,8 @@ rule octopus_tp53:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format_tp53.output,
-		tumour_bams=get_tumour_bam_files,
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
+		tumour_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour')
 	output: 
 		tumour_vcf=protected('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf')
 	wildcard_constraints:
@@ -42,7 +43,8 @@ rule filter_calls2_TP53:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format_tp53.output,
-		tumour_bams=get_tumour_bam_files,
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
+		tumour_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour'),
 		vcf_file=rules.filter_octopus_raw_calls_TP53.output
 	output: 
 		tumour_vcf='results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.filtered2.vcf',

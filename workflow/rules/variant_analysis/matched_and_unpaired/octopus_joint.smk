@@ -3,9 +3,10 @@ rule octopus:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format.output, 
-		tumour_bams= lambda wildcards: get_tumour_bam_files(wildcards, 'bam'),
-		tumour_bam_indexes = lambda wildcards: get_tumour_bam_files(wildcards, 'bai'),
-		normal_bams= cleaned_normal_bams
+		tumour_bams= lambda wildcards: get_tumour_bam_files(wildcards, 'bam', 'tumour'),
+		tumour_bam_indexes = lambda wildcards: get_tumour_bam_files(wildcards, 'bai', 'tumour'),
+		normal_bams=lambda wildcards: get_tumour_bam_files(wildcards, 'bam', 'normal'),
+		normal_bam_indexes = lambda wildcards: get_tumour_bam_files(wildcards, 'bai', 'normal')
 	output: 
 		tumour_vcf=protected('results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
 	threads: 4
