@@ -1,6 +1,6 @@
 # use the database to identify germline samples which were sequenced using amplicon panel 28
 
-library(tidyverse)
+library(magrittr)
 library(DBI)
 library(RPostgres)
 
@@ -27,7 +27,7 @@ germline_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name
 	dplyr::filter(fk_amplicon_panel %in% c(6,28)) %>%
 	dplyr::arrange(fk_britroc_number)
 
-germline_metadata = germline_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+germline_metadata = germline_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
 somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%
@@ -37,15 +37,15 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 	dplyr::filter(fk_amplicon_panel %in% c(6,28)) %>%
 	dplyr::arrange(fk_britroc_number)
 
-somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+somatic_metadata = somatic_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
 # ensure that there is a archival and a relapse sample for the same patient
 paired_somatic_metadata = somatic_metadata %>% 
 	dplyr::group_by(fk_britroc_number,type) %>% 
-	dplyr::summarise(n=n()) %>% 
-	ungroup() %>% 
-	group_by(fk_britroc_number) %>% 
-	summarise(n=n()) %>%
+	dplyr::summarise(n=dplyr::n()) %>% 
+	dplyr::ungroup() %>% 
+	dplyr::group_by(fk_britroc_number) %>% 
+	dplyr::summarise(n=dplyr::n()) %>%
 	dplyr::filter(n>1) %>%
 	dplyr::select(-n)
 
@@ -54,5 +54,4 @@ somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% pai
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% germline_metadata$fk_britroc_number)
 germline_metadata = germline_metadata %>% dplyr::filter(fk_britroc_number %in% somatic_metadata$fk_britroc_number)
 
-write.table(germline_metadata, snakemake@output[['germline_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
-write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
+write.table(somatic_metadata, snakemake@output[[1]], row.names=FALSE, quote=FALSE, sep='\t')

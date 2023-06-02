@@ -1,6 +1,6 @@
 # use the database to identify germline samples which were sequenced using amplicon panel 28
 
-library(tidyverse)
+library(magrittr)
 library(DBI)
 library(RPostgres)
 
@@ -28,7 +28,6 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 	dplyr::arrange(fk_britroc_number)
 
 # only include patients that have at least one tumour sample of each type
-print(somatic_metadata %>% tibble::as_tibble())
 
 # QC filtering
 #somatic_metadata = remove_non_relevant_samples( 
@@ -44,9 +43,9 @@ patients_with_tumour_samples_of_both_types =
 
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% patients_with_tumour_samples_of_both_types)
 
-somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+somatic_metadata = somatic_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
-tp53_somatic_metadata = readr::read_tsv(snakemake@input[['somatic_tp53_metadata']])
+tp53_somatic_metadata = readr::read_tsv(snakemake@input[[1]])
 
 patients_with_tp53_samples_of_both_types = 
 	tp53_somatic_metadata %>% dplyr::group_by(fk_britroc_number,type) %>% dplyr::summarise(n=dplyr::n()) %>% 
@@ -55,4 +54,4 @@ patients_with_tp53_samples_of_both_types =
 # filter so we only examine non-TP53 genes for patient which had TP53 sequencing for both tumour types
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% patients_with_tp53_samples_of_both_types)
 
-write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
+write.table(somatic_metadata, snakemake@output[[1]], row.names=FALSE, quote=FALSE, sep='\t')

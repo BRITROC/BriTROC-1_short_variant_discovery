@@ -10,8 +10,8 @@ rule filter_calls2:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format.output,
-		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
-		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour'),
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour_panel_28'),
+		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_panel_28'),
 		normal_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'normal'),
 		normal_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'normal'),
 		vcf_file=rules.filter_octopus_raw_calls.output

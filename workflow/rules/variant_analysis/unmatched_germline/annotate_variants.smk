@@ -18,16 +18,9 @@ rule vep_octopus_germline:
 			-a GRCh37 \
 			--port 3337'
 
-#rule collate_and_filter_octopus_germline_vep_files:
-#	input: 
-#		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf', patient_id=germline_patients, analysis_type=wildcards.analysis_type)
-#	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/filtered_vep_calls_octopus_joined.tsv'
-#	script: '../../../scripts/annotate_variants_joined/collate_and_filter_vep_files_joined_octopus_germline.R'
-
 rule collate_and_filter_octopus_germline_vcfs:
 	input: 
-		vcf_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vcf',patient_id=germline_patients, analysis_type=wildcards.analysis_type)
-		#collated_vep_file=rules.collate_and_filter_octopus_germline_vep_files.output
+		vcf_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vcf',patient_id=patients_with_nontumour_sample_sequencing, analysis_type=wildcards.analysis_type)
 	output: 
 		vcf_full='results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/octopus_unmatched_germline_collated.tsv',
 		vcf_MTBP='results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/octopus_unmatched_germline_collated_MTBP.vcf'
@@ -40,7 +33,7 @@ rule MTBP_curate_germline_octopus_vcfs:
 
 rule collate_and_filter_octopus_vep_files_germline:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf',patient_id=germline_patients, analysis_type=wildcards.analysis_type),
+		vep_files= lambda wildcards: expand('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}.vep.vcf',patient_id=patients_with_nontumour_sample_sequencing, analysis_type=wildcards.analysis_type),
 		vcf_file=rules.MTBP_curate_germline_octopus_vcfs.output
 	output: 
 		vep_output='results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/collated/filtered_vep_calls_octopus_joined.tsv',

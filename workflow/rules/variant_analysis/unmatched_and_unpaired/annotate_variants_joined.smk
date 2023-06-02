@@ -36,7 +36,7 @@ rule ensure_tech_rep_genotypes_match_for_unmatched_variants:
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_unmatched_variants_across_patients:
-	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=all_tumour_sample_patients)
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=patients_with_panel_28_tumour_sequencing)
 	output: 'results/variant_analysis/unmatched/{analysis_type}/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
@@ -53,7 +53,7 @@ rule MTBP_filter_unmatched_variants:
 
 rule filter_unmatched_vcfs_using_vep_annotations:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
+		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=patients_with_panel_28_tumour_sequencing),
 		vcf_file=rules.MTBP_filter_curated_results.output
 	output: 
 		vep_output='results/variant_analysis/unmatched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv',

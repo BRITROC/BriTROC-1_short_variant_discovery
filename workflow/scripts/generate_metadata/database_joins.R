@@ -1,6 +1,6 @@
 # use the database to identify germline samples which were sequenced using amplicon panel 28
 
-library(tidyverse)
+library(magrittr)
 library(DBI)
 library(RPostgres)
 
@@ -27,7 +27,7 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 	dplyr::filter(fk_amplicon_panel %in% c(28)) %>%
 	dplyr::arrange(fk_britroc_number)
 
-somatic_metadata = somatic_metadata %>% mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
+somatic_metadata = somatic_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
 tp53_somatic_metadata = readr::read_tsv(snakemake@input[['somatic_tp53_metadata']])
 
@@ -36,4 +36,4 @@ patients_with_samples_sequenced_for_tp53 = tp53_somatic_metadata %>% dplyr::pull
 # filter so we only examine non-TP53 genes for patient which had TP53 sequencing for at least one sample
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_britroc_number %in% patients_with_samples_sequenced_for_tp53)
 
-write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
+write.table(somatic_metadata, snakemake@output[[1]], row.names=FALSE, quote=FALSE, sep='\t')

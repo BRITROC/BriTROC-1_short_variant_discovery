@@ -7,8 +7,8 @@ rule octopus_tp53:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format_tp53.output,
-		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
-		tumour_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour')
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour_TP53'),
+		tumour_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_TP53')
 	output: 
 		tumour_vcf=protected('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf')
 	wildcard_constraints:

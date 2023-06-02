@@ -21,7 +21,7 @@ rule ensure_tech_rep_genotypes_match_matched_analysis:
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_and_filter_tumour_type_specific_vcf_files:
-	input: lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{tumour_type}.filtered3.vcf', analysis_type=wildcards.analysis_type, patient_id=get_relevant_patient_list(wildcards), tumour_type=wildcards.tumour_type)
+	input: lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{tumour_type}.filtered3.vcf', analysis_type=wildcards.analysis_type, patient_id=patients_with_matched_and_paired_sequencing, tumour_type=wildcards.tumour_type)
 	output: 'results/variant_analysis/matched/{analysis_type}/paired/collated/{tumour_type}_filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
@@ -32,7 +32,7 @@ rule MTBP_filter_curated_paired_results:
 
 rule collate_and_filter_octopus_vep_files_matched_analysis:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=matched_somatic_patients, analysis_type=wildcards.analysis_type),
+		vep_files= lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=patients_with_matched_and_paired_sequencing, analysis_type=wildcards.analysis_type),
 		vcf_file=rules.MTBP_filter_curated_paired_results.output
 	output: 
 		vep_output='results/variant_analysis/matched/{analysis_type}/paired/collated/filtered_vep_calls_octopus_joined_{tumour_type}.tsv',

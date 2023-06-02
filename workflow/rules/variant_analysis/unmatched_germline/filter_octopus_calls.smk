@@ -1,6 +1,6 @@
 rule filter_octopus_germline_raw_calls:
 	input: 
-		filtered_vcf=rules.octopus_germline.output
+		filtered_vcf=rules.octopus_germline_with_hard_filter_annotation.output
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 

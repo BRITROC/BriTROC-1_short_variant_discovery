@@ -54,4 +54,4 @@ relevant_samples = remove_non_relevant_samples(
 
 somatic_metadata = somatic_metadata %>% dplyr::filter(fk_sample %in% relevant_samples)
 
-write.table(somatic_metadata, snakemake@output[['somatic_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
+write.table(somatic_metadata, snakemake@output[[1]], row.names=FALSE, quote=FALSE, sep='\t')

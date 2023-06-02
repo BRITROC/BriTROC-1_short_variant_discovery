@@ -5,7 +5,7 @@ rule filter_octopus_raw_calls_targeted:
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 rule bgzip_vcf_targeted:
-	input: rules.filter_octopus_raw_calls_targeted.output.tumour_vcf
+	input: rules.filter_octopus_raw_calls_targeted.output
 	output: 
 		compressed_vcf=temp('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf.gz')
 	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'

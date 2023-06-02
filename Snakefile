@@ -5,36 +5,31 @@ configfile: 'config/config.yaml'
 import pandas
 import os
 
-# read-in metadata sheets
+# TP53 sequencing metadata
+TP53_tumour_sequencing_metadata = pandas.read_table("config/TP53_tumour_amplicon_sequencing_metadata.tsv").set_index('fk_sample', drop=False)
+TP53_sequenced_DNA_samples = TP53_tumour_sequencing_metadata.index.unique().tolist()
 
-# TP53 metadata
-somatic_tp53_metadata = pandas.read_table("config/somatic_samples_tp53.tsv").set_index('fk_sample', drop=False)
-somatic_tp53_samples = somatic_tp53_metadata.index.unique().tolist()
+# nontumour sequencing metadata
+nontumour_sequencing_metadata = pandas.read_table("config/nontumour_amplicon_sequencing_metadata.tsv").set_index("fk_britroc_number", drop=False)
+patients_with_nontumour_sample_sequencing = nontumour_sequencing_metadata.index.unique().tolist()
 
-# germline metadata
-germline_metadata = pandas.read_table("config/germline_metadata.tsv").set_index("fk_britroc_number", drop=False)
-germline_patients = germline_metadata.index.unique().tolist()
+# panel 28 sequencing metadata
+# unmatched and unpaired analysis metadata
+# panel 28 = TP53 + other important HGSC related genes
+panel_28_tumour_sequencing_metadata = pandas.read_table("config/panel_28_tumour_amplicon_sequencing_metadata.tsv").set_index("fk_britroc_number", drop=False)
+patients_with_panel_28_tumour_sequencing = panel_28_tumour_sequencing_metadata.index.unique().tolist()
 
 # matched and paired analysis metadata
-matched_germline_metadata = pandas.read_table("config/matched_germline_metadata.tsv").set_index("fk_barcode", drop=False)
-matched_somatic_metadata = pandas.read_table("config/matched_somatic_metadata.tsv").set_index("fk_britroc_number", drop=False)
-
-matched_germline_barcodes = matched_germline_metadata.index.unique().tolist()
-matched_somatic_patients = matched_somatic_metadata.index.unique().tolist()
+matched_and_paired_sequencing_metadata = pandas.read_table("config/matched_and_paired_somatic_metadata.tsv").set_index("fk_britroc_number", drop=False)
+patients_with_matched_and_paired_sequencing = matched_and_paired_sequencing_metadata.index.unique().tolist()
 
 # matched and unpaired analysis metadata
-matched_and_unpaired_germline_metadata = pandas.read_table("config/germline_metadata_panel_matched_and_unpaired.tsv").set_index("fk_barcode", drop=False)
-matched_and_unpaired_somatic_metadata = pandas.read_table('config/somatic_metadata_panel_matched_and_unpaired.tsv').set_index("fk_britroc_number", drop=False)
-
-matched_and_unpaired_somatic_metadata_patients = matched_and_unpaired_somatic_metadata.index.unique().tolist()
-
-# unmatched and unpaired analysis metadata
-all_tumour_metadata = pandas.read_table("config/all_tumour_metadata.tsv").set_index("fk_britroc_number", drop=False)
-all_tumour_sample_patients = all_tumour_metadata.index.unique().tolist()
+matched_and_unpaired_sequencing_metadata = pandas.read_table('config/somatic_metadata_panel_matched_and_unpaired.tsv').set_index("fk_britroc_number", drop=False)
+patients_with_matched_and_unpaired_sequencing = matched_and_unpaired_sequencing_metadata.index.unique().tolist()
 
 # unmatched and paired analysis metadata
-tumour_metadata_patients_with_both_types = pandas.read_table('config/tumour_metadata_with_one_of_both_types.tsv').set_index("fk_britroc_number", drop=False)
-all_patients_with_tumour_samples_of_both_types = tumour_metadata_patients_with_both_types.index.unique().tolist()
+unmatched_and_paired_sequencing_metadata = pandas.read_table('config/tumour_metadata_with_one_of_both_types.tsv').set_index("fk_britroc_number", drop=False)
+patients_with_unmatched_and_paired_sequencing = unmatched_and_paired_sequencing_metadata.index.unique().tolist()
 
 # read in list of python functions created for this workflow
 exec(open('snakemake_rule_functions.py').read())

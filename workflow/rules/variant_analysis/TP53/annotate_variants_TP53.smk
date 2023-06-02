@@ -18,12 +18,12 @@ rule vep_octopus_tp53:
 			--port 3337'
 
 rule collate_and_filter_octopus_vep_files_tp53:
-	input: expand('results/variant_analysis/TP53/{sample}.filtered.vep.vcf', sample=somatic_tp53_samples)
+	input: expand('results/variant_analysis/TP53/{sample}.filtered.vep.vcf', sample=TP53_sequenced_DNA_samples)
 	output: 'results/variant_analysis/TP53/collated/filtered_{tumour_type}_vep_calls_octopus.tsv'
 	script: '../../../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
 
 rule collate_allele_fraction_data:
-	input: expand('results/variant_analysis/TP53/{sample}.vcf', sample=somatic_tp53_samples)
+	input: expand('results/variant_analysis/TP53/{sample}.vcf', sample=TP53_sequenced_DNA_samples)
 	output: 'results/variant_analysis/TP53/collated/tp53_collated_MAFs.tsv'
 	script: '../../../scripts/annotate_variants_TP53/extract_info_from_vcf.R'
 

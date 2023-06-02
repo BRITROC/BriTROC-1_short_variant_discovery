@@ -3,10 +3,11 @@ rule convert_bed6_to_oct_format:
 	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'
 	script: '../../../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
-rule octopus_germline:
+rule octopus_germline_with_hard_filter_annotation:
 	input:
 		interval_file=rules.convert_bed6_to_oct_format.output,
-		normal_bams=cleaned_normal_bams,
+		normal_bams= lambda wildcards: get_bam_files('bam', 'normal'),
+		normal_bam_indexes = lambda wildcards: get_bam_files('bam_indexes', 'normal'),
 		reference_genome=config['reference_genome']
 	threads: 4
 	output: tumour_vcf=protected('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
@@ -20,9 +21,3 @@ rule octopus_germline:
 				--threads \
 				--regions-file {input.interval_file} \
 				-I {input.normal_bams} -o {output.tumour_vcf}'
-
-rule filter_octopus_raw_calls_germline:
-	input: 
-		filtered_vcf=rules.octopus_germline.output
-	output: 'results/variant_analysis/germline/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.1.panel_6_28.passed.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'

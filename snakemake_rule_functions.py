@@ -6,10 +6,12 @@ def get_bam_files(wildcards, bam_or_bai, sample_type):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
 	# NB: the paired metadata table is a subset of the unpaired table - therefore using the unpaired table for the paired analysis is not inappropriate
 
-	if sample_type == 'tumour':
-		test_sample_metadata = all_tumour_metadata[(all_tumour_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	if sample_type == 'tumour_panel_28':
+		test_sample_metadata = panel_28_tumour_sequencing_metadata[(panel_28_tumour_sequencing_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	if sample_type == 'tumour_TP53':
+		test_sample_metadata = TP53_tumour_sequencing_metadata[(TP53_tumour_sequencing_metadata.fk_sample == wildcards.sample)]
 	elif sample_type == 'normal':
-		test_sample_metadata = germline_metadata[(germline_metadata.fk_britroc_number == int(wildcards.patient_id))]
+		test_sample_metadata = nontumour_sequencing_metadata[(nontumour_sequencing_metadata.fk_britroc_number == int(wildcards.patient_id))]
 
 	# configure 'analysis_type' string
 	if wildcards.analysis_type == 'panel_6_28':

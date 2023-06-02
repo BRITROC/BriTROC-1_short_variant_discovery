@@ -15,7 +15,7 @@ rule ensure_tech_rep_genotypes_match_unmatched_targeted:
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_unmatched_tumour_type_specific_vcf_files:
-	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/paired/{patient_id}.{tumour_type}.filtered3.targeted.vcf', patient_id=all_patients_with_tumour_samples_of_both_types, tumour_type=wildcards.tumour_type)
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/paired/{patient_id}.{tumour_type}.filtered3.targeted.vcf', patient_id=patients_with_panel_28_tumour_sequencing, tumour_type=wildcards.tumour_type)
 	output: 'results/variant_analysis/unmatched/{analysis_type}/paired/collated/{tumour_type}_filtered3_joined.targeted.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
@@ -26,7 +26,7 @@ rule MTBP_filter_unmatched_tumour_type_specific_variants:
 
 rule collate_and_filter_octopus_vep_files_with_tumour_type_targeted:
 	input:
-		vep_files=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=all_tumour_sample_patients),
+		vep_files=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=patients_with_panel_28_tumour_sequencing),
 		vcf_file=rules.MTBP_filter_unmatched_tumour_type_specific_variants.output
 	output:
 		vep_output='results/variant_analysis/unmatched/{analysis_type}/paired/collated/{tumour_type}_filtered_vep_calls_octopus_joined.targeted.tsv',

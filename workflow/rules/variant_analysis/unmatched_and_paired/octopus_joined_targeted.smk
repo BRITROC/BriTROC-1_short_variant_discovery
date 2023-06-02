@@ -8,8 +8,8 @@ rule octopus_unmatched_targeted_calling:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.get_interval_file_for_targeted_calling_for_unmatched_analysis.output, 
-		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
-		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour'),
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour_panel_28'),
+		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_panel_28'),
 	output: 
 		tumour_vcf='results/variant_analysis/unmatched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf',
 	threads: 16

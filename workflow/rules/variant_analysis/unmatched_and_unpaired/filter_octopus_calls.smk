@@ -9,8 +9,8 @@ rule octopus_unmatched_with_hard_filter_annotations:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format.output,
-		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour'),
-		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour'),
+		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour_panel_28'),
+		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_panel_28'),
 		vcf_file=rules.filter_unmatched_raw_calls_by_random_forest.output
 	output: 
 		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
