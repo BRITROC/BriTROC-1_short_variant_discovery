@@ -53,8 +53,9 @@ rule create_nonoverlapping_amplicons_TP53:
 		'resources/union_of_tp53_amplicons.amplicons.4.bed',
 		'resources/union_of_tp53_amplicons.amplicons.5.bed',
 		'resources/union_of_tp53_amplicons.amplicons.6.bed',
-		'resources/union_of_tp53_amplicons.amplicons.7.bed',
-	shell: 'Rscript ampliconseq/bin/create_non_overlapping_amplicon_groups.R \
+		'resources/union_of_tp53_amplicons.amplicons.7.bed'
+	container: 
+	shell: 'Rscript /opt/ampliconseq/build/create_non_overlapping_amplicon_groups.R \
 			--amplicons {input} \
 			--reference-sequence-index {config[reference_genome_index]} \
 			--output {output[0]} \
@@ -129,7 +130,11 @@ rule create_nonoverlapping_amplicons_panel_28:
 		--output-prefix nonoverlapping.panel_28 \
 		--minimum-number-of-sets 2'
 
-rule clean_bams_TP53:
+def remove_trailing_dots(wildcards):
+	mnt_bam_path = '/SLX/' + wildcards.SLX_ID + '/' + 'bam/' + wildcards.SLX_ID + '.' + wildcards.barcode + '.' + wildcards.flowcell + '.s_' + wildcards.lane + '.bam'
+	return mnt_bam_path
+
+rule clean_bams:
 	input:
 		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam',
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai',
@@ -138,107 +143,16 @@ rule clean_bams_TP53:
 		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
 		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
 		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
-#	wildcard_constraints:
-#		barcode='FLD[0-9]+'
 	container: 'docker://crukcibioinformatics/ampliconseq'
+	params:
+		mnt_bam_path=remove_trailing_dots
 	shell: 
 		'extract-amplicon-regions \
+		--id {wildcards.SLX_ID}.{wildcards.barcode}.{wildcards.flowcell}.{wildcards.lane}.{wildcards.nonoverlapping_id} \
 		--unmark-duplicate-reads \
 		--require-both-ends-anchored \
 		--maximum-distance 1 \
 		--coverage {output.coverage} \
-		--input {input.bam} \
+		--input {params.mnt_bam_path} \
 		--output {output.bam} \
 		--amplicon-intervals {input.amplicon_intervals}'
-
-#rule clean_bams:
-#	input:
-#		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
-#		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
-#		amplicon_intervals='resources/tp53.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
-#	output:
-#		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
-#		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
-#		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
-#	wildcard_constraints:
-#		barcode='FLD[0-9]+'
-#	shell: 
-#		'java -Xms2G -Xmx6G \
-#		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-#		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
-#		--unmark-duplicate-reads \
-#		--require-both-ends-anchored \
-#		--maximum-distance 1 \
-#		--amplicon-coverage {output.coverage} \
-#		--bam {input.bam} \
-#		--amplicon-bam {output.bam} \
-#		--amplicons {input.amplicon_intervals}'
-
-rule clean_bams2:
-	input:
-		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
-		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
-		amplicon_intervals='resources/panel_6_28.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
-	output:
-		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bam'),
-		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.bai'),
-		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_6_28.coverage.txt'
-	wildcard_constraints:
-		barcode='FLD[0-9]+'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
-		--unmark-duplicate-reads \
-		--require-both-ends-anchored \
-		--maximum-distance 1 \
-		--amplicon-coverage {output.coverage} \
-		--bam {input.bam} \
-		--amplicon-bam {output.bam} \
-		--amplicons {input.amplicon_intervals}'
-
-rule clean_bams_panel_28_only:
-	input:
-		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
-		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
-		amplicon_intervals='resources/nonoverlapping.antijoined_panel_28_6.amplicons.{nonoverlapping_id}.bed'
-	output:
-		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bam'),
-		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.bai'),
-		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.antijoined_panel_28_6.coverage.txt'
-	wildcard_constraints:
-		barcode='FLD[0-9]+'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
-		--unmark-duplicate-reads \
-		--require-both-ends-anchored \
-		--maximum-distance 1 \
-		--amplicon-coverage {output.coverage} \
-		--bam {input.bam} \
-		--amplicon-bam {output.bam} \
-		--amplicons {input.amplicon_intervals}'
-
-rule clean_bams_panel_28:
-	input:
-		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
-		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
-		amplicon_intervals='resources/nonoverlapping.panel_28.amplicons.{nonoverlapping_id}.bed'
-	output:
-		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bam'),
-		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.bai'),
-		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.panel_28.coverage.txt'
-	wildcard_constraints:
-		barcode='FLD[0-9]+'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
-		--unmark-duplicate-reads \
-		--require-both-ends-anchored \
-		--maximum-distance 1 \
-		--amplicon-coverage {output.coverage} \
-		--bam {input.bam} \
-		--amplicon-bam {output.bam} \
-		--amplicons {input.amplicon_intervals}'
