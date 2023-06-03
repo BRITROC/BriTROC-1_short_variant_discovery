@@ -31,6 +31,11 @@ patients_with_matched_and_unpaired_sequencing = matched_and_unpaired_sequencing_
 unmatched_and_paired_sequencing_metadata = pandas.read_table('config/tumour_metadata_with_one_of_both_types.tsv').set_index("fk_britroc_number", drop=False)
 patients_with_unmatched_and_paired_sequencing = unmatched_and_paired_sequencing_metadata.index.unique().tolist()
 
+wildcard_constraints:
+	nonoverlapping_id='[1-9]',
+	patient_id='[0-9]{1,3}',
+	sample='(JBLAB-[0-9]+|IM_[0-9]+)'
+
 # read in list of python functions created for this workflow
 exec(open('snakemake_rule_functions.py').read())
 

@@ -23,22 +23,8 @@ rule union_of_tp53_intervals:
 	script: '../scripts/generate_intersected_amplicons/get_union_of_tp53_intervals.R'
 
 rule add_header_to_interval_list_file:
-	input: 
+	input:
 		template='resources/amplicon_panels/28_JBLAB_AAprimers_dream_panel/{interval_type}.txt',
-		incomplete_intervals_file=rules.intersect_intervals.output
-	output: 'resources/intersected_panel_6_28_amplicons.{interval_type}.interval_list'
-	shell: "grep '@' {input.template} | cat - {input.incomplete_intervals_file} > temp_file && mv temp_file {output}"
-
-rule add_header_to_interval_list_antijoined_file:
-	input: 
-		template='resources/amplicon_panels/28_JBLAB_AAprimers_dream_panel/{interval_type}.txt',
-		incomplete_intervals_file=rules.antijoin_intervals.output
-	output: 'resources/antijoined_panel_28_6_amplicons.{interval_type}.interval_list'
-	shell: "grep '@' {input.template} | cat - {input.incomplete_intervals_file} > temp_file && mv temp_file {output}"
-
-rule add_header_to_interval_list_tp53_union_file:
-	input: 
-		template='resources/amplicon_panels/28_JBLAB_AAprimers_dream_panel/{interval_type}.txt',
-		incomplete_intervals_file=rules.union_of_tp53_intervals.output
-	output: 'resources/union_of_tp53_amplicons.{interval_type}.interval_list'
+		incomplete_intervals_file='resources/{amplicon_panel}.{interval_type}.interval_list.tmp'
+	output: 'resources/{amplicon_panel}.{interval_type}.interval_list'
 	shell: "grep '@' {input.template} | cat - {input.incomplete_intervals_file} > temp_file && mv temp_file {output}"
