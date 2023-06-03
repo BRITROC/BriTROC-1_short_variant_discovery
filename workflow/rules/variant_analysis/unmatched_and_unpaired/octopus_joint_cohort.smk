@@ -19,8 +19,6 @@ rule octopus_unmatched_with_random_forests:
 				--somatic-forest resources/somatic.v0.7.2.forest \
 				--max-somatic-haplotypes 2 \
 				--annotations SB SD AF AD FRF \
-				--filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | AD < 1 | AF < 0.01 | AFB > 0.25 | SB > 0.98 | BQ < 15 | DP < 1 | ADP < 1" \
-				--somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SB > 0.90 | SD > 0.90 | FRF > 0.5 | BQ < 20 | DP < 3 | ADP < 1 | MF > 0.2 | NC > 1 | AD < 1 | AF < 0.0001" \
 				--min-expected-somatic-frequency 0.03 \
 				--min-credible-somatic-frequency 0.01 \
 				--threads \
