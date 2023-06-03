@@ -251,7 +251,7 @@ annotations %>% group_by(SYMBOL,`#Uploaded_variation`) %>% summarise(n=n()) %>% 
 annotations %>% group_by(patient_id,SYMBOL) %>% summarise(n=n()) %>% dplyr::ungroup() %>% dplyr::group_by(SYMBOL) %>% 
 	summarise(n=n()) %>% dplyr::arrange(n) %>% print(n=Inf)
 
-readr::write_tsv(snakemake@output$, append=FALSE)
+#readr::write_tsv(snakemake@output$, append=FALSE)
 quit()
 
 britroc_con <- dbConnect(RPostgres::Postgres(),
