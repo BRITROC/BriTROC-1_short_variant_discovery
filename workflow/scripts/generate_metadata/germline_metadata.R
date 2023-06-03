@@ -6,7 +6,7 @@ library(RPostgres)
 
 readRenviron('~/.Renviron')
 
-britroc_con <- dbConnect(RPostgres::Postgres(),
+britroc_con <- DBI::dbConnect(RPostgres::Postgres(),
                  dbname='britroc1',
                  host='jblab-db.cri.camres.org',
                  port = 5432,
@@ -22,11 +22,11 @@ run_slx = RPostgres::dbReadTable(britroc_con, 'run_slx')
 
 germline_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%
-	dplyr::inner_join(run_slx, by='fk_slx') %>%
+	dplyr::inner_join(run_slx, by='fk_slx', relationship='many-to-many') %>%
 	dplyr::filter(type %in% c('germline')) %>%
 	dplyr::filter(fk_amplicon_panel %in% c(6,28)) %>%
 	dplyr::arrange(fk_britroc_number)
 
 germline_metadata = germline_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
-write.table(germline_metadata, snakemake@output[['germline_metadata']], row.names=FALSE, quote=FALSE, sep='\t')
+write.table(germline_metadata, snakemake@output[[1]], row.names=FALSE, quote=FALSE, sep='\t')
