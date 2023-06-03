@@ -1,5 +1,5 @@
 rule convert_bed6_to_oct_format_tp53:
-	input:  rules.create_nonoverlapping_amplicons_TP53.output.nonoverlapping_target_intervals                                     
+	input:   'resources/union_of_tp53_amplicons.targets.{nonoverlapping_id}.bed'        #rules.create_nonoverlapping_amplicons_TP53.output.nonoverlapping_target_intervals                                     
 	output: 'resources/union_of_tp53.{nonoverlapping_id}.targets.oct'
 	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 

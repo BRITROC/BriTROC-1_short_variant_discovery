@@ -36,22 +36,47 @@ rule symlink_bam_indexes:
 		lane='[1-8]'           #"((?!_bwamem).)*"
 	shell: 'ln {input} {output}'
 
+
 rule create_nonoverlapping_amplicons_TP53:
-	input: 
-		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.interval_list',
-		target_intervals='resources/union_of_tp53_amplicons.targets.interval_list'
-	output: 
-		nonoverlapping_amplicon_intervals='resources/foo-union_of_tp53_amplicons.amplicons.interval_list',
-		nonoverlapping_target_intervals='resources/foo-union_of_tp53_amplicons.targets.interval_list'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
-		--amplicons {input.amplicon_intervals} \
-		--targets {input.target_intervals} \
-		--reference {config[reference_genome]} \
-		--output-prefix tp53.nonoverlapping \
-		--minimum-number-of-sets 2'
+	input: 'resources/union_of_tp53_amplicons.amplicons.tsv'
+	output: 'resources/union_of_tp53_amplicons.amplicons.grouped.tsv',
+		'resources/union_of_tp53_amplicons.targets.1.bed',
+		'resources/union_of_tp53_amplicons.targets.2.bed',
+		'resources/union_of_tp53_amplicons.targets.3.bed',
+		'resources/union_of_tp53_amplicons.targets.4.bed',
+		'resources/union_of_tp53_amplicons.targets.5.bed',
+		'resources/union_of_tp53_amplicons.targets.6.bed',
+		'resources/union_of_tp53_amplicons.targets.7.bed',
+		'resources/union_of_tp53_amplicons.amplicons.1.bed',
+		'resources/union_of_tp53_amplicons.amplicons.2.bed',
+		'resources/union_of_tp53_amplicons.amplicons.3.bed',
+		'resources/union_of_tp53_amplicons.amplicons.4.bed',
+		'resources/union_of_tp53_amplicons.amplicons.5.bed',
+		'resources/union_of_tp53_amplicons.amplicons.6.bed',
+		'resources/union_of_tp53_amplicons.amplicons.7.bed',
+	shell: 'Rscript ampliconseq/bin/create_non_overlapping_amplicon_groups.R \
+			--amplicons {input} \
+			--reference-sequence-index {config[reference_genome_index]} \
+			--output {output[0]} \
+			--amplicon-bed-prefix resources/union_of_tp53_amplicons.amplicons \
+			--target-bed-prefix resources/union_of_tp53_amplicons.targets'
+
+#rule create_nonoverlapping_amplicons_TP53:
+#	input: 
+#		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.interval_list',
+#		target_intervals='resources/union_of_tp53_amplicons.targets.interval_list'
+#	output: 
+#		nonoverlapping_amplicon_intervals='resources/foo-union_of_tp53_amplicons.amplicons.interval_list',
+#		nonoverlapping_target_intervals='resources/foo-union_of_tp53_amplicons.targets.interval_list'
+#	shell: 
+#		'java -Xms2G -Xmx6G \
+		#		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
+		#		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
+		#		--amplicons {input.amplicon_intervals} \
+		#		--targets {input.target_intervals} \
+		#		--reference {config[reference_genome]} \
+		#		--output-prefix tp53.nonoverlapping \
+		#		--minimum-number-of-sets 2'
 
 rule create_nonoverlapping_amplicons2:
 	input: 
@@ -104,28 +129,50 @@ rule create_nonoverlapping_amplicons_panel_28:
 		--output-prefix nonoverlapping.panel_28 \
 		--minimum-number-of-sets 2'
 
-rule clean_bams:
+rule clean_bams_TP53:
 	input:
-		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
-		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
-		amplicon_intervals='resources/tp53.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
+		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam',
+		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai',
+		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.{nonoverlapping_id}.bed'
 	output:
-		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
-		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
-		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
-	wildcard_constraints:
-		barcode='FLD[0-9]+'
+		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
+		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
+		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
+#	wildcard_constraints:
+#		barcode='FLD[0-9]+'
+	container: 'docker://crukcibioinformatics/ampliconseq'
 	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
+		'extract-amplicon-regions \
 		--unmark-duplicate-reads \
 		--require-both-ends-anchored \
 		--maximum-distance 1 \
-		--amplicon-coverage {output.coverage} \
-		--bam {input.bam} \
-		--amplicon-bam {output.bam} \
-		--amplicons {input.amplicon_intervals}'
+		--coverage {output.coverage} \
+		--input {input.bam} \
+		--output {output.bam} \
+		--amplicon-intervals {input.amplicon_intervals}'
+
+#rule clean_bams:
+#	input:
+#		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bam',
+#		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.{lane}.bai',
+#		amplicon_intervals='resources/tp53.nonoverlapping.amplicons.{nonoverlapping_id}.bed'
+#	output:
+#		bam=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
+#		bam_index=protected('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
+#		coverage='../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
+#	wildcard_constraints:
+#		barcode='FLD[0-9]+'
+#	shell: 
+#		'java -Xms2G -Xmx6G \
+#		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
+#		org.cruk.ampliconseq.util.ExtractAmpliconRegions \
+#		--unmark-duplicate-reads \
+#		--require-both-ends-anchored \
+#		--maximum-distance 1 \
+#		--amplicon-coverage {output.coverage} \
+#		--bam {input.bam} \
+#		--amplicon-bam {output.bam} \
+#		--amplicons {input.amplicon_intervals}'
 
 rule clean_bams2:
 	input:

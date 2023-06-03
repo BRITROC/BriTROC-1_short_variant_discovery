@@ -1,4 +1,5 @@
 reference_genome: /scratchc/jblab/reference_data/reference_genomes/homo_sapiens/GRCh37_g1kp2/fasta/hsa.GRCh37_g1kp2.fa
+reference_genome_index: /scratchc/jblab/reference_data/reference_genomes/homo_sapiens/GRCh37_g1kp2/fasta/hsa.GRCh37_g1kp2.fa.fai
 
 non_hgsoc_samples: ['JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420','IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424','IM_302','IM_303','IM_304','IM_305','JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44']
 samples_with_no_good_sequencing: ['IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441']
