@@ -14,7 +14,8 @@ rule octopus:
 		nonoverlapping_id='[1-9]'
 	params:
 		normal_sample_identifier=get_normal_sample_names
-	shell: '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus'
+	shell: 'octopus \
 				-C cancer \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \

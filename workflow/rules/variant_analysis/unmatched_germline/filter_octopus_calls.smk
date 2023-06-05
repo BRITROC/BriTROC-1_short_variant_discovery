@@ -2,7 +2,8 @@ rule filter_octopus_germline_raw_calls:
 	input: 
 		filtered_vcf=rules.octopus_germline_with_hard_filter_annotation.output
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 rule filter_octopus_germline_calls2:
 	input:
@@ -13,7 +14,8 @@ rule filter_octopus_germline_calls2:
 		vcf_file=rules.filter_octopus_germline_raw_calls.output
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf'
 	threads: 4
-	shell:   '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus'
+	shell:   'octopus \
 				--allow-octopus-duplicates \
 				--allow-marked-duplicates \
 				--disable-downsampling \
@@ -29,17 +31,20 @@ rule filter_octopus_germline_calls2:
 rule filter_octopus_germline_raw_calls2:
 	input: rules.filter_octopus_germline_calls2.output
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered3.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 rule bgzip_vcf_octopus_germline:
 	input: rules.filter_octopus_germline_raw_calls2.output
 	output: compressed_vcf=temp('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered3.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
+	conda: 'config/htslib.yaml'
+	shell: 'bgzip < {input} > {output.compressed_vcf}'
 
 rule index_compressed_vcf_octopus_germline:
 	input: rules.bgzip_vcf_octopus_germline.output.compressed_vcf
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered3.vcf.gz.csi'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools index {input}'
 
 rule concat_vcfs_octopus_germline:
 	input:
@@ -49,7 +54,8 @@ rule concat_vcfs_octopus_germline:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/merged/{patient_id}_unmatched.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
 
 rule ensure_genotypes_match:
 	input: rules.concat_vcfs_octopus_germline.output

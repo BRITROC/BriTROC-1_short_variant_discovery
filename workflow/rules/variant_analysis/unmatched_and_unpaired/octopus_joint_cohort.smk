@@ -10,7 +10,8 @@ rule octopus_unmatched_with_random_forests:
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
-	shell: '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus'
+	shell: 'octopus \
 				-C cancer \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \

@@ -2,7 +2,8 @@ rule filter_unmatched_raw_calls_by_random_forest:
 	input: 
 		filtered_vcf=rules.octopus_unmatched_with_random_forests.output
 	output: 'results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 # Note well the removal of the FRF filter for this particular call to octopus
 rule octopus_unmatched_with_hard_filter_annotations:
@@ -15,7 +16,8 @@ rule octopus_unmatched_with_hard_filter_annotations:
 	output: 
 		tumour_vcf='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
 	threads: 4
-	shell:   '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus'
+	shell:   'octopus \
 				-C cancer \
 				--allow-octopus-duplicates \
 				--allow-marked-duplicates \
@@ -35,12 +37,14 @@ rule bgzip_unmatched_filtered_vcfs:
 	input: rules.octopus_unmatched_with_hard_filter_annotations.output.tumour_vcf
 	output: 
 		compressed_vcf=temp('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
+	conda: 'config/htslib.yaml'
+	shell: 'bgzip < {input} > {output.compressed_vcf}'
 
 rule index_unmatched_filtered_and_compressed_vcfs:
 	input: rules.bgzip_unmatched_filtered_vcfs.output.compressed_vcf
 	output: 'results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools index {input}'
 
 rule concat_unmatched_vcfs_across_amplicon_groups:
 	input: 
@@ -50,4 +54,5 @@ rule concat_unmatched_vcfs_across_amplicon_groups:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
 	output: 'results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered2.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}' 
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}' 

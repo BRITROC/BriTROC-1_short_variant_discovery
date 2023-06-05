@@ -14,6 +14,7 @@ rule octopus_targeted_calling:
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'
+	container: 'docker://dancooke/octopus'
 	shell: 'octopus \
 				-C cancer \
 				--disable-downsampling \

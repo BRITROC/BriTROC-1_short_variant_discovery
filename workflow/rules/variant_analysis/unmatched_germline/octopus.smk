@@ -11,7 +11,8 @@ rule octopus_germline_with_hard_filter_annotation:
 		reference_genome=config['reference_genome']
 	threads: 4
 	output: tumour_vcf=protected('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
-	shell: '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus' 
+	shell: 'octopus \
 			-R {input.reference_genome} \
 				--allow-marked-duplicates \
 				--allow-octopus-duplicates \

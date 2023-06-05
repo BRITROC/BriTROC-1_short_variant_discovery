@@ -13,8 +13,9 @@ rule octopus_tp53:
 		tumour_vcf=protected('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf')
 	wildcard_constraints:
 		sample='(JBLAB-[0-9]+|IM_[0-9]+)'
+	container: 'docker://dancooke/octopus'
 	threads: 4
-	shell: '../octopus/bin/octopus \
+	shell: 'octopus \
 				-C cancer \
 				--disable-downsampling \
 				--somatics-only \
@@ -37,7 +38,8 @@ rule filter_octopus_raw_calls_TP53:
 	input: 
 		filtered_vcf=rules.octopus_tp53.output
 	output: 'results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.filtered.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 # this is less restrictive than expecting matching genotypes
 rule remove_homozygous_reference_calls:
@@ -48,16 +50,19 @@ rule remove_homozygous_reference_calls:
 rule bgzip_vcf_sample_level:
 	input: rules.remove_homozygous_reference_calls.output
 	output: temp('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output}'
+	conda: 'config/htslib.yaml'
+	shell: 'bgzip < {input} > {output}'
 
 rule index_compressed_vcf_sample_level:
 	input: rules.bgzip_vcf_sample_level.output
 	output: 'results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz.csi'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools index {input}'
 
 rule concat_vcfs_sample_level:
 	input: 
 		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz', nonoverlapping_id=get_nonoverlapping_id_list(wildcards), sample=wildcards.sample, analysis_type=wildcards.analysis_type),
 		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz.csi', nonoverlapping_id=get_nonoverlapping_id_list(wildcards), sample=wildcards.sample, analysis_type=wildcards.analysis_type)
 	output: 'results/variant_analysis/{analysis_type}/{sample}.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'

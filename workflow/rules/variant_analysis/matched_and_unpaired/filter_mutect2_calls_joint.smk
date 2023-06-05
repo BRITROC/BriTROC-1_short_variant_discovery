@@ -4,7 +4,8 @@ rule filter_octopus_raw_calls:
 	input: 
 		filtered_vcf=rules.octopus.output
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools view -f PASS {input} | sed "/bcftools/d" > {output}'
 
 rule filter_calls2:
 	input:
@@ -20,7 +21,8 @@ rule filter_calls2:
 	threads: 4
 	params:
 		normal_sample_identifier=get_normal_sample_names
-	shell:   '../octopus/bin/octopus \
+	container: 'docker://dancooke/octopus'
+	shell:   'octopus \
 				-C cancer \
 				--allow-octopus-duplicates \
 				--allow-marked-duplicates \
@@ -41,16 +43,19 @@ rule bgzip_vcf:
 	input: rules.filter_calls2.output.tumour_vcf
 	output: 
 		compressed_vcf=temp('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
+	conda: 'config/htslib.yaml'
+	shell: 'bgzip < {input} > {output.compressed_vcf}'
 
 rule index_compressed_vcf:
 	input: rules.bgzip_vcf.output
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools index {input}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools index {input}'
 
 rule concat_vcfs:
 	input:
 		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id),
 		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id)
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.vcf'
-	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
+	conda: 'config/bcftools.yaml'
+	shell: 'bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
