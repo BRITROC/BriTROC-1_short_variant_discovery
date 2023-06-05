@@ -20,7 +20,7 @@ rule generate_vep_annotations_for_unmatched_variants:
 rule ensure_tech_rep_genotypes_match_for_unmatched_variants:
 	input:
 		combined_vcfs=rules.concat_unmatched_vcfs_across_amplicon_groups.output,
-		tumour_metadata='config/all_tumour_metadata.tsv'
+		tumour_metadata='config/panel_28_tumour_amplicon_sequencing_metadata.tsv'
 	params:
 		variant_quality_score_threshold=500,
 		C_to_G_maf_threshold=0.23,
@@ -36,7 +36,7 @@ rule ensure_tech_rep_genotypes_match_for_unmatched_variants:
 	script: '../../../scripts/annotate_variants_joined/view_square_vcfs.R'
 
 rule collate_unmatched_variants_across_patients:
-	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=patients_with_panel_28_tumour_sequencing)
+	input: lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered3.vcf', patient_id=patients_with_panel_28_tumour_sequencing, analysis_type=wildcards.analysis_type)
 	output: 'results/variant_analysis/unmatched/{analysis_type}/collated/filtered3_joined.tsv'
 	script: '../../../scripts/annotate_variants_joined/filtered4_files_joined.R'
 
@@ -53,8 +53,8 @@ rule MTBP_filter_unmatched_variants:
 
 rule filter_unmatched_vcfs_using_vep_annotations:
 	input: 
-		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{patient_id}.filtered.vep.vcf',patient_id=patients_with_panel_28_tumour_sequencing),
-		vcf_file=rules.MTBP_filter_curated_results.output
+		vep_files= lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered.vep.vcf',patient_id=patients_with_panel_28_tumour_sequencing, analysis_type=wildcards.analysis_type),
+		vcf_file=rules.MTBP_filter_unmatched_variants.output
 	output: 
 		vep_output='results/variant_analysis/unmatched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv',
 		vep_reduced='results/variant_analysis/unmatched/{analysis_type}/collated/BriTROC-1_unmatched_and_unpaired_variants.tsv',

@@ -13,7 +13,7 @@ rule octopus_unmatched_with_hard_filter_annotations:
 		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_panel_28'),
 		vcf_file=rules.filter_unmatched_raw_calls_by_random_forest.output
 	output: 
-		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
+		tumour_vcf='results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf',
 	threads: 4
 	shell:   '../octopus/bin/octopus \
 				-C cancer \
@@ -44,8 +44,8 @@ rule index_unmatched_filtered_and_compressed_vcfs:
 
 rule concat_unmatched_vcfs_across_amplicon_groups:
 	input: 
-		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id),
-		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id)
+		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type),
+		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type)
 	wildcard_constraints:
 		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
 		patient_id='[0-9]+'
