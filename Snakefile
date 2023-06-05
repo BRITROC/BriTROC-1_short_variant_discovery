@@ -89,4 +89,4 @@ rule all:
 		'plots/panel_6_28/matched_and_paired_oncoprint_somatic_variants_only.png',
 		'plots/panel_6_28/matched_and_paired_oncoprint_germline_and_somatic_variants.png',
 		'plots/whole_cohort_oncoprints_panel_28_not_intercalated_ggplot2.png',
-		'plots/whole_cohort_oncoprints_panel_28_intercalated.targeted.png'	
+		'plots/unmatched_and_paired_oncoprint_panel_28.png'	

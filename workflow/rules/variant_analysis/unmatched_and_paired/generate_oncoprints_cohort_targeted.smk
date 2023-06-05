@@ -15,18 +15,9 @@ rule prepare_data_for_whole_oncoprint_generation_unmatched_and_paired:
 rule generate_unmatched_and_paired_oncoprint:
 	input:
 		data_for_somatic_oncoprint=rules.prepare_data_for_whole_oncoprint_generation_unmatched_and_paired.output.data_for_somatic_oncoprint,
-		patient_table_file_path='britroc1_db/database_text_file_output/patient.tsv',
+		patient_table_file_path='britroc1_db/database_text_file_output/patients.tsv',
 		chemotherapy_lines_table_file_path='britroc1_db/database_text_file_output/chemotherapy_lines.tsv'
 	params: 
 		gene_set_analysed=get_gene_set_analysed
-	output: somatic_oncoprint='plots/whole_cohort_oncoprints_{analysis_type}_intercalated.targeted.png' 
+	output: somatic_oncoprint='plots/unmatched_and_paired_oncoprint_{analysis_type}.png' 
 	script: '../scripts/generate_oncoprints/generate_unmatched_and_unpaired_oncoprint.R'
-
-rule generate_unmatched_and_paired_oncoprint_diff_labels:
-	input:
-		data_for_somatic_oncoprint=rules.prepare_data_for_whole_oncoprint_generation_unmatched_and_paired.output.data_for_somatic_oncoprint,
-		patient_table_file_path='britroc1_db/database_text_file_output/patient.tsv'
-	params: 
-		gene_set_analysed=get_gene_set_analysed
-	output: somatic_oncoprint='plots/whole_cohort_oncoprints_{analysis_type}_intercalated.targeted.diff_labels.png' 
-	script: '../scripts/generate_oncoprints/generate_somatic_oncoprints_diff_labels.R'
