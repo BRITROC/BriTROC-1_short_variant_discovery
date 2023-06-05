@@ -24,30 +24,9 @@ def get_bam_files(wildcards, bam_or_bai, sample_type):
 		analysis_type = 'union_of_tp53' 
 
 	if bam_or_bai == 'bam':
-		bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
+		bam_files_tmp = expand('cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
 	elif bam_or_bai == 'bai':
-		bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
-
-	bam_files = []
-
-	for bam_file_name in bam_files_tmp:
-		new_bam_name = bam_file_name.replace('nonoverlapping_id_place_holder', wildcards.nonoverlapping_id)
-		new_bam_name = new_bam_name.replace('analysis_type_place_holder', analysis_type)
-		bam_files.append(new_bam_name)
-
-	return(bam_files)
-
-def cleaned_normal_bams(wildcards):
-
-	metadata = germline_metadata[(germline_metadata.fk_britroc_number == int(wildcards.patient_id))]
-
-	# configure 'analysis_type' string
-	if wildcards.analysis_type == 'panel_6_28':
-		analysis_type = 'panel_6_28'
-	elif wildcards.analysis_type == 'panel_28_only':
-		analysis_type = 'antijoined_panel_28_6' 
-
-	bam_files_tmp = expand('../SLX/{SLX_ID}/bam/cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bam', zip, SLX_ID=metadata['fk_slx'], barcodes=metadata['fk_barcode'], flowcell=metadata['flowcell'], lane=metadata['lane'])
+		bam_files_tmp = expand('cleaned_bams/{SLX_ID}.{barcodes}.{flowcell}.s_{lane}.nonoverlapping_id_place_holder.analysis_type_place_holder.bai', zip, SLX_ID=test_sample_metadata['fk_slx'], barcodes=test_sample_metadata['fk_barcode'], flowcell=test_sample_metadata['flowcell'], lane=test_sample_metadata['lane'])
 
 	bam_files = []
 
@@ -60,11 +39,11 @@ def cleaned_normal_bams(wildcards):
 
 def get_normal_sample_names(wildcards):
 	# some samples have been sequenced multiple times which is a variable we will have to factor in later
-	test_sample_metadata = matched_and_unpaired_somatic_metadata[(matched_and_unpaired_somatic_metadata.fk_britroc_number == int(wildcards.patient_id))]
+	test_sample_metadata = nontumour_sequencing_metadata[(nontumour_sequencing_metadata.fk_britroc_number == int(wildcards.patient_id))]
 	britroc_number = test_sample_metadata.set_index('fk_britroc_number', drop=False)
 	britroc_number = britroc_number.index.unique().tolist()
 
-	normal_metadata = matched_and_unpaired_germline_metadata[matched_and_unpaired_germline_metadata['fk_britroc_number'] == britroc_number[0]]
+	normal_metadata = nontumour_sequencing_metadata[nontumour_sequencing_metadata['fk_britroc_number'] == britroc_number[0]]
 
 	SLX = normal_metadata.set_index('fk_slx', drop=False)
 	SLX = SLX.index.unique().tolist()
@@ -91,10 +70,9 @@ def get_normal_sample_names(wildcards):
 
 def get_nonoverlapping_id_list(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
-		nonoverlapping_id_list = [1,2,3,4]
+		return([1,2,3,4,5,6])
 	elif wildcards.analysis_type == 'panel_28_only':
-		nonoverlapping_id_list = [1,2,3]
-	return(nonoverlapping_id_list)
+		return([1,2,3])
 
 def get_gene_set_analysed(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
@@ -112,9 +90,19 @@ def get_relevant_patient_list(wildcards):
 
 def get_relevant_bed_file(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
-		output_file='resources/panel_6_28.nonoverlapping.targets.{}.bed'.format(wildcards.nonoverlapping_id)
+		output_file='resources/panel_6_28.targets.{}.bed'.format(wildcards.nonoverlapping_id)
 	elif wildcards.analysis_type == 'panel_28_only':
 		output_file='resources/nonoverlapping.antijoined_panel_28_6.targets.{}.bed'.format(wildcards.nonoverlapping_id)
 	elif wildcards.analysis_type == 'panel_28':
-		output_file='resources/nonoverlapping.panel_28.targets.{}.bed'.format(wildcards.nonoverlapping_id)	
+		output_file='resources/panel_28.targets.{}.bed'.format(wildcards.nonoverlapping_id)	
 	return(output_file)
+
+def get_relevant_amplicon_bed_file(wildcards):
+	if wildcards.analysis_type == 'panel_6_28':
+		output_file='resources/panel_6_28.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
+	elif wildcards.analysis_type == 'union_of_tp53':
+		output_file='resources/union_of_tp53_amplicons.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
+	elif wildcards.analysis_type == 'panel_28':
+		output_file='resources/panel_28.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)	
+	return(output_file)
+
