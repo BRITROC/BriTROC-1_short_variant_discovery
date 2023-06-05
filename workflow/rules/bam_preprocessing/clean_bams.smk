@@ -1,39 +1,8 @@
-#filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
+# filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
 
-#rule symlink_bams:
-#	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bam'
-#	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam'
-#	wildcard_constraints:
-#		barcode='FLD[0-9]+',
-#		flowcell="[A-Z0-9-]+",
-#		lane='[1-8]'           #"((?!_bwamem).)*"
-#	shell: 'ln {input} {output}'
-
-#rule symlink_bam_indexes:
-#	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{flowcell}_GRCh37_g1kp2_{lane}_{barcode}.altered_header.bai'
-#	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai'
-#	wildcard_constraints:
-#		barcode='FLD[0-9]+',
-#		flowcell="[A-Z0-9-]+",
-#		lane='[1-8]'           #"((?!_bwamem).)*"
-#	shell: 'ln {input} {output}'
-
-rule symlink_bams:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.bam'
-	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam'
-	wildcard_constraints:
-		barcode='FLD[0-9]+',
-		flowcell="[A-Z0-9-]+",
-		lane='[1-8]'           #"((?!_bwamem).)*"
-	shell: 'ln {input} {output}'
-
-rule symlink_bam_indexes:
-	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.bai'
-	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai'
-	wildcard_constraints:
-		barcode='FLD[0-9]+',
-		flowcell="[A-Z0-9-]+",
-		lane='[1-8]'           #"((?!_bwamem).)*"
+rule symlink_bam_or_bam_indexes:
+	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.{bam_or_bai}'
+	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{bam_or_bai}'
 	shell: 'ln {input} {output}'
 
 rule create_nonoverlapping_amplicons_TP53:
@@ -61,6 +30,52 @@ rule create_nonoverlapping_amplicons_TP53:
 			--amplicon-bed-prefix resources/union_of_tp53_amplicons.amplicons \
 			--target-bed-prefix resources/union_of_tp53_amplicons.targets'
 
+rule create_nonoverlapping_amplicons_panel_6_28:
+	input: 'resources/panel_6_28.amplicons.tsv'
+	output: 'resources/panel_6_28.amplicons.grouped.tsv',
+		'resources/panel_6_28.targets.1.bed',
+		'resources/panel_6_28.targets.2.bed',
+		'resources/panel_6_28.targets.3.bed',
+		'resources/panel_6_28.targets.4.bed',
+		'resources/panel_6_28.targets.5.bed',
+		'resources/panel_6_28.targets.6.bed',
+		'resources/panel_6_28.amplicons.1.bed',
+		'resources/panel_6_28.amplicons.2.bed',
+		'resources/panel_6_28.amplicons.3.bed',
+		'resources/panel_6_28.amplicons.4.bed',
+		'resources/panel_6_28.amplicons.5.bed',
+		'resources/panel_6_28.amplicons.6.bed',
+	container: 'docker://crukcibioinformatics/ampliconseq'
+	shell: 'Rscript --vanilla /opt/ampliconseq/build/bin/create_non_overlapping_amplicon_groups.R \
+			--amplicons {input} \
+			--reference-sequence-index {config[reference_genome_index]} \
+			--output {output[0]} \
+			--amplicon-bed-prefix resources/panel_6_28.amplicons \
+			--target-bed-prefix resources/panel_6_28.targets'
+
+rule create_nonoverlapping_amplicons_panel_28:
+	input: 'resources/panel_28.amplicons.tsv'
+	output: 'resources/panel_28.amplicons.grouped.tsv',
+		'resources/panel_28.targets.1.bed',
+		'resources/panel_28.targets.2.bed',
+		'resources/panel_28.targets.3.bed',
+		'resources/panel_28.targets.4.bed',
+		'resources/panel_28.targets.5.bed',
+		'resources/panel_28.targets.6.bed',
+		'resources/panel_28.amplicons.1.bed',
+		'resources/panel_28.amplicons.2.bed',
+		'resources/panel_28.amplicons.3.bed',
+		'resources/panel_28.amplicons.4.bed',
+		'resources/panel_28.amplicons.5.bed',
+		'resources/panel_28.amplicons.6.bed',
+	container: 'docker://crukcibioinformatics/ampliconseq'
+	shell: 'Rscript --vanilla /opt/ampliconseq/build/bin/create_non_overlapping_amplicon_groups.R \
+			--amplicons {input} \
+			--reference-sequence-index {config[reference_genome_index]} \
+			--output {output[0]} \
+			--amplicon-bed-prefix resources/panel_28.amplicons \
+			--target-bed-prefix resources/panel_28.targets'
+
 def remove_trailing_dots(wildcards):
 	mnt_bam_path = '/SLX/' + wildcards.SLX_ID + '/' + 'bam/' + wildcards.SLX_ID + '.' + wildcards.barcode + '.' + wildcards.flowcell + '.s_' + wildcards.lane + '.bam'
 	return mnt_bam_path
@@ -69,11 +84,11 @@ rule clean_bams:
 	input:
 		bam='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bam',
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai',
-		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.{nonoverlapping_id}.bed'
+		amplicon_intervals= get_relevant_amplicon_bed_file
 	output:
-		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bam'),
-		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.bai'),
-		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.{lane}.{nonoverlapping_id}.union_of_tp53.coverage.txt'
+		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.bam'),
+		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.bai'),
+		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.coverage.txt'
 	container: 'docker://crukcibioinformatics/ampliconseq'
 	params:
 		mnt_bam_path=remove_trailing_dots
