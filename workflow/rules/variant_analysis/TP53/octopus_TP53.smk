@@ -1,5 +1,5 @@
 rule convert_bed6_to_oct_format_tp53:
-	input:   'resources/union_of_tp53_amplicons.targets.{nonoverlapping_id}.bed'        #rules.create_nonoverlapping_amplicons_TP53.output.nonoverlapping_target_intervals                                     
+	input:   'resources/union_of_tp53_amplicons.targets.{nonoverlapping_id}.bed'                                     
 	output: 'resources/union_of_tp53.{nonoverlapping_id}.targets.oct'
 	script: '../scripts/octopus_formatting/convert_bed6_to_octopus.R'
 
@@ -48,7 +48,7 @@ rule remove_homozygous_reference_calls:
 rule bgzip_vcf_sample_level:
 	input: rules.remove_homozygous_reference_calls.output
 	output: temp('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz')
-	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output.compressed_vcf}'
+	shell: '/home/bioinformatics/software/htslib/htslib-1.6/bin/bgzip < {input} > {output}'
 
 rule index_compressed_vcf_sample_level:
 	input: rules.bgzip_vcf_sample_level.output
