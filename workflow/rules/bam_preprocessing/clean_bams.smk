@@ -36,7 +36,6 @@ rule symlink_bam_indexes:
 		lane='[1-8]'           #"((?!_bwamem).)*"
 	shell: 'ln {input} {output}'
 
-
 rule create_nonoverlapping_amplicons_TP53:
 	input: 'resources/union_of_tp53_amplicons.amplicons.tsv'
 	output: 'resources/union_of_tp53_amplicons.amplicons.grouped.tsv',
@@ -54,81 +53,13 @@ rule create_nonoverlapping_amplicons_TP53:
 		'resources/union_of_tp53_amplicons.amplicons.5.bed',
 		'resources/union_of_tp53_amplicons.amplicons.6.bed',
 		'resources/union_of_tp53_amplicons.amplicons.7.bed'
-	container: 
-	shell: 'Rscript /opt/ampliconseq/build/create_non_overlapping_amplicon_groups.R \
+	container: 'docker://crukcibioinformatics/ampliconseq'
+	shell: 'Rscript --vanilla /opt/ampliconseq/build/bin/create_non_overlapping_amplicon_groups.R \
 			--amplicons {input} \
 			--reference-sequence-index {config[reference_genome_index]} \
 			--output {output[0]} \
 			--amplicon-bed-prefix resources/union_of_tp53_amplicons.amplicons \
 			--target-bed-prefix resources/union_of_tp53_amplicons.targets'
-
-#rule create_nonoverlapping_amplicons_TP53:
-#	input: 
-#		amplicon_intervals='resources/union_of_tp53_amplicons.amplicons.interval_list',
-#		target_intervals='resources/union_of_tp53_amplicons.targets.interval_list'
-#	output: 
-#		nonoverlapping_amplicon_intervals='resources/foo-union_of_tp53_amplicons.amplicons.interval_list',
-#		nonoverlapping_target_intervals='resources/foo-union_of_tp53_amplicons.targets.interval_list'
-#	shell: 
-#		'java -Xms2G -Xmx6G \
-		#		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		#		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
-		#		--amplicons {input.amplicon_intervals} \
-		#		--targets {input.target_intervals} \
-		#		--reference {config[reference_genome]} \
-		#		--output-prefix tp53.nonoverlapping \
-		#		--minimum-number-of-sets 2'
-
-rule create_nonoverlapping_amplicons2:
-	input: 
-		amplicon_intervals='resources/intersected_panel_6_28_amplicons.amplicons.interval_list',
-		target_intervals='resources/intersected_panel_6_28_amplicons.targets.interval_list'
-	output: 
-		nonoverlapping_amplicon_intervals='resources/foo-panel_6_28_amplicons.amplicons.interval_list',
-		nonoverlapping_target_intervals='resources/foo-panel_6_28_amplicons.targets.interval_list'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
-		--amplicons {input.amplicon_intervals} \
-		--targets {input.target_intervals} \
-		--reference {config[reference_genome]} \
-		--output-prefix panel_6_28.nonoverlapping \
-		--minimum-number-of-sets 2'
-
-rule create_nonoverlapping_amplicons_panel_28_only:
-	input: 
-		amplicon_intervals='resources/antijoined_panel_28_6_amplicons.amplicons.interval_list',
-		target_intervals='resources/antijoined_panel_28_6_amplicons.targets.interval_list'
-	output: 
-		nonoverlapping_amplicon_intervals='resources/nonoverlapping_antijoined_panel_28_6_amplicons.amplicons.interval_list',
-		nonoverlapping_target_intervals='resources/nonoverlapping_antijoined_panel_28_6_amplicons.targets.interval_list'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
-		--amplicons {input.amplicon_intervals} \
-		--targets {input.target_intervals} \
-		--reference {config[reference_genome]} \
-		--output-prefix nonoverlapping.antijoined_panel_28_6 \
-		--minimum-number-of-sets 2'
-
-rule create_nonoverlapping_amplicons_panel_28:
-	input: 
-		amplicon_intervals='/scratcha/jblab/amplicon_panels/28_JBLAB_AAprimers_dream_panel/amplicons.txt',
-		target_intervals='/scratcha/jblab/amplicon_panels/28_JBLAB_AAprimers_dream_panel/targets.txt'
-	output: 
-		nonoverlapping_amplicon_intervals='resources/nonoverlapping.panel_28_amplicons.amplicons.interval_list',
-		nonoverlapping_target_intervals='resources/nonoverlapping.panel_28_amplicons.targets.interval_list'
-	shell: 
-		'java -Xms2G -Xmx6G \
-		-classpath lib/ampliconseq-pipeline-0.7.2.jar:lib/commons-cli-1.4.jar:lib/commons-logging-1.2.jar:lib/htsjdk-2.19.0.jar:lib/snappy-java-1.1.4.jar \
-		org.cruk.ampliconseq.util.CreateNonOverlappingAmpliconsAndTargets \
-		--amplicons {input.amplicon_intervals} \
-		--targets {input.target_intervals} \
-		--reference {config[reference_genome]} \
-		--output-prefix nonoverlapping.panel_28 \
-		--minimum-number-of-sets 2'
 
 def remove_trailing_dots(wildcards):
 	mnt_bam_path = '/SLX/' + wildcards.SLX_ID + '/' + 'bam/' + wildcards.SLX_ID + '.' + wildcards.barcode + '.' + wildcards.flowcell + '.s_' + wildcards.lane + '.bam'
