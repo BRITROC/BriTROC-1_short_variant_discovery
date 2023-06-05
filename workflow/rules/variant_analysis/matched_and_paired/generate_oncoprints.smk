@@ -13,7 +13,7 @@ rule prepare_somatic_variant_data_for_oncoprint_generation:
 rule generate_somatic_oncoprints_ggplot2:
 	input:
 		data_for_somatic_oncoprint=rules.prepare_somatic_variant_data_for_oncoprint_generation.output.data_for_somatic_oncoprint,
-		patient_table_file_path='britroc1_db/database_text_file_output/patient.tsv'
+		patient_table_file_path='britroc1_db/database_text_file_output/patients.tsv'
 	params: gene_set_analysed=get_gene_set_analysed
 	output: somatic_oncoprint='plots/{analysis_type}/matched_and_paired_oncoprint_somatic_variants_only.png'
 	script: '../../../scripts/generate_oncoprints/generate_germline_and_somatic_oncoprint_ggplot2.R'
@@ -23,7 +23,7 @@ rule generate_germline_and_somatic_oncoprints_ggplot2:
 	input:
 		data_for_somatic_oncoprint=rules.prepare_somatic_variant_data_for_oncoprint_generation.output.data_for_somatic_oncoprint,
 		germline_data='BriTROC-1_germline_variants.tsv',
-		patient_table_file_path='britroc1_db/database_text_file_output/patient.tsv'
+		patient_table_file_path='britroc1_db/database_text_file_output/patients.tsv'
 	params: 
 		gene_set_analysed=get_gene_set_analysed
 	output: germline_and_somatic_oncoprint='plots/{analysis_type}/matched_and_paired_oncoprint_germline_and_somatic_variants.png' 

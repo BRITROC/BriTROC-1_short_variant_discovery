@@ -14,7 +14,7 @@ rule prepare_data_for_whole_oncoprint_generation_not_intercalated:
 rule generate_whole_cohort_oncoprint_not_intercalated_ggplot2:
 	input:
 		data_for_somatic_oncoprint=rules.prepare_data_for_whole_oncoprint_generation_not_intercalated.output.data_for_somatic_oncoprint,
-		patient_table_file_path='britroc1_db/database_text_file_output/patient.tsv'
+		patient_table_file_path='britroc1_db/database_text_file_output/patients.tsv'
 	params: 
 		gene_set_analysed=get_gene_set_analysed
 	output: somatic_oncoprint='plots/whole_cohort_oncoprints_{analysis_type}_not_intercalated_ggplot2.png' 
