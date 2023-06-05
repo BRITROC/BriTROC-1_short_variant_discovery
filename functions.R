@@ -17,20 +17,16 @@ make_connection_to_postgres_server = function(database_name, host_name, port_num
 	return (db_connection)
 }
 
-remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type) {
-	
+remove_non_relevant_samples = function (non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, DNA_samples_file_path, slx_library_file_path, experiment_file_path, analysis_type) {	
 		# read in DNA sample and library information
-		samples = dbReadTable(britroc_con, 'sample')
+		samples = readr::read_tsv(DNA_samples_file_path)
 		
-		slx_library = dbReadTable(britroc_con, 'slx_library') %>%
+		slx_library = readr::read_tsv(slx_library_file_path) %>%
 		       dplyr::filter(fk_slx!='SLX-13716') %>% # no data for this SLX
 		       dplyr::filter(grepl('AA',fk_experiment)) # select for tam-seq experiments only
 		
-		slx_clarity = dbReadTable(clarity_con, 'slx')
-		
-		slx_library = dplyr::semi_join(slx_library, slx_clarity, by=c('fk_slx'='name')) # ensure slx is actually in clarity
-		
-		experiments = dbReadTable(britroc_con, 'experiment') %>% dplyr::filter(fk_amplicon_panel %in% c(1,6,10,28)) # only allow panel 6 or panel 28 amplicon panels
+		experiments = readr::read_tsv(experiment_file_path) %>% 
+			dplyr::filter(fk_amplicon_panel %in% c(1,6,10,28)) # only allow panel 6 or panel 28 amplicon panels
 		slx_library = slx_library %>% dplyr::semi_join(experiments, by=c('fk_experiment'='name'))
 		
 		# retrieve analysis type

@@ -1,13 +1,11 @@
 # A simple script within a larger snakemake workflow of collating and filtering variant calls outputted by a variant calling algorithm
 
 library(magrittr)
-library(DBI)
-library(RPostgres)
 
 # ensure that the script reads from the users .Renviron text file
 readRenviron('~/.Renviron')
 
-vep_files = snakemake@input %>% unlist
+vep_files = snakemake@input['filtered_vep_files'] %>% unlist
 
 print(vep_files %>% length)
 
@@ -172,16 +170,8 @@ britroc_con <- dbConnect(RPostgres::Postgres(),
                          password = Sys.getenv('jblab_db_password')
 )
 
-clarity_con <- dbConnect(RPostgres::Postgres(),
-                         dbname='clarity',
-                         host='jblab-db.cri.camres.org',
-                         port = 5432,
-                         user = Sys.getenv('jblab_db_username'),
-                         password = Sys.getenv('jblab_db_password')
-)
-
-
-samples = dbReadTable(britroc_con, 'sample') %>% dplyr::select(-fk_histological_id,-fk_block_id,-glasgow_comment)
+samples = readr::read_tsv(snakemake@input['britroc1_DNA_samples']) %>% 
+	dplyr::select(-fk_histological_id,-fk_block_id,-glasgow_comment)
 
 annotations = dplyr::inner_join(annotations,samples, by=c('sample_id'='name'))
 

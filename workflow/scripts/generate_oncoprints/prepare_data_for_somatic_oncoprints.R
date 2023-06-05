@@ -9,9 +9,6 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	source('/Users/bradle02/.Renviron')
 	source('functions.R')
 
-	britroc_con = make_connection_to_postgres_server('britroc1', 'jblab-db.cri.camres.org', 5432)
-	clarity_con = make_connection_to_postgres_server('clarity', 'jblab-db.cri.camres.org', 5432)
-
 	# read in tumour samples variants
 	non_tp53_variants_archival = readr::read_tsv(nonTP53_archival_variants) %>% dplyr::mutate(type='archival')
 	non_tp53_variants_relapse = readr::read_tsv(nonTP53_relapse_variants) %>% dplyr::mutate(type='relapse')
@@ -131,7 +128,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	## remove non-relevant samples
 	# TODO: remove SLX-13716 from the database
 		
-	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
+	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, snakemake@input['DNA_sample_file_path'], snakemake@input['slx_library_file_path'], snakemake@input['experiments_file_path'], analysis_type)
 
 	# only retain variants in patients with at least one germline, relapse and archival sample
 	all_variants = all_variants %>% dplyr::filter(patient_id %in% relevant_samples$fk_britroc_number)

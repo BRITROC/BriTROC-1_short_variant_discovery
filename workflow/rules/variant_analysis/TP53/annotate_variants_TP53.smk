@@ -18,7 +18,9 @@ rule vep_octopus_tp53:
 			--port 3337'
 
 rule collate_and_filter_octopus_vep_files_tp53:
-	input: expand('results/variant_analysis/TP53/{sample}.filtered.vep.vcf', sample=TP53_sequenced_DNA_samples)
+	input: 
+		filtered_vep_files=expand('results/variant_analysis/TP53/{sample}.filtered.vep.vcf', sample=TP53_sequenced_DNA_samples),
+		britroc1_DNA_samples='britroc1_db/database_text_file_output/sample.tsv'
 	output: 'results/variant_analysis/TP53/collated/filtered_{tumour_type}_vep_calls_octopus.tsv'
 	script: '../../../scripts/annotate_variants_TP53/collate_and_filter_vep_files.R'
 

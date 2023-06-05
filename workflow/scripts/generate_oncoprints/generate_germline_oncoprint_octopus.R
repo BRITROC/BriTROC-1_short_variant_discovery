@@ -24,27 +24,9 @@ gene_list=oncoprint_data$SYMBOL %>% as.factor %>% levels()
 oncoprint_data = oncoprint_data %>% dplyr::select(patient_id,SYMBOL,Consequence)
 
 # make connection to database
-library(DBI)
-library(RPostgres)
 
 readRenviron('~/.Renviron')
 source('functions.R')
-
-britroc_con <- dbConnect(RPostgres::Postgres(),
-                 dbname='britroc1',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
-
-clarity_con <- dbConnect(RPostgres::Postgres(),
-                 dbname='britroc1',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
 
 non_hgsoc_samples = c('JBLAB-4114','JBLAB-4916','IM_249','IM_250','IM_234','IM_235','IM_236','IM_237','JBLAB-4271','IM_420','IM_262','JBLAB-4922','JBLAB-4923','IM_303','IM_290','IM_43','IM_293','IM_307','IM_308','IM_309','IM_424','IM_302','IM_303','IM_304','IM_305','JBLAB-19320','IM_61','IM_62','IM_63','IM_397','IM_302','IM_98','JBLAB-4210','IM_147','JBLAB-4216','IM_44')
 samples_with_no_good_sequencing = c('IM_144','IM_435','IM_436','IM_158','IM_296','IM_373','IM_154','IM_297','IM_365','IM_432','IM_429','IM_368','IM_441')
@@ -54,7 +36,7 @@ samples_with_very_low_purity = c('IM_1','IM_2','IM_3','IM_4','IM_20','IM_26','IM
 relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, 'germline')
 
 # only include patients with relevant samples
-samples = dbReadTable(britroc_con, 'sample') %>% tibble::as_tibble()
+samples = readr::read_tsv(snakemake@input['DNA_sample_file_path'])
 samples = samples %>% dplyr::filter(type=='germline')
 samples = samples %>% dplyr::filter(fk_britroc_number %in% relevant_samples$fk_britroc_number)
 
@@ -176,7 +158,7 @@ oncoprint_data$patient_id =
 		.fun=min
 )
 
-patient_table = dbReadTable(britroc_con, 'patients') %>% tibble::as_tibble()
+patient_table = readr::read_tsv(snakemake@input['patient_table_file_path'])
 patient_table$britroc_number = as.factor(patient_table$britroc_number)
 
 print(oncoprint_data)

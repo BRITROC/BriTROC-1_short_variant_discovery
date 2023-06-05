@@ -63,9 +63,6 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	'chr10:89720683'
 	)
 
-	britroc_con = make_connection_to_postgres_server('britroc1', 'jblab-db.cri.camres.org', 5432)
-	clarity_con = make_connection_to_postgres_server('clarity', 'jblab-db.cri.camres.org', 5432)
-
 	# read in tumour samples variants
 
 	# read in tumour samples variants
@@ -90,7 +87,7 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	tp53_variants = readr::read_tsv(TP53_variants) %>% 
 			dplyr::mutate(SYMBOL='TP53')
 	
-	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, britroc_con, clarity_con, analysis_type)
+	relevant_samples = remove_non_relevant_samples(non_hgsoc_samples, samples_with_no_good_sequencing, samples_with_very_low_purity, snakemake@input['DNA_sample_file_path'], snakemake@input['slx_library_file_path'], snakemake@input['experiments_file_path'], analysis_type)
 
 	print(non_tp53_variants)
 	print(tp53_variants)
@@ -173,8 +170,6 @@ prepare_data_for_oncoprint_generation = function (nonTP53_archival_variants, non
 	#	dplyr::filter(!(SYMBOL == 'FANCM' & patient_id==123 & type=='relapse')) %>%
 	#	dplyr::filter(!(SYMBOL == 'BRCA2' & patient_id==77 & type=='relapse'))
 
-	# MTBP specific processing filters
-	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(Consequence %in% c('frameshift_variant','stop_gained'))
 	#non_tp53_variants = non_tp53_variants %>% dplyr::filter(SYMBOL %in% c('BRCA1','BRCA2','FANCM','BARD1'))	
 
 	#} else if (gene_set_analysed == 'panel_28_only') {

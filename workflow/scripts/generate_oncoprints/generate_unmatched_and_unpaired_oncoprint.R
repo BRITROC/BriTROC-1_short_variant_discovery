@@ -24,19 +24,9 @@ gene_list = c(
 oncoprint_data$variant_type = 'mutation_present'
 
 # make connection to database
-library(DBI)
-library(RPostgres)
-
 readRenviron('~/.Renviron')
-britroc_con <- dbConnect(RPostgres::Postgres(),
-                 dbname='britroc1',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
 
-patient_table = dbReadTable(britroc_con, 'patients') %>% tibble::as_tibble()
+patient_table = readr::read_tsv(snakemake@input['patient_table_file_path'])
 patient_table = patient_table %>% dplyr::select(britroc_number, age, histological_type, tumour_location_at_diagnosis, tumour_stage_at_diagnosis, 
 					pt_sensitivity_at_reg, diagnosis_date, registration_date)
 patient_table = patient_table %>% dplyr::mutate(day_diff=registration_date - diagnosis_date) %>%
@@ -314,7 +304,7 @@ p5 = ggplot(new_combined_table,
 			legend.box.margin=margin(-10,-10,-10,-10)
 		) + ylab('')
 
-chemotherapy_lines = dbReadTable(britroc_con, 'chemotherapy_lines') %>% tibble::as_tibble()
+chemotherapy_lines = readr::read_tsv(snakemake@input['chemotherapy_lines_table_file_path'])
 chemotherapy_lines = chemotherapy_lines %>% dplyr::group_by(fk_britroc_number) %>% dplyr::summarise(num_lines=max(chemotherapy_line))
 
 chemotherapy_lines$fk_britroc_number = as.factor(chemotherapy_lines$fk_britroc_number)

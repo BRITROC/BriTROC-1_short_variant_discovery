@@ -1,6 +1,4 @@
 library(magrittr)
-library(DBI)
-library(RPostgres)
 library(ggplot2)
 library(patchwork)
 
@@ -8,9 +6,6 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 
 	source('~/.Renviron')
 	source('functions.R')
-
-	# establish database connections
-	britroc_con = make_connection_to_postgres_server('britroc1', 'jblab-db.cri.camres.org', 5432)
 
 	# read in preprocessed data
 	somatic_variants = readr::read_tsv(somatic_variants)
@@ -354,7 +349,7 @@ generate_somatic_oncoprint = function(somatic_variants, somatic_oncoprint_output
 					)
 		)
 
-	patient_table = dbReadTable(britroc_con, 'patients')
+	patient_table = readr:read_tsv(snakemake@input['patient_table_file_path'])
 	patient_table = patient_table %>% dplyr::select(britroc_number, pt_sensitivity_at_reg)
 	patient_table$britroc_number = patient_table$britroc_number %>% as.factor()
 
