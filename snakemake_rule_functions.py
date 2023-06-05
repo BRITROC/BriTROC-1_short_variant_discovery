@@ -71,8 +71,10 @@ def get_normal_sample_names(wildcards):
 def get_nonoverlapping_id_list(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
 		return([1,2,3,4,5,6])
-	elif wildcards.analysis_type == 'panel_28_only':
-		return([1,2,3])
+	elif wildcards.analysis_type == 'panel_28':
+		return([1,2,3,4,5,6])
+	elif wildcards.analysis_type == 'TP53':
+		return([1,2,3,4,5,6,7])
 
 def get_gene_set_analysed(wildcards):
 	if wildcards.analysis_type == 'panel_6_28':
@@ -98,11 +100,11 @@ def get_relevant_bed_file(wildcards):
 	return(output_file)
 
 def get_relevant_amplicon_bed_file(wildcards):
-	if wildcards.analysis_type == 'panel_6_28':
+	if wildcards.amplicon_set_type == 'panel_6_28':
 		output_file='resources/panel_6_28.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
-	elif wildcards.analysis_type == 'union_of_tp53':
+	elif wildcards.amplicon_set_type == 'union_of_tp53':
 		output_file='resources/union_of_tp53_amplicons.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)
-	elif wildcards.analysis_type == 'panel_28':
+	elif wildcards.amplicon_set_type == 'panel_28':
 		output_file='resources/panel_28.amplicons.{}.bed'.format(wildcards.nonoverlapping_id)	
 	return(output_file)
 

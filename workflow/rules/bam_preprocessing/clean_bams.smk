@@ -86,9 +86,9 @@ rule clean_bams:
 		bai='../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bai',
 		amplicon_intervals= get_relevant_amplicon_bed_file
 	output:
-		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.bam'),
-		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.bai'),
-		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{analysis_type}.coverage.txt'
+		bam=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{amplicon_set_type}.bam'),
+		bam_index=protected('cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{amplicon_set_type}.bai'),
+		coverage='cleaned_bams/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{nonoverlapping_id}.{amplicon_set_type}.coverage.txt'
 	container: 'docker://crukcibioinformatics/ampliconseq'
 	params:
 		mnt_bam_path=remove_trailing_dots

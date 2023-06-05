@@ -25,7 +25,7 @@ rule union_of_tp53_intervals:
 rule get_panel_28_intervals:
 	input: 'resources/amplicon_panels/28_JBLAB_AAprimers_dream_panel/{interval_type}.txt'
 	output: temp('resources/panel_28.{interval_type}.interval_list.tmp')
-	script: 'cp {input} {output}'
+	shell: 'cp {input} {output}'
 
 rule convert_interval_file_to_tsv:
 	input:  
