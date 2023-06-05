@@ -1,6 +1,6 @@
 rule vep_octopus_tp53:
 	input: rules.concat_vcfs_sample_level.output
-	output: 'results/variant_analysis/TP53/{sample}.filtered.vep.vcf'
+	output: 'results/variant_analysis/{analysis_type}/{sample}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
 			-i {input} \

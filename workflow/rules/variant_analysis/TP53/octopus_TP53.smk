@@ -57,7 +57,7 @@ rule index_compressed_vcf_sample_level:
 
 rule concat_vcfs_sample_level:
 	input: 
-		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.vcf.gz', nonoverlapping_id=[1,2,3,4,5], sample=wildcards.sample),
-		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/TP53/{sample}.{nonoverlapping_id}.vcf.gz.csi', nonoverlapping_id=[1,2,3,4,5], sample=wildcards.sample)
-	output: 'results/variant_analysis/TP53/{sample}.vcf'
+		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz', nonoverlapping_id=get_nonoverlapping_id_list(wildcards), sample=wildcards.sample, analysis_type=wildcards.analysis_type),
+		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/{analysis_type}/{sample}.{nonoverlapping_id}.vcf.gz.csi', nonoverlapping_id=get_nonoverlapping_id_list(wildcards), sample=wildcards.sample, analysis_type=wildcards.analysis_type)
+	output: 'results/variant_analysis/{analysis_type}/{sample}.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
