@@ -6,8 +6,8 @@ rule convert_bed6_to_oct_format:
 rule octopus_germline_with_hard_filter_annotation:
 	input:
 		interval_file=rules.convert_bed6_to_oct_format.output,
-		normal_bams= lambda wildcards: get_bam_files('bam', 'normal'),
-		normal_bam_indexes = lambda wildcards: get_bam_files('bam_indexes', 'normal'),
+		normal_bams= lambda wildcards: get_bam_files(wildcards, 'bam', 'normal'),
+		normal_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'normal'),
 		reference_genome=config['reference_genome']
 	threads: 4
 	output: tumour_vcf=protected('results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.vcf')
