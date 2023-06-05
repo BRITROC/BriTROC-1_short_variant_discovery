@@ -8,7 +8,8 @@ rule filter_octopus_germline_calls2:
 	input:
 		reference_genome=config['reference_genome'],
 		interval_file=rules.convert_bed6_to_oct_format.output,
-		normal_bams=cleaned_normal_bams,
+		normal_bams= lambda wildcards: get_bam_files(wildcards, 'bam', 'normal'),
+		normal_bam_indexes = lambda wildcards: get_bam_files(wildcards, 'bai', 'normal'),
 		vcf_file=rules.filter_octopus_germline_raw_calls.output
 	output: 'results/variant_analysis/germline/octopus_unmatched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf'
 	threads: 4

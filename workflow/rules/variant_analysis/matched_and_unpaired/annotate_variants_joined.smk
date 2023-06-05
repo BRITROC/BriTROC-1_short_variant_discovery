@@ -25,8 +25,8 @@ rule get_somatic_variants_only:
 rule ensure_tech_rep_genotypes_match:
 	input: 
 		combined_vcfs=rules.get_somatic_variants_only.output,
-		germline_metadata='config/germline_metadata_panel_matched_and_unpaired.tsv',
-		tumour_metadata='config/somatic_metadata_panel_matched_and_unpaired.tsv'
+		germline_metadata='config/nontumour_amplicon_sequencing_metadata.tsv',
+		tumour_metadata='config/panel_28_tumour_amplicon_sequencing_metadata.tsv'
 	params:
 		variant_quality_score_threshold=500,
 		C_to_G_maf_threshold=0.23,

@@ -1,13 +1,13 @@
 rule get_somatic_variants_only_from_matched_and_paired_analysis:
-	input: rules.concat_vcfs.output
+	input: rules.concat_vcfs_targeted.output
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'
 	shell: 'grep -e "SOMATIC" -e "#" {input} > {output}'
 
 rule ensure_tech_rep_genotypes_match_matched_analysis:
 	input: 
 		combined_vcfs=rules.get_somatic_variants_only_from_matched_and_paired_analysis.output,
-		germline_metadata='config/matched_germline_metadata.tsv',
-		tumour_metadata='config/matched_somatic_metadata.tsv'
+		germline_metadata='config/nontumour_amplicon_sequencing_metadata.tsv',
+		tumour_metadata='config/panel_28_tumour_amplicon_sequencing_metadata.tsv'
 	params:
 		variant_quality_score_threshold=500,
 		C_to_G_maf_threshold=0.23,
