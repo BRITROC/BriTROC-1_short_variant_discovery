@@ -17,9 +17,7 @@ rule index_compressed_vcf_targeted:
 
 rule concat_vcfs_targeted:
 	input: 
-		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf.gz', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type),
-		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf.gz.csi', nonoverlapping_id=[1,2,3,4], patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type)
-	wildcard_constraints:
-		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
-		patient_id='[0-9]+'
+		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf.gz', get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type),
+		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.filtered2.targeted.vcf.gz.csi', get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id, analysis_type=wildcards.analysis_type)
 	output: 'results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.filtered2.targeted.vcf'
+	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'

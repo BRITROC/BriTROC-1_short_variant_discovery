@@ -1,6 +1,6 @@
 rule get_somatic_variants_only_from_matched_and_paired_analysis:
 	input: rules.concat_vcfs_targeted.output
-	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.somatics_only.vcf'
+	output: 'results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.filtered2.somatics_only.vcf'
 	shell: 'grep -e "SOMATIC" -e "#" {input} > {output}'
 
 rule ensure_tech_rep_genotypes_match_matched_analysis:

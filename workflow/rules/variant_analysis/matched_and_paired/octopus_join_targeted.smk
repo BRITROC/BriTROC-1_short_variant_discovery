@@ -10,7 +10,7 @@ rule octopus_targeted_calling:
 		tumour_bams=lambda wildcards: get_bam_files(wildcards, 'bam', 'tumour_panel_28'),
 		tumour_bam_indexes=lambda wildcards: get_bam_files(wildcards, 'bai', 'tumour_panel_28')
 	output: 
-		tumour_vcf='results/variant_analysis/{matched_or_unmatched}/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf'
+		tumour_vcf='results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.{nonoverlapping_id}.targeted.vcf'
 	threads: 16
 	wildcard_constraints:
 		nonoverlapping_id='[1-9]'

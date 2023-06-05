@@ -52,8 +52,5 @@ rule concat_vcfs:
 	input:
 		compressed_vcfs=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id),
 		compressed_vcf_indexes=lambda wildcards: expand('results/variant_analysis/matched/{analysis_type}/{patient_id}.{nonoverlapping_id}.filtered2.vcf.gz.csi', analysis_type=wildcards.analysis_type, nonoverlapping_id=get_nonoverlapping_id_list(wildcards), patient_id=wildcards.patient_id)
-	wildcard_constraints:
-		sample='(IM_[0-9]+|JBLAB-[0-9]+)',
-		patient_id='[0-9]+'
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.filtered2.vcf'
 	shell: '/home/bioinformatics/software/bcftools/bcftools-1.10.2/bin/bcftools concat --allow-overlaps {input.compressed_vcfs} -O v -o {output}'
