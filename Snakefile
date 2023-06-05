@@ -33,8 +33,11 @@ patients_with_unmatched_and_paired_sequencing = unmatched_and_paired_sequencing_
 
 wildcard_constraints:
 	nonoverlapping_id='[1-9]',
+	lane='[1-8]',
 	patient_id='[0-9]{1,3}',
-	sample='(JBLAB-[0-9]+|IM_[0-9]+)'
+	sample='(JBLAB-[0-9]+|IM_[0-9]+)',
+	bam_or_bai='(bam|bai)',
+	analysis_type='(TP53|panel_6_28|panel_28)'
 
 # read in list of python functions created for this workflow
 exec(open('snakemake_rule_functions.py').read())
@@ -61,8 +64,8 @@ include: 'workflow/rules/variant_analysis/matched_and_unpaired/generate_oncoprin
 
 # matched and paired variant analysis
 include: 'workflow/rules/variant_analysis/matched_and_paired/octopus_join_targeted.smk'
-include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_joined.smk'
 include: 'workflow/rules/variant_analysis/matched_and_paired/filter_octopus_calls_targeted.smk'
+include: 'workflow/rules/variant_analysis/matched_and_paired/annotate_variants_joined.smk'
 include: 'workflow/rules/variant_analysis/matched_and_paired/generate_oncoprints.smk'
 
 # unmatched and unpaired analyses
