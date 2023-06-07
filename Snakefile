@@ -43,8 +43,9 @@ wildcard_constraints:
 exec(open('snakemake_rule_functions.py').read())
 
 # preprocessing
-include: 'workflow/rules/bam_preprocessing/generate_intersected_amplicons.smk'
-include: 'workflow/rules/bam_preprocessing/clean_bams.smk'
+include: 'workflow/rules/pre_variant_analysis/reference_genomes.smk'
+include: 'workflow/rules/pre_variant_analysis/generate_intersected_amplicons.smk'
+include: 'workflow/rules/pre_variant_analysis/clean_bams.smk'
 
 # TP53 variant analysis
 include: 'workflow/rules/variant_analysis/TP53/octopus_TP53.smk'
