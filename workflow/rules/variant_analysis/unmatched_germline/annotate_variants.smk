@@ -8,7 +8,7 @@ rule vep_octopus_germline:
 			--cache \
 			--offline \
 			--format vcf \
-			--dir /Users/bradle02/.vep/ \
+			--dir vep_cache \
 			--force_overwrite \
 			--hgvsg \
 			--fasta /Users/bradle02/.vep/homo_sapiens/103_GRCh37/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
