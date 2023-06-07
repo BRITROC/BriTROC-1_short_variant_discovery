@@ -1,3 +1,6 @@
 [submodule "britroc1_db"]
 	path = britroc1_db
 	url = https://github.com/TBradley27/britroc1_db.git
+[submodule "ampliconseq"]
+	path = ampliconseq
+	url = https://github.com/crukci-bioinformatics/ampliconseq.git
