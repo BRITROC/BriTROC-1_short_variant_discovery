@@ -9,6 +9,7 @@ rule vep_octopus:
 			--offline \
 			--format vcf \
 			--dir vep_cache \
+			--hgvsg \
 			--force_overwrite \
 			--fasta /Users/bradle02/.vep/homo_sapiens/103_GRCh37/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
 			--check_existing \
