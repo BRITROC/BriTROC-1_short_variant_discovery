@@ -1,5 +1,7 @@
 rule generate_vep_annotations_for_unmatched_variants:
-	input: rules.concat_unmatched_vcfs_across_amplicon_groups.output
+	input:
+		variants=rules.concat_unmatched_vcfs_across_amplicon_groups.output,
+		reference_genome=rules.decompress_reference_genome_for_use_with_vep.output
 	output: 'results/variant_analysis/unmatched/{analysis_type}/{patient_id}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
@@ -11,7 +13,7 @@ rule generate_vep_annotations_for_unmatched_variants:
 			--dir vep_cache \
 			--force_overwrite \
 			--hgvsg \
-			--fasta /Users/bradle02/.vep/homo_sapiens/103_GRCh37/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
+			--fasta {input.reference_genome} \
 			--check_existing \
 			--everything \
 			--no_escape \

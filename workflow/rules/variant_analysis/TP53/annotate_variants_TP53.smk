@@ -1,9 +1,11 @@
 rule vep_octopus_tp53:
-	input: rules.concat_vcfs_sample_level.output
+	input: 
+		variants=rules.concat_vcfs_sample_level.output,
+		reference_genome=rules.decompress_reference_genome_for_use_with_vep.output
 	output: 'results/variant_analysis/{analysis_type}/{sample}.filtered.vep.vcf'
 	conda: '../../../../config/vep.yaml'
 	shell: 'ensembl-vep/vep \
-			-i {input} \
+			-i {input.variants} \
 			-o {output} \
 			--cache \
 			--offline \
@@ -11,7 +13,7 @@ rule vep_octopus_tp53:
 			--dir vep_cache/ \
 			--force_overwrite \
 			--hgvsg \
-			--fasta /Users/bradle02/.vep/homo_sapiens/103_GRCh37/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
+			--fasta {input.reference_genome} \
 			--check_existing \
 			--everything \
 			--no_escape \
