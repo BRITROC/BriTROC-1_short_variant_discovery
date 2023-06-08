@@ -1,34 +1,16 @@
 # use the database to identify somatic samples with matched normal samples which were prepared using amplicon panel 28
 
-library(magrittr)
-library(DBI)
-library(RPostgres)
-
 readRenviron('~/.Renviron')
-britroc_con <- DBI::dbConnect(RPostgres::Postgres(),
-                 dbname='britroc1',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
 
-clarity_con <- DBI::dbConnect(RPostgres::Postgres(),
-                 dbname='clarity',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
 
 
 source('functions.R')
 
 # example usage
-samples = RPostgres::dbReadTable(britroc_con, 'sample')
-libraries = RPostgres::dbReadTable(britroc_con, 'slx_library')
-experiments = RPostgres::dbReadTable(britroc_con, 'experiment')
-run_slx = RPostgres::dbReadTable(britroc_con, 'run_slx')
+samples = readr::read_tsv(snakemake@input['DNA_samples_file_path'])
+libraries = readr::read_tsv(snakemake@input['libraries_file_path'])
+experiments = readr::read_tsv(snakemake@input['experiments_file_path'])
+run_slx = readr::read_tsv(snakemake@input['run_slx_file_path'])
 
 somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%
@@ -46,8 +28,9 @@ relevant_samples = remove_non_relevant_samples(
 	non_hgsoc_samples = snakemake@config[['non_hgsoc_samples']],
        samples_with_no_good_sequencing = snakemake@config[['samples_with_no_good_sequencing']],
         samples_with_very_low_purity = snakemake@config[['samples_with_very_low_purity']],
-	britroc_con=britroc_con,
-	clarity_con=clarity_con,
+	snakemake@input['DNA_samples_file_path'], 
+	snakemake@input['slx_library_file_path'], 
+	snakemake@input['experiments_file_path'],
         analysis_type='cohort'
 ) %>% dplyr::pull(name)
 

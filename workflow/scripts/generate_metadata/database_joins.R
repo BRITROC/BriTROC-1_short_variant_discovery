@@ -6,19 +6,11 @@ library(RPostgres)
 
 readRenviron('~/.Renviron')
 
-britroc_con <- DBI::dbConnect(RPostgres::Postgres(),
-                 dbname='britroc1',
-                 host='jblab-db.cri.camres.org',
-                 port = 5432,
-                 user = Sys.getenv('jblab_db_username'),
-                 password = Sys.getenv('jblab_db_password')
-)
-
 # example usage
-samples = RPostgres::dbReadTable(britroc_con, 'sample')
-libraries = RPostgres::dbReadTable(britroc_con, 'slx_library')
-experiments = RPostgres::dbReadTable(britroc_con, 'experiment')
-run_slx = RPostgres::dbReadTable(britroc_con, 'run_slx')
+samples = readr::read_tsv(snakemake@input['DNA_samples_file_path'])
+libraries = readr::read_tsv(snakemake@input['slx_library_file_path'])
+experiments = readr::read_tsv(snakemake@input['experiments_file_path'])
+run_slx = readr::read_tsv(snakemake@input['run_slx_file_path'])
 
 somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name')) %>%
 	dplyr::inner_join(experiments, by=c('fk_experiment'='name')) %>%
@@ -29,7 +21,7 @@ somatic_metadata = dplyr::inner_join(libraries, samples, by=c('fk_sample'='name'
 
 somatic_metadata = somatic_metadata %>% dplyr::mutate(flowcell=stringr::str_extract(string=fk_run, pattern='[-A-Z0-9]+$'))
 
-tp53_somatic_metadata = readr::read_tsv(snakemake@input[[1]])
+tp53_somatic_metadata = readr::read_tsv(snakemake@input['TP53_amplicon_metadata'])
 
 patients_with_samples_sequenced_for_tp53 = tp53_somatic_metadata %>% dplyr::pull(fk_britroc_number)
 
