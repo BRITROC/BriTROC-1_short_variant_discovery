@@ -15,3 +15,7 @@ Most dependencies are managed via snakemake, so the code must be executed using 
 # execution
 
 The workflow can be executed from the main directory using the command 'snakemake -j 1 -n'
+
+# AUthorship & copyright
+
+Thomas Bradley 2023 'thomas.bradley@cruk.cam.ac.uk' (@TBradley27)
