@@ -1,5 +1,7 @@
 # generate amplicon and targets intervals file which is the intersection of amplicons and targets for panel 6 and panel 28
 
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule intersect_intervals:
 	input:
 		panel_6='resources/amplicon_panels/6_HR_Elkes_panel_2015_08_28/{interval_type}.txt',

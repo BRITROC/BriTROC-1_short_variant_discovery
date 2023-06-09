@@ -1,5 +1,7 @@
 # note: Can't use SelectVariant with octopus output as they are not compatible
 
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule filter_octopus_raw_calls:
 	input: 
 		filtered_vcf=rules.octopus.output

@@ -1,5 +1,7 @@
 # filter out suspected alignment errors in bam files by removing reads which do not map to a primer start site in the correct orientation and also by removing reads in which its mate/pair does not also map to the corresponding primer site for the same amplicon
 
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule symlink_bam_or_bam_indexes:
 	input: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.bwamem.homo_sapiens.{bam_or_bai}'
 	output: '../SLX/{SLX_ID}/bam/{SLX_ID}.{barcode}.{flowcell}.s_{lane}.{bam_or_bai}'

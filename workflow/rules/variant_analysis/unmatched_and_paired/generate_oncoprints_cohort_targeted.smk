@@ -1,5 +1,9 @@
 # somatic variants now found at the following path: results/variant_analysis/unmatched/paired/submission_results/collated/
 
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule prepare_data_for_whole_oncoprint_generation_unmatched_and_paired:
 	input:
 		filtered_non_TP53_variants_archival='results/variant_analysis/unmatched/{analysis_type}/paired/collated/archival_filtered_vep_calls_octopus_joined.targeted.tsv',

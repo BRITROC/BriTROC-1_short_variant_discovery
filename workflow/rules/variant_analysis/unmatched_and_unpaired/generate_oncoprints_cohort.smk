@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule prepare_data_for_whole_oncoprint_generation_not_intercalated:
 	input:
 		filtered_non_TP53_variants='results/variant_analysis/unmatched/{analysis_type}/collated/filtered_vep_calls_octopus_joined.tsv',

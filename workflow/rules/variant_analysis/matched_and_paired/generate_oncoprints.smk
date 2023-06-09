@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule prepare_somatic_variant_data_for_oncoprint_generation:
 	input:
 		filtered_matched_and_paired_variants_archival='results/variant_analysis/matched/{analysis_type}/paired/collated/filtered_calls_octopus_joined_archival.vcf',

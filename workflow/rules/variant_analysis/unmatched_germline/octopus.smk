@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule convert_bed6_to_oct_format:
 	input:  get_relevant_bed_file                                           
 	output: 'resources/{analysis_type}.{nonoverlapping_id}.targets.oct'

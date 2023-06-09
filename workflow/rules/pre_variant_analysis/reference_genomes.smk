@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule download_hs37d5_reference_genome:
 	output: temp('reference_genomes/hs37d5.fa.gz')
 	shell: 'wget https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz --output-document={output}'

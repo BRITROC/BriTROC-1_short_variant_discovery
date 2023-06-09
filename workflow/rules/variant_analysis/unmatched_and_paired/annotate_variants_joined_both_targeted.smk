@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule ensure_tech_rep_genotypes_match_unmatched_targeted:
 	input: 
 		combined_vcfs=rules.concat_vcfs_octopus_unmatched_targeted.output,

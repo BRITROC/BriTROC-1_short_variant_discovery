@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule vep_octopus_germline:
 	input: 
 		variants=rules.ensure_genotypes_match.output,

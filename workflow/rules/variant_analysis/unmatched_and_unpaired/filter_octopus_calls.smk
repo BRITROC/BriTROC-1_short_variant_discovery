@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule filter_unmatched_raw_calls_by_random_forest:
 	input: 
 		filtered_vcf=rules.octopus_unmatched_with_random_forests.output

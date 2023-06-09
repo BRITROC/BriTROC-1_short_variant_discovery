@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule convert_bed6_to_oct_format_tp53:
 	input:   'resources/union_of_tp53_amplicons.targets.{nonoverlapping_id}.bed'                                     
 	output: 'resources/union_of_tp53.{nonoverlapping_id}.targets.oct'

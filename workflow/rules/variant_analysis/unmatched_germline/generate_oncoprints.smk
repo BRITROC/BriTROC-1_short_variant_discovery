@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule curate_germline_variants:
 	output: 
 		filtered_germline_variants='results/variant_analysis/germline/ampliconseq_pipeline/{analysis_type}/collated/filtered_germline_variants.tsv',

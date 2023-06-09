@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule bgzip_octopus_unmatched_targeted_vcf:
 	input: rules.octopus_unmatched_targeted_calling.output.tumour_vcf
 	output: 

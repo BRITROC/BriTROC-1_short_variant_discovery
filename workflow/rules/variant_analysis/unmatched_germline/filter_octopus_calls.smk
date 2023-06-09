@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule filter_octopus_germline_raw_calls:
 	input: 
 		filtered_vcf=rules.octopus_germline_with_hard_filter_annotation.output

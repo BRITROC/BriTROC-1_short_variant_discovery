@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule get_interval_file_for_targeted_calling:
 	input: rules.ensure_tech_rep_genotypes_match.output.tumour_samples_union
 	output: 'results/variant_analysis/matched/{analysis_type}/{patient_id}.interval_file.txt'

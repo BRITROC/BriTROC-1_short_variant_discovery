@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule get_somatic_variants_only_from_matched_and_paired_analysis:
 	input: rules.concat_vcfs_targeted.output
 	output: 'results/variant_analysis/matched/{analysis_type}/paired/{patient_id}.filtered2.somatics_only.vcf'

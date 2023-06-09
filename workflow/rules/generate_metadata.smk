@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule all:
 	input: 
 		'config/TP53_tumour_amplicon_sequencing_metadata.tsv',

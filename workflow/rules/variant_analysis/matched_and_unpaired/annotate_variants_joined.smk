@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 rule vep_octopus:
 	input: 
 		 variants=rules.concat_vcfs.output,

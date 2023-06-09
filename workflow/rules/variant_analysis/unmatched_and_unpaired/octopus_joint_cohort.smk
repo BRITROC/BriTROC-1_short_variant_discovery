@@ -1,3 +1,5 @@
+# copyright Thomas Bradley 2023 ('thomas.bradley@cruk.cam.ac.uk')
+
 # NB: we use both germline and somatic random forests as we are calling both variant types even though there is no matched normal
 rule octopus_unmatched_with_random_forests:
 	input:
