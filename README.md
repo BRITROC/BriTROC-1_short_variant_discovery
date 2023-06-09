@@ -1,6 +1,6 @@
 # BriTROC-1 variant calling
 
-The code repository for variant discovery used in the Smith & Bradley et al. (2023) publication.
+The code repository for variant discovery used in the Smith & Bradley et al. (2023) study examining genomic changes between diagnosis and relapse set of tumour samples fro the BriTROC-1 study
 
 # Assumptions
 
