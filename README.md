@@ -18,4 +18,4 @@ The workflow can be executed from the main directory using the command 'snakemak
 
 # Authorship & copyright
 
-Thomas Bradley 2023 'thomas.bradley@cruk.cam.ac.uk' (@TBradley27)
+Thomas Bradley 2023 'thomas.bradley@cruk.cam.ac.uk' [@TBradley27]
